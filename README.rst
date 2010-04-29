@@ -1,14 +1,16 @@
 Info
 ----
 
-GIMME is an XMMS2 client for Emacs currently being developed for Google's Summer of Code. You can read more about it at http://scorciapino.com/blog/archives/49, which has some mockups, too.
+GIMME is an XMMS2 client for Emacs currently being developed for
+Google's Summer of Code. You can read more about it at
+http://scorciapino.com/blog/archives/49, which has some mockups, too.
 
 Pomodoros
 ---------
 
-I wonder how much time I'll dedicate to GIMME...
+I wonder how much time I'll end up dedicating to GIMME...
 
-* 29/4 -> 5 pomodoros
+* *29/4*: 5 pomodoros
 
 TODO
 ----
