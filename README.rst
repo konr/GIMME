@@ -10,7 +10,8 @@ Pomodoros
 
 I wonder how much time I'll end up dedicating to GIMME...
 
-* *29/4*: 5 pomodoros
+* *29/4*: 5 pomodoros building a simple ruby+emacs example
+* *30/4*: 1 pomodoro installing xmms and its libs in this machine
 
 TODO
 ----

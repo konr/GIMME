@@ -11,6 +11,8 @@
 (defun test ()
   (process-send-string foo "test\n"))
 
+(defun error ()
+  (process-send-string foo "atest\n"))
 
 
 
