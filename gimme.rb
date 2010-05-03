@@ -2,6 +2,11 @@ require 'xmmsclient'
 require 'xmmsclient_glib'
 require 'glib2'
 
+def message text
+  # TODO: ESCAPE text
+  "(message \"#{text}\")"
+end
+
 class GIMME
 
   def initialize
@@ -23,6 +28,18 @@ class GIMME
       else
         puts "Currently playing ID: #{id}"
       end
+    end
+  end
+
+  def play
+    @async.playback_start.notifier do |id|
+      puts message "Now playing."
+    end
+  end
+
+  def pause
+    @async.playback_pause.notifier do |id|
+      puts message "Now paused."
     end
   end
 
