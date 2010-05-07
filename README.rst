@@ -31,8 +31,7 @@ I wonder how much time I'll end up dedicating to GIMME...
 * **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro :(
 * **05/5**: 3 pomodoros watching Ruby screencasts on metaprogramming
 * **06/5**: 6 pomodoros: 3 watching ruby screencasts and 3 working on code
-* **07/5**: 7 pomodoros: 1 watching ruby screencasts, 2 messing with
-    the sexp library, 4 coding and looking for documentation
+* **07/5**: 7 pomodoros: 1 watching ruby screencasts, 2 messing with the sexp library, 4 coding and looking for documentation
 
 
 .. _Emacs's manual: http://www.chemie.fu-berlin.de/chemnet/use/info/elisp/elisp_34.html
