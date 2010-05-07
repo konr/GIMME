@@ -4,7 +4,6 @@ def debug(m)
   puts m if $debug
 end
 
-def sexp text
-  # TODO: ESCAPE text
-  "(message \"#{text}\")"
+def message (t)
+  puts [:message, t].to_sexp
 end

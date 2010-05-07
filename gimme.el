@@ -18,7 +18,7 @@
           ',(mapcar (lambda (f)
              `(fset ',(read (format "gimme-%s" f))
                     (lambda () (interactive)
-                      (process-send-string *gimme-process* ,(format "%s\n" f)))))
+                      (process-send-string *gimme-process* ,(format "%s\n" (list f))))))
            args)))
 
 
@@ -26,5 +26,5 @@
 
 (setq *gimme-executable* "ruby ~/Projetos/GIMME/gimme.rb")
 (gimme-init)
-(gimme-generate-commands play pause)
+(gimme-generate-commands play pause foo)
 (provide 'gimme)
