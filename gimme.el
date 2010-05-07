@@ -17,7 +17,7 @@
   `(mapcar 'eval 
           ',(mapcar (lambda (f)
              `(fset ',(read (format "gimme-%s" f))
-                    (lambda nil (interactive)
+                    (lambda () (interactive)
                       (process-send-string *gimme-process* ,(format "%s\n" f)))))
            args)))
 

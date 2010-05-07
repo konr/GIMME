@@ -2,51 +2,44 @@ require 'xmmsclient'
 require 'xmmsclient_glib'
 require 'glib2'
 
-def message text
+$debug = 1
+
+def debug(m)
+  puts m if $debug
+end
+
+def sexp text
   # TODO: ESCAPE text
   "(message \"#{text}\")"
 end
 
 class GIMME
 
+
   def initialize
-    begin
-      @async = Xmms::Client.new('GIMMEasync').connect(ENV['XMMS_PATH'])
-    rescue Xmms::Client::ClientError
-      puts 'Failed to connect to XMMS2 daemon.'
-      puts 'Please make sure xmms2d is running and using the correct IPC path.'
-      exit
-    end
+    @async = Xmms::Client.new('GIMMEasync').connect(ENV['XMMS_PATH'])
     @async.add_to_glib_mainloop
-    #@async.playback_current_id.notifier(&method(:on_playback_cur_id))
+
   end
 
-  def ainfo
-    @async.playback_current_id.notifier do |id|
-      if(id == 0)
-        puts 'There is no current ID. XMMS2 is probably not playing anything.'
-      else
-        puts "Currently playing ID: #{id}"
+  def self.gen_methods
+    m = {
+      'play' => 'playback_start',
+      'pause' => 'playback_pause'
+    }
+
+    m.each do |k,v|
+      define_method(k) do
+        @async.send(v).notifier {|id| puts sexp(k)}
       end
     end
   end
 
-  def play
-    @async.playback_start.notifier do |id|
-      puts message "Now playing."
-    end
-  end
+  gen_methods
 
-  def pause
-    @async.playback_pause.notifier do |id|
-      puts message "Now paused."
-    end
-  end
-
-  def test
-    puts '(message "Hello, Cleveland!")'
-  end
 end
+
+
 
 $ml = GLib::MainLoop.new(nil, false)
 client = GIMME.new
