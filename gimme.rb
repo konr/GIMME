@@ -1,17 +1,7 @@
 require 'xmmsclient'
 require 'xmmsclient_glib'
 require 'glib2'
-
-$debug = 1
-
-def debug(m)
-  puts m if $debug
-end
-
-def sexp text
-  # TODO: ESCAPE text
-  "(message \"#{text}\")"
-end
+require 'gimme-aux'
 
 class GIMME
 
@@ -43,8 +33,10 @@ end
 
 $ml = GLib::MainLoop.new(nil, false)
 client = GIMME.new
+$channel = GLib::IOChannel.new(STDIN)
 
 Thread.new do
+  puts $channel
   while true
     # print "> "
     gets.strip.each do | command |

@@ -17,13 +17,16 @@ I wonder how much time I'll end up dedicating to GIMME...
 * **07/5**: 6 pomodoros: 3 watching ruby screencasts and 3 working on code
 
 
+
 TODO et Next Steps
 ------------------
 
-* Read about processes on `Emacs's manual`_. (est. 2 pom)
-* Fix paredit and flyspell modes (est. 1 pom)
-* Finish Ruby screencasts (est. 4 pom)
-* Study the sexp library (est. 2 pom)
+# Fix paredit and flyspell modes (est. 1 pom)
+# Finish Ruby screencasts (est. 4 pom)
+# Read a tutorial on Glib (http://ruby-gnome2.sourceforge.jp/hiki.cgi?tut-gtk2-glib) and remove the thread (5 pomodoros)
+# Study the sexp library (est. 2 pom)
+# Read about processes on `Emacs's manual`_. (est. 2 pom)
+
 
 
 
