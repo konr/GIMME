@@ -16,6 +16,7 @@ class GIMME
   def self.gen_methods
     {
       'play' => 'playback_start',
+      'tickle' => 'playback_tickle',
       'pause' => 'playback_pause'
     }.each do |k,v|
       define_method(k) do
@@ -27,7 +28,22 @@ class GIMME
   gen_methods
 
   def list
-    print_col("Default",["id","artist","album","title"])
+    print_col("Default",["id","tracknr","artist","album","title"])
+  end
+
+  def prev
+    @async.playlist_set_next_rel(-1).notifier { tickle }
+  end
+
+  def next
+    @async.playlist_set_next_rel(1).notifier { tickle }
+  end
+      
+  def playn (id)
+    # FIXME: What if the playlist isn't playing? 
+    # { tickle; play } didn't work as expected
+    # perhaps they are not executed in the correct order
+    @async.playlist_set_next(id).notifier { tickle } 
   end
 
   private
@@ -36,9 +52,9 @@ class GIMME
     @async.coll_get(name).notifier do |coll|
       @async.coll_query_info(coll,atrib).notifier do |wrapperdict|
         wrapperdict.each do |dict|
-          print "(" # FIXME not sure how to send these alists to Emacs
-          dict.each {|key,val| print [key, ".".to_sym, val].to_sexp } # FIXME ".".to_sym :P
-          print ")\n"
+          adict = {}
+          dict.each {|key,val| adict[key] = val }
+          puts ["gimme-append-to-buffer".to_sym,[:quote, adict.to_a.flatten]].to_sexp
         end
         42 # FIXME: For some reason, an integer is required
       end
