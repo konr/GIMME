@@ -5,21 +5,17 @@
   Google's Summer of Code. You can read more about it at
   http://scorciapino.com/blog/archives/49, which has some mockups, too.
 
-  Reference
-  ---------
-
-  - Ruby bindings: http://xmms2.org/wiki/Component:Ruby_bindings
-  - RDoc: http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/
 
 
 * TODO
 
   - Playlist-view:
-  1. Fix the keybinding to make it look less like text
-  2. Learn how broadcasts work and display the currently played track
-  3. Make it prettier
-  4. ???
-  5. Document and refactor the code
+    1. Fix the keybinding to make it look less like text
+    2. Learn how broadcasts work and display the currently played track
+    3. Make it prettier
+    4. ???
+    5. Document and refactor the code
+
 
 * Known problems
 
@@ -33,6 +29,10 @@
 
    I've studied other people's code, and apparently they are using the
    same approach. I will come to this problem again soon.
+
+* Reference:
+  - Ruby bindings: http://xmms2.org/wiki/Component:Ruby_bindings
+  - RDoc: http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/
 
 * Pomodoros
 
