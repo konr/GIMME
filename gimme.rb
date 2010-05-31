@@ -14,7 +14,9 @@ class GIMME
     @async.add_to_glib_mainloop
 
     @async.broadcast_playback_current_id.notifier do |res|
-      print_current(res)
+      @async.playlist("_active").current_pos.notifier do |pos|
+        puts ["gimme-set-playing".to_sym, pos[:position]].to_sexp
+      end
       true
     end
 
@@ -44,7 +46,7 @@ class GIMME
 
   def list
     # FIXME: Clean up this mess
-    @async.playback_current_id.notifier do |id|
+    @async.playlist("_active").current_pos.notifier do |pos|
       atrib=["id","artist","album","title"]
       bdict={}
       @async.coll_get("_active").notifier do |coll|
@@ -52,12 +54,12 @@ class GIMME
           wrapperdict.each do |dict|
             adict = {}
             dict.each {|key,val| adict[key] = val }
-            adict[:face] = :highlight if (adict[:id] == id)
             bdict[adict[:id]]=adict
           end
           @async.playlist("_active").entries.notifier do |list|
             list.each_with_index do |el,i|
               bdict[el][:pos] = i
+              bdict[el][:face] = :highlight if (i == pos[:position])
               puts ["gimme-append-to-buffer".to_sym,[:quote, bdict[el].to_a.flatten]].to_sexp
             end
             42 # FIXME: For some reason, an integer is required
@@ -92,9 +94,6 @@ class GIMME
 
   private
 
-  def print_current (id)
-    puts ["gimme-set-playing".to_sym, id].to_sexp
-  end
 
   def change_volume (inc)
     @async.playback_volume_get.notifier do |vol|

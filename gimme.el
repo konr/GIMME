@@ -22,8 +22,9 @@
                      (nth 0 colors) (nth 1 colors))))
     (apply 'concat "#" color)))
 
-(defun gimme-set-playing (id)
+(defun gimme-set-playing (pos)
   "Highlights the currently played song"
+  ;; FIXME can assume again a single highlighted track, so it's better to revert to a simpler version of the function
   (when (get-buffer gimme-buffer-name)
     (with-current-buffer gimme-buffer-name
       (let* ((h-beg t) (h-end t))
@@ -31,7 +32,7 @@
           (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
           (setq h-end (next-property-change (or h-beg (point-min))))
           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
-      (let* ((beg (text-property-any (point-min) (point-max) 'id id))
+      (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
              (end (next-property-change (or beg (point-min)))))
         (when beg (put-text-property beg end 'face 'highlight))))))
 
