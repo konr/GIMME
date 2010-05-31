@@ -22,19 +22,25 @@
                      (nth 0 colors) (nth 1 colors))))
     (apply 'concat "#" color)))
 
+(defmacro unlocking-buffer (&rest body)
+  `(progn (toggle-read-only nil)
+          ,@body
+          (toggle-read-only t)))
+
 (defun gimme-set-playing (pos)
   "Highlights the currently played song"
   ;; FIXME can assume again a single highlighted track, so it's better to revert to a simpler version of the function
   (when (get-buffer gimme-buffer-name)
     (with-current-buffer gimme-buffer-name
-      (let* ((h-beg t) (h-end t))
-        (while h-beg
-          (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
-          (setq h-end (next-property-change (or h-beg (point-min))))
-          (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
-      (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
-             (end (next-property-change (or beg (point-min)))))
-        (when beg (put-text-property beg end 'face 'highlight))))))
+      (unlocking-buffer
+       (let* ((h-beg t) (h-end t))
+         (while h-beg
+           (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
+           (setq h-end (next-property-change (or h-beg (point-min))))
+           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
+       (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
+              (end (next-property-change (or beg (point-min)))))
+         (when beg (put-text-property beg end 'face 'highlight)))))))
 
 ;; FIXME: Filter somehow the sexps allowing some only a preselection of them
 (defun eval-all-sexps (s)
@@ -71,30 +77,29 @@
   (interactive)
   (get-buffer-create gimme-buffer-name)
   (with-current-buffer gimme-buffer-name
-    (gimme-playlist-mode)
-    (setq header-line-format '(:eval (substring gimme-playlist-header
-                                                (min (length gimme-playlist-header)
-                                                     (window-hscroll)))))
-    (clipboard-kill-region 1 (point-max))
-    (save-excursion
-      (gimme-send-message "(list)\n")))
-  (switch-to-buffer (get-buffer gimme-buffer-name))) ;; FIXME: Quite redundant and ugly
+    (unlocking-buffer
+     (gimme-playlist-mode)
+     (clipboard-kill-region 1 (point-max))
+     (save-excursion
+       (gimme-send-message "(list)\n")))
+    (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 
 (defun gimme-append-to-buffer (plist)
   (set-buffer gimme-buffer-name)
   (with-current-buffer gimme-buffer-name
     (save-excursion
-      (goto-char (point-max))
-      (let ((beg (point-marker)))
-        (let ((line (car gimme-playlist-formats)))
-          (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
-            (setq line (replace-regexp-in-string (nth 0 token)
-                                                 (or (getf plist (nth 1 token)) "nil")
-                                                 line)))
-          (insert line))
-        (insert "\n")
-        (add-text-properties beg (point-marker) plist)))))
+      (unlocking-buffer
+       (goto-char (point-max))
+       (let ((beg (point-marker)))
+         (let ((line (car gimme-playlist-formats)))
+           (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
+             (setq line (replace-regexp-in-string (nth 0 token)
+                                                  (or (getf plist (nth 1 token)) "nil")
+                                                  line)))
+           (insert line))
+         (insert "\n")
+         (add-text-properties beg (point-marker) plist))))))
 
 (defun gimme-focused-play () ;; FIXME: Message "tickle" received
   (interactive)
@@ -113,12 +118,20 @@
                 (list (car gimme-playlist-formats))))
   (gimme-playlist))
 
+(defun gimme-set-title (title)
+  "Where is my lexical scope when I need it? :("
+  (setq gimme-playlist-header title)
+  (setq header-line-format
+        '(:eval (substring gimme-playlist-header
+                           (min (length gimme-playlist-header)
+                                (window-hscroll))))))
+
 ;; Keymap
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'gimme-focused-play)
-    (define-key map (kbd "q") 'gimme-close)
+    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
     (define-key map (kbd "n") 'gimme-next)
     (define-key map (kbd "p") 'gimme-prev)
     (define-key map (kbd "s") 'gimme-stop)

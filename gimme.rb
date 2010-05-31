@@ -47,6 +47,7 @@ class GIMME
   def list
     # FIXME: Clean up this mess
     @async.playlist("_active").current_pos.notifier do |pos|
+      puts ["gimme-set-title".to_sym, "GIMME - Playlist View (" + pos[:name] + ")"].to_sexp
       atrib=["id","artist","album","title"]
       bdict={}
       @async.coll_get("_active").notifier do |coll|
