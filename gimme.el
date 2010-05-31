@@ -1,10 +1,10 @@
-(defvar *gimme-process*)
-(defvar *gimme-executable* "ruby ~/Projetos/GIMME/gimme.rb")
-(defvar *gimme-buffer*)
-(defvar *gimme-buffer-name* "*GIMME*")
-(defvar *gimme-playlist-header* "GIMME - Playlist view")
-(defvar *gimme-filter-remainder* "")
-(defvar *gimme-playlist-formats* '("%title" "%artist > %title" "%artist > %album > %title") )
+(defvar gimme-process)
+(defvar gimme-executable "ruby ~/Projetos/GIMME/gimme.rb")
+(defvar gimme-buffer)
+(defvar gimme-buffer-name "GIMME")
+(defvar gimme-playlist-header "GIMME - Playlist view")
+(defvar gimme-filter-remainder "")
+(defvar gimme-playlist-formats '("%title" "%artist > %title" "%artist > %album > %title") )
 
 (defun alpha-blend (c1 c2 a)
   "The resulting color of merging the c1 with alpha a on a background of color c2"
@@ -21,7 +21,7 @@
 
 (defun gimme-set-playing (id)
   "Highlights the currently played song"
-  (with-current-buffer *gimme-buffer-name*
+  (with-current-buffer gimme-buffer-name
     (let* ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
            (h-end (next-property-change (or h-beg (point-min))))
            (beg (text-property-any (point-min) (point-max) 'id id))
@@ -32,8 +32,8 @@
 
 ;; FIXME: Filter somehow the sexps allowing some only a preselection of them
 (defun eval-all-sexps (s)
-  (let ((s (concat *gimme-filter-remainder* s)))
-    (setq *gimme-filter-remainder*
+  (let ((s (concat gimme-filter-remainder s)))
+    (setq gimme-filter-remainder
           (loop for x = (ignore-errors (read-from-string s))
                 then (ignore-errors (read-from-string (substring s position)))
                 while x
@@ -51,14 +51,14 @@
       (if moving (goto-char (process-mark proc))))))
 
 (defun gimme-init ()
-  (get-buffer-create *gimme-buffer-name*)
-  (setq *gimme-process*
+  (get-buffer-create gimme-buffer-name)
+  (setq gimme-process
         (start-process-shell-command ""
-                                     nil *gimme-executable*))
-  (set-process-filter *gimme-process* (lambda (a b) (eval-all-sexps b))))
+                                     nil gimme-executable))
+  (set-process-filter gimme-process (lambda (a b) (eval-all-sexps b))))
 
 (defun gimme-send-message (message)
-  (process-send-string *gimme-process* message))
+  (process-send-string gimme-process message))
 
 (defmacro gimme-generate-commands (&rest args)
   ;; FIXME: Too ugly :(
@@ -66,31 +66,31 @@
            ',(mapcar (lambda (f)
                        `(fset ',(read (format "gimme-%s" f))
                               (lambda () (interactive)
-                                (process-send-string *gimme-process* ,(format "%s\n" (list f))))))
+                                (process-send-string gimme-process ,(format "%s\n" (list f))))))
                      args)))
 
 
 (defun gimme-playlist ()
   (interactive)
-  (get-buffer-create *gimme-buffer-name*)
-  (with-current-buffer *gimme-buffer-name*
+  (get-buffer-create gimme-buffer-name)
+  (with-current-buffer gimme-buffer-name
     (gimme-playlist-mode)
-    (setq header-line-format '(:eval (substring *gimme-playlist-header*
-                                                (min (length *gimme-playlist-header*)
+    (setq header-line-format '(:eval (substring gimme-playlist-header
+                                                (min (length gimme-playlist-header)
                                                      (window-hscroll)))))
     (clipboard-kill-region 1 (point-max))
     (save-excursion
       (gimme-send-message "(list)\n")))
-  (switch-to-buffer (get-buffer *gimme-buffer-name*))) ;; FIXME: Quite redundant and ugly
+  (switch-to-buffer (get-buffer gimme-buffer-name))) ;; FIXME: Quite redundant and ugly
 
 
 (defun gimme-append-to-buffer (plist)
-  (set-buffer *gimme-buffer-name*)
-  (with-current-buffer *gimme-buffer-name*
+  (set-buffer gimme-buffer-name)
+  (with-current-buffer gimme-buffer-name
     (save-excursion
       (goto-char (point-max))
       (let ((beg (point-marker)))
-        (let ((line (car *gimme-playlist-formats*)))
+        (let ((line (car gimme-playlist-formats)))
           (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
             (setq line (replace-regexp-in-string (nth 0 token)
                                                  (or (getf plist (nth 1 token)) "nil")
@@ -111,9 +111,9 @@
 (defun gimme-toggle-view ()
   ;; FIXME: check perfomance on large playlists, but I think I'll change it avoid reloading the playlist
   (interactive)
-  (setq *gimme-playlist-formats* 
-        (append (cdr *gimme-playlist-formats*)
-                (list (car *gimme-playlist-formats*))))
+  (setq gimme-playlist-formats 
+        (append (cdr gimme-playlist-formats)
+                (list (car gimme-playlist-formats))))
   (gimme-playlist))
 
 ;; Keymap
