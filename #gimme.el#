@@ -4,7 +4,8 @@
 (defvar *gimme-buffer-name* "*GIMME*")
 (defvar *gimme-playlist-header* "GIMME - Playlist view")
 (defvar *gimme-filter-remainder* "")
-(defvar *gimme-playlist-formats* '("%title" "%artist > %title" "%artist > %album > %title") )
+
+;; Aux
 
 (defun alpha-blend (c1 c2 a)
   "The resulting color of merging the c1 with alpha a on a background of color c2"
@@ -38,7 +39,7 @@
                 then (ignore-errors (read-from-string (substring s position)))
                 while x
                 summing (or (cdr x) 0) into position
-                doing (eval (car x))
+                doing (eval (car x)) 
                 finally (return (substring s position))))))
 
 (defun ordinary-insertion-filter (proc string)
@@ -87,18 +88,12 @@
 (defun gimme-append-to-buffer (plist)
   (set-buffer *gimme-buffer-name*)
   (with-current-buffer *gimme-buffer-name*
-    (save-excursion
-      (goto-char (point-max))
-      (let ((beg (point-marker)))
-        (let ((line (car *gimme-playlist-formats*)))
-          (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
-            (setq line (replace-regexp-in-string (nth 0 token)
-                                                 (or (getf plist (nth 1 token)) "nil")
-                                                 line)))
-          (insert line))
-        ;;(insert (getf plist 'title))
-        (insert "\n")
-        (add-text-properties beg (point-marker) plist)))))
+    (goto-char (point-max))
+    (let ((beg (point-marker)))
+      (insert (getf plist 'title))
+      (insert "\n")
+      (add-text-properties beg (point-marker) plist))
+    ))
 
 (defun gimme-focused-play () ;; FIXME: Message "tickle" received
   (interactive)
@@ -106,15 +101,7 @@
    (format "%s\n" (list 'playn (- (get-text-property (point) 'tracknr) 1)))))
 
 (defun gimme-update-playlist ()
-  (gimme-playlist)) ;; FIXME: this approach unfortunately won't work :(
-
-(defun gimme-toggle-view ()
-  ;; FIXME: check perfomance on large playlists, but I think I'll change it avoid reloading the playlist
-  (interactive)
-  (setq *gimme-playlist-formats* 
-        (append (cdr *gimme-playlist-formats*)
-                (list (car *gimme-playlist-formats*))))
-  (gimme-playlist))
+  (gimme-playlist)) ;; FIXME: check performance on large playlists
 
 ;; Keymap
 
