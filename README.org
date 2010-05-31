@@ -13,7 +13,7 @@ is done.
   Google's Summer of Code. You can read more about it at
   http://scorciapino.com/blog/archives/49, which has some mockups, too.
 
-  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal sexps
+  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps
 
 * Reference:
   - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
@@ -23,7 +23,7 @@ is done.
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **31/5**: 3 fixing the sexp reader.
+  - **31/5**: 5 fixing the sexp reader.
   - **30/5**: 9 adding features to the playlist-view
   - **28/5**: 8 pomodoros working on playlist-view
   - **27/5**: 2 pomodoros trying to fix the problem with long strings. I'll come back to it later.

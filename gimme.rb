@@ -1,10 +1,10 @@
 require 'xmmsclient'
 require 'xmmsclient_glib'
 require 'glib2'
-require 'gimme-aux'
 require 'rubygems'
 require 'sexp'
 require 'pp'
+require 'gimme-aux'
 
 
 class GIMME
@@ -43,15 +43,24 @@ class GIMME
 
 
   def list
+    # FIXME: Clean up this mess
     @async.playback_current_id.notifier do |id|
-      atrib=["id","tracknr","artist","album","title"]
-      @async.coll_get("Default").notifier do |coll|
+      atrib=["id","artist","album","title"]
+      bdict={}
+      @async.coll_get("_active").notifier do |coll|
         @async.coll_query_info(coll,atrib).notifier do |wrapperdict|
           wrapperdict.each do |dict|
             adict = {}
             dict.each {|key,val| adict[key] = val }
             adict[:face] = :highlight if (adict[:id] == id)
-            puts ["gimme-append-to-buffer".to_sym,[:quote, adict.to_a.flatten]].to_sexp
+            bdict[adict[:id]]=adict
+          end
+          @async.playlist("_active").entries.notifier do |list|
+            list.each_with_index do |el,i|
+              bdict[el][:pos] = i
+              puts ["gimme-append-to-buffer".to_sym,[:quote, bdict[el].to_a.flatten]].to_sexp
+            end
+            42 # FIXME: For some reason, an integer is required
           end
           42 # FIXME: For some reason, an integer is required
         end

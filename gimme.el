@@ -1,10 +1,13 @@
 (defvar gimme-process)
+;; Not working on some computers
 (defvar gimme-executable "ruby ~/Projetos/GIMME/gimme.rb")
 (defvar gimme-buffer)
 (defvar gimme-buffer-name "GIMME")
 (defvar gimme-playlist-header "GIMME - Playlist view")
 (defvar gimme-filter-remainder "")
-(defvar gimme-playlist-formats '("%title" "%artist > %title" "%artist > %album > %title") )
+(defvar gimme-playlist-formats '("%artist > %title"
+                                 "%title"
+                                 "%artist > %album > %title"))
 
 (defun alpha-blend (c1 c2 a)
   "The resulting color of merging the c1 with alpha a on a background of color c2"
@@ -21,13 +24,16 @@
 
 (defun gimme-set-playing (id)
   "Highlights the currently played song"
-  (with-current-buffer gimme-buffer-name
-    (let* ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
-           (h-end (next-property-change (or h-beg (point-min))))
-           (beg (text-property-any (point-min) (point-max) 'id id))
-           (end (next-property-change (or beg (point-min)))))
-      (when h-beg (remove-text-properties h-beg h-end '(face nil)))
-      (when beg (put-text-property beg end 'face 'highlight)))))
+  (when (get-buffer gimme-buffer-name)
+    (with-current-buffer gimme-buffer-name
+      (let* ((h-beg t) (h-end t))
+        (while h-beg
+          (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
+          (setq h-end (next-property-change (or h-beg (point-min))))
+          (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
+      (let* ((beg (text-property-any (point-min) (point-max) 'id id))
+             (end (next-property-change (or beg (point-min)))))
+        (when beg (put-text-property beg end 'face 'highlight))))))
 
 ;; FIXME: Filter somehow the sexps allowing some only a preselection of them
 (defun eval-all-sexps (s)
@@ -39,15 +45,6 @@
                 summing (or (cdr x) 0) into position
                 doing (eval (car x))
                 finally (return (substring s position))))))
-
-(defun ordinary-insertion-filter (proc string)
-  (with-current-buffer (process-buffer proc)
-    (let ((moving (= (point) (process-mark proc))))
-      (save-excursion
-        (goto-char (process-mark proc))
-        (insert string)
-        (set-marker (process-mark proc) (point)))
-      (if moving (goto-char (process-mark proc))))))
 
 (defun gimme-init ()
   (get-buffer-create gimme-buffer-name)
@@ -95,14 +92,14 @@
                                                  (or (getf plist (nth 1 token)) "nil")
                                                  line)))
           (insert line))
-        ;;(insert (getf plist 'title))
         (insert "\n")
         (add-text-properties beg (point-marker) plist)))))
 
 (defun gimme-focused-play () ;; FIXME: Message "tickle" received
   (interactive)
+  (message (format "%s" (get-text-property (point) 'pos)))
   (gimme-send-message
-   (format "%s\n" (list 'playn (- (get-text-property (point) 'tracknr) 1)))))
+   (format "%s\n" (list 'playn (get-text-property (point) 'pos)))))
 
 (defun gimme-update-playlist ()
   (gimme-playlist)) ;; FIXME: this approach unfortunately won't work :(
@@ -110,7 +107,7 @@
 (defun gimme-toggle-view ()
   ;; FIXME: check perfomance on large playlists, but I think I'll change it avoid reloading the playlist
   (interactive)
-  (setq gimme-playlist-formats 
+  (setq gimme-playlist-formats
         (append (cdr gimme-playlist-formats)
                 (list (car gimme-playlist-formats))))
   (gimme-playlist))
@@ -120,6 +117,7 @@
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'gimme-focused-play)
+    (define-key map (kbd "q") 'gimme-close)
     (define-key map (kbd "n") 'gimme-next)
     (define-key map (kbd "p") 'gimme-prev)
     (define-key map (kbd "s") 'gimme-stop)
