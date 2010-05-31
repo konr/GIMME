@@ -12,9 +12,13 @@ is done.
   GIMME is an XMMS2 client for Emacs currently being developed for
   Google's Summer of Code. You can read more about it at
   http://scorciapino.com/blog/archives/49, which has some mockups, too.
+
+  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal sexps
+
 * Reference:
-  - Ruby bindings: http://xmms2.org/wiki/Component:Ruby_bindings
-  - RDoc: http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/
+  - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
+  - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
+
 * Pomodoros
 
   I wonder how much time I'll end up dedicating to GIMME...

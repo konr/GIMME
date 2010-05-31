@@ -27,8 +27,7 @@
            (beg (text-property-any (point-min) (point-max) 'id id))
            (end (next-property-change (or beg (point-min)))))
       (when h-beg (remove-text-properties h-beg h-end '(face nil)))
-      (when beg (put-text-property beg end 'face 'highlight))
-      )))
+      (when beg (put-text-property beg end 'face 'highlight)))))
 
 ;; FIXME: Filter somehow the sexps allowing some only a preselection of them
 (defun eval-all-sexps (s)
