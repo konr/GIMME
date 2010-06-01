@@ -1,5 +1,4 @@
 (defvar gimme-process)
-;; Not working on some computers
 (defvar gimme-executable "cd ~/Projetos/GIMME && ruby gimme.rb")
 (defvar gimme-last-ids nil)
 (defvar gimme-buffer-name "GIMME")
