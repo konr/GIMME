@@ -1,0 +1,39 @@
+* Status and next steps
+
+  Now it's almost usable! You still have to manually update the playlist
+  and add songs from another client, but besides these, the first view
+  is done.
+
+  1. Work on the playlist-updated broadcast
+  2. Mess around with coloring
+  3. Blog post
+  4. Fix the id3v2 bug
+     
+* Info
+  GIMME is an XMMS2 client for Emacs currently being developed for
+  Google's Summer of Code. You can read more about it at
+  http://scorciapino.com/blog/archives/49, which has some mockups, too.
+
+  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps
+
+* Reference:
+  - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
+  - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
+
+* Pomodoros
+
+  I wonder how much time I'll end up dedicating to GIMME...
+
+  - **01/6**: 16 fixing various issues and working on the broadcasts
+  - **31/5**: 7 fixing the sexp reader and making things work
+  - **30/5**: 9 adding features to the playlist-view
+  - **28/5**: 8 pomodoros working on playlist-view
+  - **27/5**: 2 pomodoros trying to fix the problem with long strings. I'll come back to it later.
+  - **18/5**: 4 pomodoros fixing the print system
+  - **07/5**: 7 pomodoros: 1 watching ruby screencasts, 2 messing with the sexp library, 4 coding and looking for documentation
+  - **06/5**: 6 pomodoros: 3 watching ruby screencasts and 3 working on code
+  - **05/5**: 3 pomodoros watching Ruby screencasts on metaprogramming
+  - **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro :(
+  - **30/4**: 1 pomodoro installing xmms and its libs in this machine
+  - **29/4**: 5 pomodoros building a simple ruby+emacs example
+
