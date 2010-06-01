@@ -21,8 +21,27 @@ class GIMME
     end
 
     @async.broadcast_playlist_changed.notifier do |res|
-      # puts ["gimme-update-playlist".to_sym].to_sexp FIXME: broken
-      # FIXME: Solve the problem of having ghost gimme processes on emacs
+      dict = {}; res.each {|key,val| dict[key] = val }
+      dict[:pos] = dict[:position] # FIXME: Remove dict[:position]
+      dict[:type] = case dict[:type]
+                    when Xmms::Playlist::ADD then :add
+                    when Xmms::Playlist::INSERT then :insert
+                    when Xmms::Playlist::SHUFFLE then :shuffle
+                    when Xmms::Playlist::REMOVE then :remove
+                    when Xmms::Playlist::CLEAR then :clear
+                    when Xmms::Playlist::MOVE then :move
+                    when Xmms::Playlist::SORT then :sort
+                    when Xmms::Playlist::UPDATE then :update
+                    end
+      if (dict[:type] == :add or dict[:type] == :insert) then
+        @async.medialib_get_info(dict[:id]).notifier do |res2|
+          [:title, :artist, :album].each {|e| dict[e] = res2[e][:"plugin/id3v2"]}
+          puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
+        end
+      else
+        puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
+      end
+
       true
     end
   end
@@ -43,11 +62,27 @@ class GIMME
   def prev; @async.playlist_set_next_rel(-1).notifier { tickle }; end
   def next; @async.playlist_set_next_rel( 1).notifier { tickle }; end
 
+  def clear; @async.playlist("_active").clear.notifier; end
+  def shuffle; @async.playlist("_active").shuffle.notifier; end
+
+  # FIXME: Generate these automatically
+  def remove (pos); @async.playlist("_active").remove_entry(pos).notifier; end
+  def add (id); @async.playlist("_active").add_entry(id).notifier; end
+  def insert (id,pos); @async.playlist("_active").insert_entry(id,pos).notifier; end
+
+  def gimme (id, pos)
+    @async.medialib_get_info(id).notifier do |res|
+      dict = {}; dict[:pos] = pos; dict[:id] = id
+      [:title, :artist, :album].each {|e| dict[e] = res[e][:"plugin/id3v2"]}
+      puts ["gimme-insert-song".to_sym, [:quote, dict.to_a.flatten], nil].to_sexp
+    end
+  end
 
   def list
     # FIXME: Clean up this mess
     @async.playlist("_active").current_pos.notifier do |pos|
-      puts ["gimme-set-title".to_sym, "GIMME - Playlist View (" + pos[:name] + ")"].to_sexp
+      pos = pos ? pos : {:name => "NULL", :position => -1} #FIXME: In case the it isn't on the playlist
+      puts [:"gimme-set-title", "GIMME - Playlist View (" + pos[:name] + ")"].to_sexp
       atrib=["id","artist","album","title"]
       bdict={}
       @async.coll_get("_active").notifier do |coll|
@@ -61,7 +96,7 @@ class GIMME
             list.each_with_index do |el,i|
               bdict[el][:pos] = i
               bdict[el][:face] = :highlight if (i == pos[:position])
-              puts ["gimme-append-to-buffer".to_sym,[:quote, bdict[el].to_a.flatten]].to_sexp
+              puts ["gimme-insert-song".to_sym,[:quote, bdict[el].to_a.flatten],:t].to_sexp
             end
             42 # FIXME: For some reason, an integer is required
           end
@@ -87,7 +122,7 @@ class GIMME
         case s
         when Xmms::Client::PLAY then tickle
         when Xmms::Client::STOP then play
-        when Xmms::Client::PAUSE then tickle # FIXME: Doesn't actually work
+        when Xmms::Client::PAUSE then tickle; play # FIXME: Doesn't actually work
         end
       end
     end
