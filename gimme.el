@@ -1,5 +1,5 @@
 (defvar gimme-process)
-(defvar gimme-executable "cd ~/Projetos/GIMME && ruby gimme.rb")
+(defvar gimme-executable "gimme.rb")
 (defvar gimme-last-ids nil)
 (defvar gimme-buffer-name "GIMME")
 (defvar gimme-playlist-header "GIMME - Playlist view")
@@ -7,6 +7,7 @@
 (defvar gimme-playlist-formats '("%artist > %title"
                                  "%title"
                                  "%artist > %album > %title"))
+
 
 (defun gimme-reset ()
   (setq gimme-last-ids nil)
@@ -29,6 +30,13 @@
   `(progn (toggle-read-only nil)
           ,@body
           (toggle-read-only t)))
+
+(defun gimme-center ()
+  "Center buffer on currently playing song"
+  (interactive)
+  (with-current-buffer gimme-buffer-name
+    (let ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight)))
+      (goto-char h-beg))))
 
 (defun gimme-set-playing (pos)
   "Highlights the currently played song"
@@ -58,9 +66,17 @@
 
 (defun gimme-init ()
   (get-buffer-create gimme-buffer-name)
+  (dolist (proc (remove-if-not (lambda (el) (string-match "GIMME" el))
+                               (mapcar #'process-name (process-list))))
+    (kill-process proc))
   (setq gimme-process
-        (start-process-shell-command gimme-buffer-name
-                                     nil gimme-executable))
+        (start-process-shell-command
+         gimme-buffer-name nil
+         (format "ruby %s"
+                 (expand-file-name
+                  (concat
+                   (file-name-directory
+                    (or load-file-name buffer-file-name)) gimme-executable)))))
   (set-process-filter gimme-process (lambda (a b) (eval-all-sexps b))))
 
 (defun gimme-send-message (message)
@@ -132,7 +148,7 @@
                       (id (get-text-property pos 'id)))
                   (gimme-send-message (format "%s\n" (list 'remove pos)))
                   (setq gimme-last-ids (append gimme-last-ids (list (list 'id id 'pos pos)))))))
-    (set-mark nil))
+  (set-mark nil))
 
 
 (defun gimme-update-playlist (plist)
@@ -152,8 +168,9 @@
                         (unlocking-buffer
                          (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'position)))
                                 (end (next-property-change beg)))
-                           (clipboard-kill-region beg end)
-                           (gimme-update-pos #'1- (point) (point-max))))))
+                           (when (and beg end) ;; XMMS2 wrongly
+                             (clipboard-kill-region beg end)
+                             (gimme-update-pos #'1- (point) (point-max)))))))
                     (message "Song removed!")))
     ('move (message "Playlist updated! (moving element)"))
     ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
@@ -202,8 +219,9 @@
     (define-key map (kbd "p") '(lambda () (interactive) (gimme-paste-deleted nil)))
     (define-key map (kbd "u") '(lambda () (interactive) (gimme-paste-deleted t)))
     (define-key map (kbd "s") 'gimme-stop)
-    (define-key map (kbd " ") 'gimme-toggle)
+    (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
+    (define-key map (kbd "l") 'gimme-center)
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "J") 'gimme-next)
     (define-key map (kbd "K") 'gimme-prev)
@@ -223,9 +241,16 @@
   (setq truncate-lines t)
   (setq major-mode 'gimme-playlist-mode
         mode-name "gimme-playlist"))
+
+
+(defun gimme ()
+  (interactive)
+  (gimme-reset)
+  (gimme-init)
+  (gimme-playlist))
+
 ;; Init
 
-(gimme-reset)
-(gimme-init)
-(gimme-generate-commands clear shuffle play pause next prev stop toggle inc_vol dec_vol current)
+(gimme-generate-commands clear shuffle play pause next prev stop toggle
+                         inc_vol dec_vol current)
 (provide 'gimme)

@@ -1,3 +1,5 @@
+$: << File.join(File.dirname(__FILE__))
+
 require 'xmmsclient'
 require 'xmmsclient_glib'
 require 'glib2'
@@ -6,6 +8,8 @@ require 'sexp'
 require 'pp'
 require 'gimme-aux'
 
+
+NOTHING = "nil"
 
 class GIMME
 
@@ -22,7 +26,8 @@ class GIMME
 
     @async.broadcast_playlist_changed.notifier do |res|
       dict = {}; res.each {|key,val| dict[key] = val }
-      dict[:pos] = dict[:position] # FIXME: Remove dict[:position]
+      dict[:pos] = dict[:position]
+      dict.delete(:position); dict.delete(:name)
       dict[:type] = case dict[:type]
                     when Xmms::Playlist::ADD then :add
                     when Xmms::Playlist::INSERT then :insert
@@ -35,8 +40,11 @@ class GIMME
                     end
       if (dict[:type] == :add or dict[:type] == :insert) then
         @async.medialib_get_info(dict[:id]).notifier do |res2|
-          [:title, :artist, :album].each {|e| dict[e] = res2[e][:"plugin/id3v2"]}
+          [:title, :artist, :album].each do |e|
+            dict[e] = res2[e] ? res2[e].first.at(1) : NOTHING
+          end if res2
           puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
+          42 # 3 freaking hours debugging because I forgot about this :(
         end
       else
         puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
@@ -72,16 +80,18 @@ class GIMME
 
   def gimme (id, pos)
     @async.medialib_get_info(id).notifier do |res|
-      dict = {}; dict[:pos] = pos; dict[:id] = id
-      [:title, :artist, :album].each {|e| dict[e] = res[e][:"plugin/id3v2"]}
-      puts ["gimme-insert-song".to_sym, [:quote, dict.to_a.flatten], nil].to_sexp
+      if res then
+        dict = {}; dict[:pos] = pos; dict[:id] = id
+        [:title, :artist, :album].each {|e| dict[e] = res[e][:"plugin/id3v2"]}
+        puts ["gimme-insert-song".to_sym, [:quote, dict.to_a.flatten], nil].to_sexp
+      end
     end
   end
 
   def list
     # FIXME: Clean up this mess
     @async.playlist("_active").current_pos.notifier do |pos|
-      pos = pos ? pos : {:name => "NULL", :position => -1} #FIXME: In case the it isn't on the playlist
+      pos = pos ? pos : {:name => NOTHING, :position => -1} #FIXME: In case the it isn't on the playlist
       puts [:"gimme-set-title", "GIMME - Playlist View (" + pos[:name] + ")"].to_sexp
       atrib=["id","artist","album","title"]
       bdict={}
