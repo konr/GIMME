@@ -1,5 +1,10 @@
 (defvar gimme-process)
+(defvar gimme-debug t)
 (defvar gimme-executable "gimme.rb")
+(defvar gimme-fullpath (expand-file-name 
+                        (concat 
+                         (file-name-directory (or load-file-name buffer-file-name)) 
+                         gimme-executable)))
 (defvar gimme-last-ids nil)
 (defvar gimme-buffer-name "GIMME")
 (defvar gimme-playlist-header "GIMME - Playlist view")
@@ -8,39 +13,19 @@
                                  "%title"
                                  "%artist > %album > %title"))
 
+;;;;;;;;;;;;;;;
+;; Functions ;;
+;;;;;;;;;;;;;;;
 
 (defun gimme-reset ()
   (setq gimme-last-ids nil)
   (setq gimme-filter-remainder ""))
 
-(defun alpha-blend (c1 c2 a)
-  "The resulting color of merging the c1 with alpha a on a background of color c2"
-  (let* ((colors (mapcar (lambda (c) (list (substring c 1 3)
-                                      (substring c 3 5)
-                                      (substring c 5 7)))
-                         (list c1 c2)))
-         (colors (mapcar (lambda (c) (mapcar (lambda (e) (string-to-number e 16)) c))
-                         colors))
-         (color (map 'list (lambda (c1 c2) (format "%.2x" (+ (* (- 1 a) c1)
-                                                        (* a c2))))
-                     (nth 0 colors) (nth 1 colors))))
-    (apply 'concat "#" color)))
-
-(defmacro unlocking-buffer (&rest body)
-  `(progn (toggle-read-only nil)
-          ,@body
-          (toggle-read-only t)))
-
-(defun gimme-center ()
-  "Center buffer on currently playing song"
-  (interactive)
-  (with-current-buffer gimme-buffer-name
-    (let ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight)))
-      (goto-char h-beg))))
 
 (defun gimme-set-playing (pos)
   "Highlights the currently played song"
   ;; FIXME can assume again a single highlighted track, so it's better to revert to a simpler version of the function
+  
   (when (get-buffer gimme-buffer-name)
     (with-current-buffer gimme-buffer-name
       (unlocking-buffer
@@ -65,6 +50,7 @@
                 finally (return (substring s position))))))
 
 (defun gimme-init ()
+  "Creates the buffer and manages the processes"
   (get-buffer-create gimme-buffer-name)
   (dolist (proc (remove-if-not (lambda (el) (string-match "GIMME" el))
                                (mapcar #'process-name (process-list))))
@@ -72,11 +58,7 @@
   (setq gimme-process
         (start-process-shell-command
          gimme-buffer-name nil
-         (format "ruby %s"
-                 (expand-file-name
-                  (concat
-                   (file-name-directory
-                    (or load-file-name buffer-file-name)) gimme-executable)))))
+         (format "ruby %s" gimme-fullpath )))
   (set-process-filter gimme-process (lambda (a b) (eval-all-sexps b))))
 
 (defun gimme-send-message (message)
@@ -91,17 +73,6 @@
                                 (process-send-string gimme-process ,(format "%s\n" (list f))))))
                      args)))
 
-
-(defun gimme-playlist ()
-  (interactive)
-  (get-buffer-create gimme-buffer-name)
-  (with-current-buffer gimme-buffer-name
-    (unlocking-buffer
-     (gimme-playlist-mode)
-     (clipboard-kill-region 1 (point-max))
-     (save-excursion
-       (gimme-send-message "(list)\n")))
-    (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 (defun gimme-update-pos (fun min max)
   (with-current-buffer gimme-buffer-name
@@ -129,27 +100,6 @@
          (add-text-properties beg (point-marker) plist)
          (unless append (gimme-update-pos #'1+ (point-marker) (point-max))))))))
 
-(defun gimme-focused-play () ;; FIXME: Message "tickle" received
-  (interactive)
-  (gimme-send-message
-   (format "%s\n" (list 'playn (get-text-property (point) 'pos)))))
-
-(defun gimme-focused-delete ()
-  (interactive) ;; Not sure if it's too selfish to consider vimpulse users :P
-  (setq gimme-last-ids nil)
-  (let* ((bounds (cond ((ignore-errors (car (vimpulse-get-bounds))) (vimpulse-get-bounds))
-                       ((mark) (cons (min (point) (mark)) (max (point) (mark))))
-                       (t (bounds-of-thing-at-point 'line))))
-         (min (car bounds))
-         (max (or (cdr bounds) (cadr bounds))))
-    (loop for pos = min then (next-property-change pos)
-          while (and pos (< pos max))
-          doing (let ((pos (get-text-property pos 'pos))
-                      (id (get-text-property pos 'id)))
-                  (gimme-send-message (format "%s\n" (list 'remove pos)))
-                  (setq gimme-last-ids (append gimme-last-ids (list (list 'id id 'pos pos)))))))
-  (set-mark nil))
-
 
 (defun gimme-update-playlist (plist)
   ;; FIXME: Deal with multiple playlists(?)
@@ -160,6 +110,7 @@
   ;;  - Shuffle
   ;;  - Add
   ;;  - Insert
+  ;;  - Clear
   (case (getf plist 'type)
     ('add    (progn (gimme-insert-song plist t)   (message "Song added!")))
     ('insert (progn (gimme-insert-song plist nil) (message "Song added!")))
@@ -178,14 +129,6 @@
     ('sort    (progn (gimme-playlist) (message "Playlist updated! (sorting list)")))
     ('update  (progn (gimme-playlist) (message "Playlist updated! (updating list)")))))
 
-(defun gimme-toggle-view ()
-  ;; FIXME: check perfomance on large playlists, but I think I'll change it avoid reloading the playlist
-  (interactive)
-  (setq gimme-playlist-formats
-        (append (cdr gimme-playlist-formats)
-                (list (car gimme-playlist-formats))))
-  (gimme-playlist))
-
 (defun gimme-set-title (title)
   "Where is my lexical scope when I need it? :("
   (setq gimme-playlist-header title)
@@ -193,19 +136,6 @@
         '(:eval (substring gimme-playlist-header
                            (min (length gimme-playlist-header)
                                 (window-hscroll))))))
-
-(defun gimme-paste-deleted (undo)
-  (interactive)
-  (ignore-errors
-    (if gimme-last-ids
-        (let ((pos (get-text-property (point) 'pos)))
-          (dolist (plist gimme-last-ids)
-            (setq pos (if undo (getf plist 'pos) (1+ pos)))
-            ;; (next-line) FIXME: This won't work multiple times
-            (gimme-send-message (format "%s\n" (list 'gimme (getf plist 'id) pos)))))
-      (message "No songs on the clipboard!")))
-  (setq gimme-last-ids nil)
-  (message (if undo "Undo!" "Paste!")))
 
 ;; Keymap
 
@@ -231,8 +161,6 @@
     (define-key map (kbd "-") 'gimme-dec_vol)
     map))
 
-;; Temp
-
 (defun gimme-playlist-mode ()
   "FIXME: Write something here"
   (interactive)
@@ -253,4 +181,6 @@
 
 (gimme-generate-commands clear shuffle play pause next prev stop toggle
                          inc_vol dec_vol current)
+(require 'gimme-playlist)
+(require 'gimme-utils)
 (provide 'gimme)

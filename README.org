@@ -27,6 +27,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **04/6**: 1 removing bugs
   - **03/6**: 3 refactoring the ruby code
   - **02/6**: 4 in vain looking for a bug
   - **01/6**: 17 fixing various issues and working on the broadcasts
