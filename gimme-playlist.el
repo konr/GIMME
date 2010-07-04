@@ -1,4 +1,11 @@
+(defvar gimme-playlist-header "GIMME - Playlist view")
+(defvar gimme-playlist-mode-functions
+  '(gimme-set-playing gimme-set-playing gimme-update-playlist
+                      gimme-insert-song gimme-set-title message))
 
+(defvar gimme-playlist-formats '("%artist > %title"
+                                 "%title"
+                                 "%artist > %album > %title"))
 
 (defun gimme-focused-play () ;; FIXME: Message "tickle" received
   (interactive)
@@ -6,20 +13,20 @@
    (format "%s\n" (list 'playn (get-text-property (point) 'pos)))))
 
 (defun gimme-focused-delete ()
-  (interactive) ;; Not sure if it's too selfish to consider vimpulse users :P
-  (setq gimme-last-ids nil)
-  (let* ((bounds (cond ((ignore-errors (car (vimpulse-get-bounds))) (vimpulse-get-bounds))
-                       ((mark) (cons (min (point) (mark)) (max (point) (mark))))
-                       (t (bounds-of-thing-at-point 'line))))
-         (min (car bounds))
-         (max (or (cdr bounds) (cadr bounds))))
-    (loop for pos = min then (next-property-change pos)
-          while (and pos (< pos max))
-          doing (let ((pos (get-text-property pos 'pos))
-                      (id (get-text-property pos 'id)))
-                  (gimme-send-message (format "%s\n" (list 'remove pos)))
-                  (setq gimme-last-ids (append gimme-last-ids (list (list 'id id 'pos pos)))))))
-  (set-mark nil))
+  (interactive)
+  (if (use-region-p)
+      (let* ((min (min (point) (mark)))
+             (max (max (point) (mark)))
+             (min (progn (goto-char min) (line-beginning-position)))
+             (max (+ 1 (progn (goto-char max) (line-end-position)))))
+        (kill-ring-save min max))
+    (kill-ring-save (line-beginning-position) (line-end-position)))
+  (let ((items (let ((last (car kill-ring)))
+                 (loop for pos = 0 then (next-property-change pos last)
+                       while pos collecting (get-text-property pos 'pos last)))))
+    (dolist (item items)
+      (gimme-send-message (format "%s\n" (list 'remove (car items))))))) ;; FIXME: item -> car items
+
 
 (defun gimme-playlist ()
   (interactive)
@@ -49,17 +56,54 @@
 
 (defun gimme-paste-deleted (undo)
   (interactive)
-  (ignore-errors
-    (if gimme-last-ids
-        (let ((pos (get-text-property (point) 'pos)))
-          (dolist (plist gimme-last-ids)
-            (setq pos (if undo (getf plist 'pos) (1+ pos)))
-            ;; (next-line) FIXME: This won't work multiple times
-            (gimme-send-message (format "%s\n" (list 'gimme (getf plist 'id) pos)))))
-      (message "No songs on the clipboard!")))
-  (setq gimme-last-ids nil)
-  (message (if undo "Undo!" "Paste!")))
+  (let* ((last (car kill-ring))
+         (pos (get-text-property (point) 'pos))
+         (ids (loop for pos = 0 then (next-property-change pos last)
+                    while pos collecting (get-text-property pos 'id last))))
+    (dolist (id ids) 
+      (setq pos (+ 1 pos))
+      (message (format "%s\n" (list 'insert id pos))))
+    (message "Paste!")))
 
+(defun gimme-focused-delete ()
+  (interactive)
+  (if (use-region-p)
+      (let* ((min (min (point) (mark)))
+             (max (max (point) (mark)))
+             (min (progn (goto-char min) (line-beginning-position)))
+             (max (+ 1 (progn (goto-char max) (line-end-position)))))
+        (kill-ring-save min max))
+    (kill-ring-save (line-beginning-position) (line-end-position)))
+  (let ((items (let ((last (car kill-ring)))
+                 (loop for pos = 0 then (next-property-change pos last)
+                       while pos collecting (get-text-property pos 'pos last)))))
+    (dolist (item items)
+      (gimme-send-message (format "%s\n" (list 'remove (car items))))) ;; FIXME: item -> car items
+    (message (format "%s" items))))
+
+(defvar gimme-playlist-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") 'gimme-focused-play)
+    (define-key map (kbd "C") 'gimme-clear)
+    (define-key map (kbd "S") 'gimme-shuffle)
+    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
+    (define-key map [remap kill-line] 'gimme-focused-delete)
+    (define-key map (kbd "d") 'kill-line)
+    (define-key map [remap kill-line] 'gimme-focused-delete)
+    (define-key map (kbd "p") '(lambda () (interactive) (gimme-paste-deleted nil)))
+    (define-key map (kbd "u") '(lambda () (interactive) (gimme-paste-deleted t)))
+    (define-key map (kbd "s") 'gimme-stop)
+    (define-key map (kbd "SPC") 'gimme-toggle)
+    (define-key map (kbd "j") 'next-line)
+    (define-key map (kbd "l") 'gimme-center)
+    (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "J") 'gimme-next)
+    (define-key map (kbd "K") 'gimme-prev)
+    (define-key map (kbd "TAB") 'gimme-toggle-view)
+    (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
+    (define-key map (kbd "+") 'gimme-inc_vol)
+    (define-key map (kbd "-") 'gimme-dec_vol)
+    map))
 
 
 

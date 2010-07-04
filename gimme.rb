@@ -10,6 +10,7 @@ require 'gimme-aux'
 
 
 NOTHING = "nil"
+$stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
 
 class GIMME
 
@@ -76,7 +77,7 @@ class GIMME
   # FIXME: Generate these automatically
   def remove (pos); @async.playlist("_active").remove_entry(pos).notifier; end
   def add (id); @async.playlist("_active").add_entry(id).notifier; end
-  def insert (id,pos); @async.playlist("_active").insert_entry(id,pos).notifier; end
+  def insert (id,pos); @async.playlist("_active").insert_entry(pos,id).notifier {|id| message id}; end
 
   def gimme (id, pos)
     @async.medialib_get_info(id).notifier do |res|
@@ -136,6 +137,10 @@ class GIMME
         end
       end
     end
+  end
+
+  def pcol (name)
+    print_col(name,["name","id","artist","album"])
   end
 
   private

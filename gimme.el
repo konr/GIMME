@@ -1,17 +1,16 @@
 (defvar gimme-process)
 (defvar gimme-debug t)
 (defvar gimme-executable "gimme.rb")
-(defvar gimme-fullpath (expand-file-name 
-                        (concat 
-                         (file-name-directory (or load-file-name buffer-file-name)) 
+(defvar gimme-fullpath (expand-file-name
+                        (concat
+                         (file-name-directory (or load-file-name buffer-file-name))
                          gimme-executable)))
-(defvar gimme-last-ids nil)
+(defvar gimme-current-mode 'playlist)
 (defvar gimme-buffer-name "GIMME")
-(defvar gimme-playlist-header "GIMME - Playlist view")
+(defvar gimme-colls-prefix "gimme-")
+(defvar gimme-filter-header "GIMME - Filter view")
 (defvar gimme-filter-remainder "")
-(defvar gimme-playlist-formats '("%artist > %title"
-                                 "%title"
-                                 "%artist > %album > %title"))
+(defvar gimme-debug t)
 
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
@@ -25,7 +24,7 @@
 (defun gimme-set-playing (pos)
   "Highlights the currently played song"
   ;; FIXME can assume again a single highlighted track, so it's better to revert to a simpler version of the function
-  
+
   (when (get-buffer gimme-buffer-name)
     (with-current-buffer gimme-buffer-name
       (unlocking-buffer
@@ -38,7 +37,6 @@
               (end (next-property-change (or beg (point-min)))))
          (when beg (put-text-property beg end 'face 'highlight)))))))
 
-;; FIXME: Filter somehow the sexps allowing some only a preselection of them
 (defun eval-all-sexps (s)
   (let ((s (concat gimme-filter-remainder s)))
     (setq gimme-filter-remainder
@@ -46,7 +44,14 @@
                 then (ignore-errors (read-from-string (substring s position)))
                 while x
                 summing (or (cdr x) 0) into position
-                doing (eval (car x))
+                doing (let* ((s (car x))
+                             (f (caar x))
+                             (ok (member f (case gimme-current-mode
+                                             (playlist gimme-playlist-mode-functions)
+                                             (filter   gimme-filter-mode-functions)))))
+                        (when gimme-debug 
+                          (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") f)))
+                        (when ok (eval (car x))))
                 finally (return (substring s position))))))
 
 (defun gimme-init ()
@@ -105,21 +110,19 @@
   ;; FIXME: Deal with multiple playlists(?)
   ;; FIXME: Bloody mess and weird variable names!
   ;; FIXME: add ?== insert?
-  ;; Tested:
-  ;;  - Remove
-  ;;  - Shuffle
-  ;;  - Add
-  ;;  - Insert
-  ;;  - Clear
+  ;; Not-Implemented:
+  ;;  - Move
   (case (getf plist 'type)
     ('add    (progn (gimme-insert-song plist t)   (message "Song added!")))
     ('insert (progn (gimme-insert-song plist nil) (message "Song added!")))
-    ('remove (progn (when (get-buffer gimme-buffer-name)
+    ('remove (progn 
+               (when gimme-debug (message (format "%s" plist)))
+               (when (get-buffer gimme-buffer-name)
                       (with-current-buffer gimme-buffer-name
                         (unlocking-buffer
-                         (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'position)))
+                         (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'pos)))
                                 (end (next-property-change beg)))
-                           (when (and beg end) ;; XMMS2 wrongly
+                           (when (and beg end)
                              (clipboard-kill-region beg end)
                              (gimme-update-pos #'1- (point) (point-max)))))))
                     (message "Song removed!")))
@@ -139,7 +142,7 @@
 
 ;; Keymap
 
-(defvar gimme-playlist-map
+(defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
@@ -170,6 +173,14 @@
   (setq major-mode 'gimme-playlist-mode
         mode-name "gimme-playlist"))
 
+(defun gimme-filter-mode ()
+  "FIXME: Write something here"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map gimme-filter-map)
+  (setq truncate-lines t)
+  (setq major-mode 'gimme-filter-mode
+        mode-name "gimme-filter"))
 
 (defun gimme ()
   (interactive)
