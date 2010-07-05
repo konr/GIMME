@@ -1,4 +1,7 @@
-(defvar gimme-filter-current-collection nil)
+(defvar gimme-filter-current-collection "*") ;; FIXME: Better name?
+(defvar gimme-filter-mode-functions
+  '(gimme-insert-song gimme-set-title message))
+
 
 (defun gimme-filter ()
   (interactive)
@@ -8,11 +11,18 @@
      (gimme-filter-mode)
      (clipboard-kill-region 1 (point-max))
      (save-excursion
-       (gimme-send-message "(list)\n")))
+       (gimme-send-message (format "(pcol \"%s\")\n"
+                                   gimme-filter-current-collection))))
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
+
+(defun gimme-child-col ()
+  (interactive))
+
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "!") 'gimme-filter)
+    (define-key map (kbd "@") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "S") 'gimme-shuffle)
@@ -31,4 +41,6 @@
     (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
     (define-key map (kbd "+") 'gimme-inc_vol)
     (define-key map (kbd "-") 'gimme-dec_vol)
+    (define-key map (kbd "<") 'gimme-parent)
+    (define-key map (kbd ">") 'gimme-child-col)
     map))

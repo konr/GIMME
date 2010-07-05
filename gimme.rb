@@ -11,6 +11,7 @@ require 'gimme-aux'
 
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
+$atribs=["title","id","artist","album"]
 
 class GIMME
 
@@ -94,10 +95,9 @@ class GIMME
     @async.playlist("_active").current_pos.notifier do |pos|
       pos = pos ? pos : {:name => NOTHING, :position => -1} #FIXME: In case the it isn't on the playlist
       puts [:"gimme-set-title", "GIMME - Playlist View (" + pos[:name] + ")"].to_sexp
-      atrib=["id","artist","album","title"]
       bdict={}
       @async.coll_get("_active").notifier do |coll|
-        @async.coll_query_info(coll,atrib).notifier do |wrapperdict|
+        @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
           wrapperdict.each do |dict|
             adict = {}
             dict.each {|key,val| adict[key] = val }
@@ -139,8 +139,26 @@ class GIMME
     end
   end
 
+  def subcol (col,pattern)
+    pattern = col == "*" ? pattern : "\"in:#{col}\" AND \"#{pattern}\""
+    puts pattern
+    puts Xmms::Collection.parse(pattern).idlist.each { |id| puts id }
+    puts "ok"
+  end
+
   def pcol (name)
-    print_col(name,["name","id","artist","album"])
+    puts [:"gimme-set-title", "GIMME - Filter View (" +name + ")"].to_sexp
+    @async.coll_get(name).notifier do |coll|
+      coll = Xmms::Collection.universe if name == "*"
+      @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
+        wrapperdict.each do |dict|
+          adict = {}
+          dict.each {|key,val| adict[key] = val }
+          puts ["gimme-insert-song".to_sym,[:quote, adict.to_a.flatten],:t].to_sexp
+        end
+        42 # FIXME: For some reason, an integer is required
+      end
+    end
   end
 
   private
@@ -155,18 +173,6 @@ class GIMME
     end
   end
 
-  def print_col(name,atrib)
-    @async.coll_get(name).notifier do |coll|
-      @async.coll_query_info(coll,atrib).notifier do |wrapperdict|
-        wrapperdict.each do |dict|
-          adict = {}
-          dict.each {|key,val| adict[key] = val }
-          puts ["gimme-append-to-buffer".to_sym,[:quote, adict.to_a.flatten]].to_sexp
-        end
-        42 # FIXME: For some reason, an integer is required
-      end
-    end
-  end
 end
 
 

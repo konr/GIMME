@@ -3,9 +3,6 @@
   '(gimme-set-playing gimme-set-playing gimme-update-playlist
                       gimme-insert-song gimme-set-title message))
 
-(defvar gimme-playlist-formats '("%artist > %title"
-                                 "%title"
-                                 "%artist > %album > %title"))
 
 (defun gimme-focused-play () ;; FIXME: Message "tickle" received
   (interactive)
@@ -37,6 +34,7 @@
      (clipboard-kill-region 1 (point-max))
      (save-excursion
        (gimme-send-message "(list)\n")))
+    (setq gimme-current-mode 'playlist)
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 (defun gimme-center ()
@@ -62,7 +60,7 @@
                     while pos collecting (get-text-property pos 'id last))))
     (dolist (id ids) 
       (setq pos (+ 1 pos))
-      (message (format "%s\n" (list 'insert id pos))))
+      (gimme-send-message (format "%s\n" (list 'insert id pos))))
     (message "Paste!")))
 
 (defun gimme-focused-delete ()
@@ -83,15 +81,16 @@
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "!") 'gimme-filter)
+    (define-key map (kbd "@") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "S") 'gimme-shuffle)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
     (define-key map [remap kill-line] 'gimme-focused-delete)
     (define-key map (kbd "d") 'kill-line)
-    (define-key map [remap kill-line] 'gimme-focused-delete)
-    (define-key map (kbd "p") '(lambda () (interactive) (gimme-paste-deleted nil)))
-    (define-key map (kbd "u") '(lambda () (interactive) (gimme-paste-deleted t)))
+    (define-key map [remap yank] (lambda () (interactive) (gimme-paste-deleted nil)))
+    (define-key map (kbd "p") 'yank)
     (define-key map (kbd "s") 'gimme-stop)
     (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)

@@ -1,36 +1,55 @@
 * Status and next steps
 
-  Now it's almost usable! Still some bugs, but quite frankly, I'm
-  using it! 
+Now there is a rudimentary filter-view, and multiple issues have been fixed.
 
+Next 10 Steps:
+  1. Find out what is happening with the coll queries on the ruby part (filter view)
+  2. Search history mechanism (filter view)
+  3. Add/insert songs capabilities (filter)
+  4. Finish working on the playlist-updated broadcast (playlist)
+  5. Use some sort of session number to prevent songs added in a previous query to show up with <TAB> (playlist)
+  6. Mess around with coloring and a mini-language for displaying the songs (playlist)
+  7. Colorize the songs (filter view)
+  8. Refactor the code (Etc)
+  9. Blog post (Etc)
+
+Filter View:
+  1. Find out what is happening with the coll queries on the ruby part
+  2. Search history mechanism
+  3. Work on the keymap
+  4. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
+  5. Colorize the songs
+  6. Add/insert songs capabilities
+
+Playlist View:
   1. Finish working on the playlist-updated broadcast
+  2. Fix the bug involving adding a, eg, .txt file using another client
+  3. Mess around with coloring and a mini-language for displaying the songs
+  4. Recreate the undo function
+  5. Recreate the kill/yank region functions
+  6. Investigate the bug that shows up when you add way too many files to your playlist using another client
+  7. Use some sort of session number to prevent songs added in a previous query to show up with <TAB>
+
+Etc:
+  1. Blog post
   2. Refactor the code
-  3. Fix the bug involving adding a, eg, .txt file using another
-     client
-  4. Mess around with coloring and a mini-language for displaying the
-     songs
-  5. Create a debug buffer
-  6. Blog post
-     
+
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
   Google's Summer of Code. You can read more about it at
   http://scorciapino.com/blog/archives/49, which has some mockups, too.
 
-  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps
+  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps.
 
 * Reference:
   - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
   - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
-
-* FIXME 
-
-  - Undo function (check)
-  - Multiple paste
 * Pomodoros
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **05/7**: 6 Polishing features added on the last few days. Filter view. Yay!
+  - **04/7**: 6 Doing I don't know what
   - **03/7**: 10 struggling with XMMS and working on random things
   - **04/6**: 1 removing bugs
   - **03/6**: 3 refactoring the ruby code
