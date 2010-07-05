@@ -23,10 +23,15 @@
   - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
   - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
 
+* FIXME 
+
+  - Undo function (check)
+  - Multiple paste
 * Pomodoros
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **03/7**: 10 struggling with XMMS and working on random things
   - **04/6**: 1 removing bugs
   - **03/6**: 3 refactoring the ruby code
   - **02/6**: 4 in vain looking for a bug
