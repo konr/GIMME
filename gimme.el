@@ -52,7 +52,7 @@
                              (ok (member f (case gimme-current-mode
                                              (playlist gimme-playlist-mode-functions)
                                              (filter   gimme-filter-mode-functions)))))
-                        (when gimme-debug 
+                        (when gimme-debug
                           (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") f)))
                         (when ok (eval (car x))))
                 finally (return (substring s position))))))
@@ -83,6 +83,7 @@
 
 
 (defun gimme-update-pos (fun min max)
+  ;; FIXME: Not working
   (with-current-buffer gimme-buffer-name
     (loop for beg = min then end
           and end = (next-property-change min) then (next-property-change end)
@@ -97,17 +98,17 @@
        (goto-char (if append (point-max)
                     (or (text-property-any (point-min) (point-max)
                                            'pos (getf plist 'pos)) (point-max))))
-       (let ((beg (point-marker)))
-         (let ((line (car gimme-playlist-formats)))
-           (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
-             (setq line (replace-regexp-in-string (nth 0 token)
-                                                  (or (getf plist (nth 1 token)) "nil")
-                                                  line)))
-           (insert (decode-coding-string line 'utf-8)))
-         (insert "\n")
-         (add-text-properties beg (point-marker) plist)
-         (unless append (gimme-update-pos #'1+ (point-marker) (point-max))))))))
+         (insert (gimme-string plist))
+         (unless append (gimme-update-pos #'1+ (point-marker) (point-max)))))))
 
+(defun gimme-string (plist)
+  (let ((line (car gimme-playlist-formats)))
+    (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
+      (setq line (replace-regexp-in-string (nth 0 token)
+                                           (or (getf plist (nth 1 token)) "nil")
+                                           line)))
+    (apply #'propertize (format "%s\n" (decode-coding-string line 'utf-8))
+                plist)))
 
 (defun gimme-update-playlist (plist)
   ;; FIXME: Deal with multiple playlists(?)
@@ -118,17 +119,17 @@
   (case (getf plist 'type)
     ('add    (progn (gimme-insert-song plist t)   (message "Song added!")))
     ('insert (progn (gimme-insert-song plist nil) (message "Song added!")))
-    ('remove (progn 
+    ('remove (progn
                (when gimme-debug (message (format "%s" plist)))
                (when (get-buffer gimme-buffer-name)
-                      (with-current-buffer gimme-buffer-name
-                        (unlocking-buffer
-                         (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'pos)))
-                                (end (next-property-change beg)))
-                           (when (and beg end)
-                             (clipboard-kill-region beg end)
-                             (gimme-update-pos #'1- (point) (point-max)))))))
-                    (message "Song removed!")))
+                 (with-current-buffer gimme-buffer-name
+                   (unlocking-buffer
+                    (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'pos)))
+                           (end (next-property-change beg)))
+                      (when (and beg end)
+                        (clipboard-kill-region beg end)
+                        (gimme-update-pos #'1- (point) (point-max)))))))
+               (message "Song removed!")))
     ('move (message "Playlist updated! (moving element)"))
     ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
     ('clear   (progn (gimme-playlist) (message "Playlist cleared!")))
@@ -168,12 +169,13 @@
   (interactive)
   (gimme-reset)
   (gimme-init)
-  (gimme-filter))
+  (gimme-playlist))
 
 ;; Init
 
 (gimme-generate-commands clear shuffle play pause next prev stop toggle
                          inc_vol dec_vol current)
 (require 'gimme-playlist)
+(require 'gimme-filter)
 (require 'gimme-utils)
 (provide 'gimme)

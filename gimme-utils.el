@@ -27,5 +27,13 @@
       (goto-char (point-max))
       (mapcar #'insert args))))
 
+(defun plist-to-alist (p)
+  (loop for x = p then (cddr x) while x
+        collecting (cons (car x) (cadr x))))
+
+(defun plist-to-pseudo-alist (p)
+  ;; FIXME: The sexp library won't work otherwise
+  (loop for x = p then (cddr x) while x
+        collecting (list (car x) (cadr x))))
 
 (provide 'gimme-utils)

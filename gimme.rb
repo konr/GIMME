@@ -26,6 +26,16 @@ class GIMME
       true
     end
 
+    @async.broadcast_medialib_entry_changed.notifier do |id|
+      dict = {}
+      @async.medialib_get_info(id).notifier do |res|
+        $atribs.map{|i| i.to_sym}.each do |e|
+          dict[e] = res[e] ? res[e].first.at(1) : NOTHING
+        end
+        puts [:"gimme-update-tags", [:quote, dict.to_a.flatten]].to_sexp
+      end
+      true
+    end
     @async.broadcast_playlist_changed.notifier do |res|
       dict = {}; res.each {|key,val| dict[key] = val }
       dict[:pos] = dict[:position]
@@ -141,9 +151,17 @@ class GIMME
 
   def subcol (col,pattern)
     pattern = col == "*" ? pattern : "\"in:#{col}\" AND \"#{pattern}\""
+    pattern = "in:foo"
     puts pattern
     puts Xmms::Collection.parse(pattern).idlist.each { |id| puts id }
     puts "ok"
+  end
+
+  def update_tags (alist)
+    dict = {}; alist.each {|key,val| dict[key] = val }
+    ($atribs-["id"]).each do |key|
+      @async.medialib_entry_property_set(dict[:id], key.to_sym, dict[key.to_sym]).notifier {}
+    end
   end
 
   def pcol (name)

@@ -1,7 +1,8 @@
 (defvar gimme-playlist-header "GIMME - Playlist view")
 (defvar gimme-playlist-mode-functions
   '(gimme-set-playing gimme-set-playing gimme-update-playlist
-                      gimme-insert-song gimme-set-title message))
+                      gimme-insert-song gimme-set-title message
+                      gimme-update-tags))
 
 
 (defun gimme-focused-play () ;; FIXME: Message "tickle" received
@@ -44,6 +45,20 @@
     (let ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight)))
       (goto-char h-beg))))
 
+(defun gimme-update-tags (plist)
+  (interactive)
+  (with-current-buffer gimme-buffer-name
+    (unlocking-buffer
+     (let* ((beg (text-property-any (point-min) (point-max) 'id (getf plist 'id)))
+            (end (next-property-change beg))
+            (pos (get-text-property (point) 'pos))
+            (plist (plist-put plist 'pos pos)))
+       (kill-region beg end)
+       (save-excursion
+         (goto-char beg)
+         (insert (gimme-string plist)))))))
+
+
 (defun gimme-toggle-view ()
   ;; FIXME: check perfomance on large playlists, but I think I'll change it avoid reloading the playlist
   (interactive)
@@ -58,7 +73,7 @@
          (pos (get-text-property (point) 'pos))
          (ids (loop for pos = 0 then (next-property-change pos last)
                     while pos collecting (get-text-property pos 'id last))))
-    (dolist (id ids) 
+    (dolist (id ids)
       (setq pos (+ 1 pos))
       (gimme-send-message (format "%s\n" (list 'insert id pos))))
     (message "Paste!")))
@@ -85,6 +100,7 @@
     (define-key map (kbd "@") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
+    (define-key map (kbd "T") 'gimme-update-tags-prompt)
     (define-key map (kbd "S") 'gimme-shuffle)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
     (define-key map [remap kill-line] 'gimme-focused-delete)
@@ -105,6 +121,15 @@
     map))
 
 
+(defun gimme-update-tags-prompt ()
+  (interactive)
+  (let ((alist (mapcar (lambda (n) (if (member (car n) '(id face pos)) n
+                                (list (car n) (format "\"%s\""
+                                                      (read-from-minibuffer
+                                                       (format "%s? " (car n))
+                                                       (format "%s" (cadr n)))))))
+                       (plist-to-pseudo-alist (text-properties-at (point))))))
+    (gimme-send-message (format "%s\n" (list 'update_tags alist)))))
 
 
 

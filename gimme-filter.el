@@ -44,3 +44,5 @@
     (define-key map (kbd "<") 'gimme-parent)
     (define-key map (kbd ">") 'gimme-child-col)
     map))
+
+(provide 'gimme-filter)
