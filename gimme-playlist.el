@@ -33,6 +33,7 @@
     (unlocking-buffer
      (gimme-playlist-mode)
      (clipboard-kill-region 1 (point-max))
+     (gimme-set-title gimme-playlist-header)
      (save-excursion
        (gimme-send-message "(list)\n")))
     (setq gimme-current-mode 'playlist)
@@ -51,21 +52,13 @@
     (unlocking-buffer
      (let* ((beg (text-property-any (point-min) (point-max) 'id (getf plist 'id)))
             (end (next-property-change beg))
-            (pos (get-text-property (point) 'pos))
-            (plist (plist-put plist 'pos pos)))
-       (kill-region beg end)
-       (save-excursion
-         (goto-char beg)
-         (insert (gimme-string plist)))))))
+            (pos (get-text-property (point) 'pos)))
+       (unless (plist-subset plist (text-properties-at beg))
+         (kill-region beg end)
+         (save-excursion
+           (goto-char beg)
+           (insert (gimme-string (plist-put plist 'pos pos)))))))))
 
-
-(defun gimme-toggle-view ()
-  ;; FIXME: check perfomance on large playlists, but I think I'll change it avoid reloading the playlist
-  (interactive)
-  (setq gimme-playlist-formats
-        (append (cdr gimme-playlist-formats)
-                (list (car gimme-playlist-formats))))
-  (gimme-playlist))
 
 (defun gimme-paste-deleted (undo)
   (interactive)
@@ -78,7 +71,7 @@
       (gimme-send-message (format "%s\n" (list 'insert id pos))))
     (message "Paste!")))
 
-(defun gimme-focused-delete ()
+(defun gimme-focused-delete (delete-p)
   (interactive)
   (if (use-region-p)
       (let* ((min (min (point) (mark)))
@@ -97,13 +90,14 @@
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "!") 'gimme-filter)
-    (define-key map (kbd "@") 'gimme-playlist)
+    (define-key map (kbd "@") 'gimme-tree)
+    (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "T") 'gimme-update-tags-prompt)
     (define-key map (kbd "S") 'gimme-shuffle)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
-    (define-key map [remap kill-line] 'gimme-focused-delete)
+    (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete t)))
     (define-key map (kbd "d") 'kill-line)
     (define-key map [remap yank] (lambda () (interactive) (gimme-paste-deleted nil)))
     (define-key map (kbd "p") 'yank)

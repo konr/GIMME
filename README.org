@@ -1,25 +1,26 @@
 * Status and next steps
 
-Now there is a rudimentary filter-view, and multiple issues have been fixed.
+Filter-view now partially works!
 
 Next 10 Steps:
-  1. Find out what is happening with the coll queries on the ruby part (filter view)
-  2. Search history mechanism (filter view)
-  3. Add/insert songs capabilities (filter)
-  4. Finish working on the playlist-updated broadcast (playlist)
-  5. Use some sort of session number to prevent songs added in a previous query to show up with <TAB> (playlist)
-  6. Mess around with coloring and a mini-language for displaying the songs (playlist)
+  1. Use some sort of session number to prevent songs added in a previous query to show up with <TAB> (playlist)
+  2. Finish working on the playlist-updated broadcast (playlist)
+  3. Finish working on filter-views's functions (filter-view)
+  4. Write a preliminary version of Tree-view (tree-view)
+  5. Mess around with coloring and a mini-language for displaying the songs (playlist)
+  6. Blog post (Etc)
   7. Colorize the songs (filter view)
   8. Refactor the code (Etc)
-  9. Blog post (Etc)
 
 Filter View:
-  1. Find out what is happening with the coll queries on the ruby part
-  2. Search history mechanism
-  3. Work on the keymap
-  4. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
-  5. Colorize the songs
-  6. Add/insert songs capabilities
+  1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
+  2. Colorize the songs
+  3. Better presentation of the current collection
+  4. Allow complex search criteria
+  5. Finish working on filter-views's functions (filter-view)
+
+Tree View:
+  1. Write a preliminary version of Tree-view
 
 Playlist View:
   1. Finish working on the playlist-updated broadcast
@@ -51,7 +52,9 @@ Etc:
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **05/7**: 6 Adding tag-editing capabilities
+  - **08/7**: 16 studying x2c, reading docs and implementing an usable version of filter-view
+  - **07/7**: 3 Hitting my head against the wall
+  - **06/7**: 6 Adding tag-editing capabilities
   - **05/7**: 6 Polishing features added on the last few days. Filter view. Yay!
   - **04/7**: 6 Doing I don't know what
   - **03/7**: 10 struggling with XMMS and working on random things

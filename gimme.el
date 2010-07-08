@@ -1,14 +1,12 @@
 (defvar gimme-process)
-(defvar gimme-debug t)
 (defvar gimme-executable "gimme.rb")
 (defvar gimme-fullpath (expand-file-name
                         (concat
                          (file-name-directory (or load-file-name buffer-file-name))
                          gimme-executable)))
-(defvar gimme-current-mode nil)
+(defvar gimme-current-mode 'playlist)
 (defvar gimme-buffer-name "GIMME")
 (defvar gimme-colls-prefix "gimme-")
-(defvar gimme-filter-header "GIMME - Filter view")
 (defvar gimme-filter-remainder "")
 (defvar gimme-debug nil)
 (defvar gimme-playlist-formats '("%artist > %title"
@@ -19,9 +17,7 @@
 ;; Functions ;;
 ;;;;;;;;;;;;;;;
 
-(defun gimme-reset ()
-  (setq gimme-last-ids nil)
-  (setq gimme-filter-remainder ""))
+(defun gimme-reset () (setq gimme-filter-remainder ""))
 
 
 (defun gimme-set-playing (pos)
@@ -50,6 +46,7 @@
                 doing (let* ((s (car x))
                              (f (caar x))
                              (ok (member f (case gimme-current-mode
+                                             (tree  gimme-tree-mode-functions)
                                              (playlist gimme-playlist-mode-functions)
                                              (filter   gimme-filter-mode-functions)))))
                         (when gimme-debug
@@ -70,6 +67,7 @@
   (set-process-filter gimme-process (lambda (a b) (eval-all-sexps b))))
 
 (defun gimme-send-message (message)
+  (when gimme-debug (message message))
   (process-send-string gimme-process message))
 
 (defmacro gimme-generate-commands (&rest args)
@@ -144,7 +142,15 @@
                            (min (length gimme-playlist-header)
                                 (window-hscroll))))))
 
-;; Keymap
+
+(defun gimme-toggle-view ()
+  ;; FIXME: check perfomance on large playlists, 
+  ;; but I think I'll change it avoid reloading the playlist
+  (interactive)
+  (setq gimme-playlist-formats
+        (append (cdr gimme-playlist-formats)
+                (list (car gimme-playlist-formats))))
+  (gimme-current-mode))
 
 
 (defun gimme-playlist-mode ()
@@ -156,6 +162,15 @@
   (setq major-mode 'gimme-playlist-mode
         mode-name "gimme-playlist"))
 
+(defun gimme-tree-mode ()
+  "FIXME: Write something here"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map gimme-tree-map)
+  (setq truncate-lines t)
+  (setq major-mode 'gimme-tree-mode
+        mode-name "gimme-tree"))
+
 (defun gimme-filter-mode ()
   "FIXME: Write something here"
   (interactive)
@@ -165,17 +180,25 @@
   (setq major-mode 'gimme-filter-mode
         mode-name "gimme-filter"))
 
+(defun gimme-current-mode ()
+  (interactive)
+  (funcall (case gimme-current-mode
+             (tree 'gimme-tree)
+             (filter 'gimme-filter)
+             (playlist 'gimme-playlist))))
+
 (defun gimme ()
   (interactive)
   (gimme-reset)
   (gimme-init)
-  (gimme-playlist))
+  (gimme-current-mode))
 
 ;; Init
 
 (gimme-generate-commands clear shuffle play pause next prev stop toggle
                          inc_vol dec_vol current)
 (require 'gimme-playlist)
+(require 'gimme-tree)
 (require 'gimme-filter)
 (require 'gimme-utils)
 (provide 'gimme)

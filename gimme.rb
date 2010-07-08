@@ -88,6 +88,21 @@ class GIMME
   # FIXME: Generate these automatically
   def remove (pos); @async.playlist("_active").remove_entry(pos).notifier; end
   def add (id); @async.playlist("_active").add_entry(id).notifier; end
+
+  def addplay (id)
+    @async.playlist("_active").add_entry(id).notifier do
+      puts '(message "not yet implemented! appending to the playlist...")'
+    end
+  end
+
+  def addcol (name)
+    @async.coll_get(name).notifier do |c|
+      # FIXME: Doesn't work :(
+      @async.playlist("_active").add_collection(c).notifier
+    end
+  end
+
+
   def insert (id,pos); @async.playlist("_active").insert_entry(pos,id).notifier {|id| message id}; end
 
   def gimme (id, pos)
@@ -150,12 +165,35 @@ class GIMME
   end
 
   def subcol (col,pattern)
-    pattern = col == "*" ? pattern : "\"in:#{col}\" AND \"#{pattern}\""
-    pattern = "in:foo"
-    puts pattern
-    puts Xmms::Collection.parse(pattern).idlist.each { |id| puts id }
-    puts "ok"
+    # FIXME: Complex patterns!
+    #
+    # Collections will follow this pattern:
+    #
+    # "*"
+    # "0-tracknr:1"
+    # "00-artist:Foo"
+
+    key,val = pattern.split(":",2)
+    parent = Xmms::Collection.universe
+    name = "0-#{pattern}"
+    if col != "*"
+      name = col.split("-")[0]+"0-#{pattern}"
+      parent = Xmms::Collection.new(Xmms::Collection::TYPE_REFERENCE)
+      parent.attributes["reference"] = col
+      parent.attributes["namespace"] = Xmms::Collection::NS_COLLECTIONS
+    end
+
+    match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+    match.attributes["field"] = key
+    match.attributes["value"] = val
+    match.operands.push(parent)
+
+    # match.attributes.each_pair {|k,v| puts k,v}
+    # @async.coll_query_ids(match).notifier { |id| puts id }
+    @async.coll_save(match,name,Xmms::Collection::NS_COLLECTIONS)
+    puts [:"gimme-filter-set-current-col", name].to_sexp
   end
+
 
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }

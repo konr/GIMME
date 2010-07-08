@@ -36,4 +36,11 @@
   (loop for x = p then (cddr x) while x
         collecting (list (car x) (cadr x))))
 
+(defun plist-subset (small big)
+  "Returns non-nil if all keys in small are also in big"
+  (let ((keys (loop for s = small then (cddr s) while s
+                    collecting (car s))))
+    (every (lambda (n) (equal (getf small n) (getf big n))) keys)))
+
+
 (provide 'gimme-utils)
