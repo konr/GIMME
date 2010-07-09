@@ -20,22 +20,6 @@
 (defun gimme-reset () (setq gimme-filter-remainder ""))
 
 
-(defun gimme-set-playing (pos)
-  "Highlights the currently played song"
-  ;; FIXME can assume again a single highlighted track, so it's better to revert to a simpler version of the function
-
-  (when (get-buffer gimme-buffer-name)
-    (with-current-buffer gimme-buffer-name
-      (unlocking-buffer
-       (let* ((h-beg t) (h-end t))
-         (while h-beg
-           (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
-           (setq h-end (next-property-change (or h-beg (point-min))))
-           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
-       (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
-              (end (next-property-change (or beg (point-min)))))
-         (when beg (put-text-property beg end 'face 'highlight)))))))
-
 (defun eval-all-sexps (s)
   (let ((s (concat gimme-filter-remainder s)))
     (setq gimme-filter-remainder
@@ -96,8 +80,8 @@
        (goto-char (if append (point-max)
                     (or (text-property-any (point-min) (point-max)
                                            'pos (getf plist 'pos)) (point-max))))
-         (insert (gimme-string plist))
-         (unless append (gimme-update-pos #'1+ (point-marker) (point-max)))))))
+       (insert (gimme-string plist))
+       (unless append (gimme-update-pos #'1+ (point-marker) (point-max)))))))
 
 (defun gimme-string (plist)
   (let ((line (car gimme-playlist-formats)))
@@ -106,7 +90,7 @@
                                            (or (getf plist (nth 1 token)) "nil")
                                            line)))
     (apply #'propertize (format "%s\n" (decode-coding-string line 'utf-8))
-                plist)))
+           plist)))
 
 (defun gimme-update-playlist (plist)
   ;; FIXME: Deal with multiple playlists(?)
@@ -123,7 +107,7 @@
                  (with-current-buffer gimme-buffer-name
                    (unlocking-buffer
                     (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'pos)))
-                           (end (next-property-change beg)))
+                           (end (or (next-property-change beg) (point-max))))
                       (when (and beg end)
                         (clipboard-kill-region beg end)
                         (gimme-update-pos #'1- (point) (point-max)))))))
@@ -144,7 +128,7 @@
 
 
 (defun gimme-toggle-view ()
-  ;; FIXME: check perfomance on large playlists, 
+  ;; FIXME: check perfomance on large playlists,
   ;; but I think I'll change it avoid reloading the playlist
   (interactive)
   (setq gimme-playlist-formats

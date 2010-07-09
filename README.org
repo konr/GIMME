@@ -28,11 +28,9 @@ Playlist View:
   3. Mess around with coloring and a mini-language for displaying the songs
   4. Recreate the undo function
   5. Recreate the kill/yank region functions
-  6. Investigate the bug that shows up when you add way too many files to your playlist using another client
-  7. Use some sort of session number to prevent songs added in a previous query to show up with <TAB>
-  8. Deal with multiple instances of a song (see gimme-update-tags etc)
-  9. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
-  10. Everytime you play a song, it updates the laststarted and timesplayed properties and thus triggers the gimme-update-tags, which somehow messes the highlighting.
+  6. Use some sort of session number to prevent songs added in a previous query to show up with <TAB>
+  7. Deal with multiple instances of a song (see gimme-update-tags etc)
+  8. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
 
 Etc:
   1. Blog post

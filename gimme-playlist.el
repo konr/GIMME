@@ -1,6 +1,6 @@
 (defvar gimme-playlist-header "GIMME - Playlist view")
 (defvar gimme-playlist-mode-functions
-  '(gimme-set-playing gimme-set-playing gimme-update-playlist
+  '(gimme-set-playing gimme-update-playlist
                       gimme-insert-song gimme-set-title message
                       gimme-update-tags))
 
@@ -10,21 +10,21 @@
   (gimme-send-message
    (format "%s\n" (list 'playn (get-text-property (point) 'pos)))))
 
-(defun gimme-focused-delete ()
-  (interactive)
-  (if (use-region-p)
-      (let* ((min (min (point) (mark)))
-             (max (max (point) (mark)))
-             (min (progn (goto-char min) (line-beginning-position)))
-             (max (+ 1 (progn (goto-char max) (line-end-position)))))
-        (kill-ring-save min max))
-    (kill-ring-save (line-beginning-position) (line-end-position)))
-  (let ((items (let ((last (car kill-ring)))
-                 (loop for pos = 0 then (next-property-change pos last)
-                       while pos collecting (get-text-property pos 'pos last)))))
-    (dolist (item items)
-      (gimme-send-message (format "%s\n" (list 'remove (car items))))))) ;; FIXME: item -> car items
+(defun gimme-set-playing (pos)
+  "Highlights the currently played song"
+  ;; FIXME can assume again a single highlighted track, so it's better to revert to a simpler version of the function
 
+  (when (get-buffer gimme-buffer-name)
+    (with-current-buffer gimme-buffer-name
+      (unlocking-buffer
+       (let* ((h-beg t) (h-end t))
+         (while h-beg
+           (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
+           (setq h-end (or (next-property-change (or h-beg (point-min))) (point-max)))
+           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
+       (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
+              (end (next-property-change (or beg (point-min)))))
+         (when beg (put-text-property beg (or end (point-max)) 'face 'highlight)))))))
 
 (defun gimme-playlist ()
   (interactive)
@@ -32,8 +32,8 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (gimme-playlist-mode)
-     (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-playlist-header)
+     (clipboard-kill-region 1 (point-max))
      (save-excursion
        (gimme-send-message "(list)\n")))
     (setq gimme-current-mode 'playlist)
@@ -52,12 +52,15 @@
     (unlocking-buffer
      (let* ((beg (text-property-any (point-min) (point-max) 'id (getf plist 'id)))
             (end (next-property-change beg))
-            (pos (get-text-property (point) 'pos)))
+            (pos (get-text-property (point) 'pos))
+            (face (get-text-property (point) 'face)))
        (unless (plist-subset plist (text-properties-at beg))
-         (kill-region beg end)
-         (save-excursion
-           (goto-char beg)
-           (insert (gimme-string (plist-put plist 'pos pos)))))))))
+         (let* ((plist (plist-put plist 'pos pos))
+                (plist (plist-put plist 'face face)))
+           (kill-region beg end)
+           (save-excursion
+             (goto-char beg)
+             (insert (gimme-string (plist-put plist 'pos pos))))))))))
 
 
 (defun gimme-paste-deleted (undo)
@@ -84,8 +87,8 @@
                  (loop for pos = 0 then (next-property-change pos last)
                        while pos collecting (get-text-property pos 'pos last)))))
     (dolist (item items)
-      (gimme-send-message (format "%s\n" (list 'remove (car items))))) ;; FIXME: item -> car items
-    (message (format "%s" items))))
+      (gimme-send-message (format "(remove %s)\n" (car items)))
+      (message (format "%s" items)))))
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
