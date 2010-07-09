@@ -6,6 +6,7 @@
                          gimme-executable)))
 (defvar gimme-current-mode 'playlist)
 (defvar gimme-buffer-name "GIMME")
+(defvar gimme-session 0)
 (defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
 (defvar gimme-debug nil)
@@ -73,15 +74,16 @@
           doing (put-text-property beg end 'pos
                                    (funcall fun (get-text-property beg 'pos))))))
 
-(defun gimme-insert-song (plist append)
-  (with-current-buffer gimme-buffer-name
-    (save-excursion
-      (unlocking-buffer
-       (goto-char (if append (point-max)
-                    (or (text-property-any (point-min) (point-max)
-                                           'pos (getf plist 'pos)) (point-max))))
-       (insert (gimme-string plist))
-       (unless append (gimme-update-pos #'1+ (point-marker) (point-max)))))))
+(defun gimme-insert-song (session plist append)
+  (when (= session gimme-session)
+    (with-current-buffer gimme-buffer-name
+      (save-excursion
+        (unlocking-buffer
+         (goto-char (if append (point-max)
+                      (or (text-property-any (point-min) (point-max)
+                                             'pos (getf plist 'pos)) (point-max))))
+         (insert (gimme-string plist))
+         (unless append (gimme-update-pos #'1+ (point-marker) (point-max))))))))
 
 (defun gimme-string (plist)
   (let ((line (car gimme-playlist-formats)))
@@ -99,20 +101,23 @@
   ;; Not-Implemented:
   ;;  - Move
   (case (getf plist 'type)
-    ('add    (progn (gimme-insert-song plist t)   (message "Song added!")))
-    ('insert (progn (gimme-insert-song plist nil) (message "Song added!")))
+    ('add    (progn (gimme-insert-song gimme-session plist t)   (message "Song added!")))
+    ('insert (progn (gimme-insert-song gimme-session plist nil) (message "Song added!")))
     ('remove (progn
+               (setq gimme-last-del (getf plist 'pos))
                (when gimme-debug (message (format "%s" plist)))
                (when (get-buffer gimme-buffer-name)
                  (with-current-buffer gimme-buffer-name
                    (unlocking-buffer
-                    (let* ((beg (text-property-any (point-min) (point-max) 'pos (getf plist 'pos)))
-                           (end (or (next-property-change beg) (point-max))))
+                    (let* ((beg (text-property-any (point-min) (point-max) 'pos 
+                                                   (getf plist 'pos)))
+                           (end (or (next-property-change (or beg (point-min))) 
+                                    (point-max))))
                       (when (and beg end)
                         (clipboard-kill-region beg end)
                         (gimme-update-pos #'1- (point) (point-max)))))))
                (message "Song removed!")))
-    ('move (message "Playlist updated! (moving element)"))
+    ('move (progn (gimme-playlist) (message "Playlist shuffled!"))(message "Playlist updated! (moving element)"))
     ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
     ('clear   (progn (gimme-playlist) (message "Playlist cleared!")))
     ('sort    (progn (gimme-playlist) (message "Playlist updated! (sorting list)")))

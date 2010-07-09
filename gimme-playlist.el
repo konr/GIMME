@@ -28,6 +28,7 @@
 
 (defun gimme-playlist ()
   (interactive)
+  (gimme-new-session)
   (get-buffer-create gimme-buffer-name)
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
@@ -35,7 +36,7 @@
      (gimme-set-title gimme-playlist-header)
      (clipboard-kill-region 1 (point-max))
      (save-excursion
-       (gimme-send-message "(list)\n")))
+       (gimme-send-message (format "(list %s)\n" gimme-session))))
     (setq gimme-current-mode 'playlist)
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
@@ -51,7 +52,7 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (let* ((beg (text-property-any (point-min) (point-max) 'id (getf plist 'id)))
-            (end (next-property-change beg))
+            (end (or (next-property-change beg) (point-max)))
             (pos (get-text-property (point) 'pos))
             (face (get-text-property (point) 'face)))
        (unless (plist-subset plist (text-properties-at beg))
@@ -87,8 +88,7 @@
                  (loop for pos = 0 then (next-property-change pos last)
                        while pos collecting (get-text-property pos 'pos last)))))
     (dolist (item items)
-      (gimme-send-message (format "(remove %s)\n" (car items)))
-      (message (format "%s" items)))))
+      (gimme-send-message (format "(remove %s)\n" (car items))))))
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))

@@ -1,38 +1,34 @@
 * Status and next steps
+  
+  Filter-view now partially works!
 
-Filter-view now partially works!
-
-Next 10 Steps:
-  1. Use some sort of session number to prevent songs added in a previous query to show up with <TAB> (playlist)
-  2. Finish working on the playlist-updated broadcast (playlist)
-  3. Finish working on filter-views's functions (filter-view)
-  4. Write a preliminary version of Tree-view (tree-view)
-  5. Mess around with coloring and a mini-language for displaying the songs (playlist)
-  6. Blog post (Etc)
-  7. Colorize the songs (filter view)
-  8. Refactor the code (Etc)
-
-Filter View:
+  Next Steps:
+  1. Finish working on filter-views's functions (filter-view)
+  2. Write a preliminary version of Tree-view (tree-view)
+  3. Mess around with coloring and a mini-language for displaying the songs (playlist)
+  4. Blog post (Etc)
+  5. Colorize the songs (filter view)
+  6. Refactor the code (Etc)
+     
+  Filter View:
   1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
   2. Colorize the songs
   3. Better presentation of the current collection
   4. Allow complex search criteria
   5. Finish working on filter-views's functions (filter-view)
-
-Tree View:
+     
+  Tree View:
   1. Write a preliminary version of Tree-view
 
-Playlist View:
-  1. Finish working on the playlist-updated broadcast
-  2. Fix the bug involving adding a, eg, .txt file using another client
+  Playlist View:
+  1. Implement the move operation on the playlist-updated broadcast
   3. Mess around with coloring and a mini-language for displaying the songs
   4. Recreate the undo function
   5. Recreate the kill/yank region functions
-  6. Use some sort of session number to prevent songs added in a previous query to show up with <TAB>
   7. Deal with multiple instances of a song (see gimme-update-tags etc)
   8. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
 
-Etc:
+  Etc:
   1. Blog post
   2. Refactor the code
 
@@ -50,7 +46,7 @@ Etc:
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **08/7**: 16 studying x2c, reading docs and implementing an usable version of filter-view
+  - **08/7**: 20 studying x2c, reading docs, fixing bugs, experimenting with other issues and implementing an usable version of filter-view
   - **07/7**: 3 Hitting my head against the wall
   - **06/7**: 6 Adding tag-editing capabilities
   - **05/7**: 6 Polishing features added on the last few days. Filter view. Yay!

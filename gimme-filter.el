@@ -4,9 +4,9 @@
   '(gimme-insert-song gimme-set-title message
                       gimme-filter-set-current-col))
 
-
 (defun gimme-filter ()
   (interactive)
+  (gimme-new-session)
   (get-buffer-create gimme-buffer-name)
   (setq gimme-current-mode 'filter)
   (with-current-buffer gimme-buffer-name
@@ -15,16 +15,16 @@
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-filter-header)
      (save-excursion
-       (gimme-send-message (format "(pcol \"%s\")\n"
-                                   (car gimme-filter-collections)))))
+       (gimme-send-message (format "(pcol \"%s\" %s)\n"
+                                   (car gimme-filter-collections) gimme-session))))
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 (defun gimme-child-col ()
   (interactive)
-  (let* ((parent (car gimme-filter-collections)) 
+  (let* ((parent (car gimme-filter-collections))
          (name (read-from-minibuffer (format "%s > " parent)))
          (message (format "(subcol \"%s\" \"%s\")\n" parent name)))
-    (if (string-match ":" name) 
+    (if (string-match ":" name)
         (gimme-send-message message)
       (message "Use the format 'key:val'"))))
 

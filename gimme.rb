@@ -98,24 +98,14 @@ class GIMME
   def addcol (name)
     @async.coll_get(name).notifier do |c|
       # FIXME: Doesn't work :(
-      @async.playlist("_active").add_collection(c).notifier
+      @async.playlist("_active").add_collection(c).notifier { message "did it work?" }
     end
   end
 
 
   def insert (id,pos); @async.playlist("_active").insert_entry(pos,id).notifier {|id| message id}; end
 
-  def gimme (id, pos)
-    @async.medialib_get_info(id).notifier do |res|
-      if res then
-        dict = {}; dict[:pos] = pos; dict[:id] = id
-        [:title, :artist, :album].each {|e| dict[e] = res[e][:"plugin/id3v2"]}
-        puts ["gimme-insert-song".to_sym, [:quote, dict.to_a.flatten], nil].to_sexp
-      end
-    end
-  end
-
-  def list
+  def list (session)
     # FIXME: Clean up this mess
     @async.playlist("_active").current_pos.notifier do |pos|
       pos = pos ? pos : {:name => NOTHING, :position => -1} #FIXME: In case the it isn't on the playlist
@@ -132,7 +122,7 @@ class GIMME
             list.each_with_index do |el,i|
               bdict[el][:pos] = i
               bdict[el][:face] = :highlight if (i == pos[:position])
-              puts ["gimme-insert-song".to_sym,[:quote, bdict[el].to_a.flatten],:t].to_sexp
+              puts ["gimme-insert-song".to_sym,session,[:quote, bdict[el].to_a.flatten],:t].to_sexp
             end
             42 # FIXME: For some reason, an integer is required
           end
@@ -202,7 +192,7 @@ class GIMME
     end
   end
 
-  def pcol (name)
+  def pcol (name, session)
     puts [:"gimme-set-title", "GIMME - Filter View (" +name + ")"].to_sexp
     @async.coll_get(name).notifier do |coll|
       coll = Xmms::Collection.universe if name == "*"
@@ -210,7 +200,7 @@ class GIMME
         wrapperdict.each do |dict|
           adict = {}
           dict.each {|key,val| adict[key] = val }
-          puts ["gimme-insert-song".to_sym,[:quote, adict.to_a.flatten],:t].to_sexp
+          puts ["gimme-insert-song".to_sym,session,[:quote, adict.to_a.flatten],:t].to_sexp
         end
         42 # FIXME: For some reason, an integer is required
       end

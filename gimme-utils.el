@@ -15,6 +15,8 @@
                      (nth 0 colors) (nth 1 colors))))
     (apply 'concat "#" color)))
 
+(defun gimme-new-session () (setq gimme-session (random)))
+
 (defmacro unlocking-buffer (&rest body)
   `(progn (toggle-read-only nil)
           ,@body
@@ -37,7 +39,7 @@
         collecting (list (car x) (cadr x))))
 
 (defun plist-subset (small big)
-  "Returns non-nil if all keys in small are also in big"
+  "Returns non-nil if all key/vals in small are also in big"
   (let ((keys (loop for s = small then (cddr s) while s
                     collecting (car s))))
     (every (lambda (n) (equal (getf small n) (getf big n))) keys)))
