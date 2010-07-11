@@ -45,7 +45,8 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **18/7**: 18 adding color support, exploring bugs and fixing minor issues
+  - **11/7**: 8 working on tree-view. Too sleepy to be productive :P
+  - **10/7**: 18 adding color support, exploring bugs and fixing minor issues
   - **08/7**: 20 studying x2c, reading docs, fixing bugs, experimenting with other issues and implementing an usable version of filter-view
   - **07/7**: 3 Hitting my head against the wall
   - **06/7**: 6 Adding tag-editing capabilities
