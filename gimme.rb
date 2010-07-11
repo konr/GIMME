@@ -176,6 +176,7 @@ class GIMME
     match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
     match.attributes["field"] = key
     match.attributes["value"] = val
+    #match = Xmms::Collection.parse(pattern)
     match.operands.push(parent)
 
     # match.attributes.each_pair {|k,v| puts k,v}

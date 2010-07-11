@@ -10,9 +10,8 @@
 (defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
 (defvar gimme-debug nil)
-(defvar gimme-playlist-formats '("%artist > %title"
-                                 "%title"
-                                 "%artist > %album > %title"))
+
+(defvar gimme-delete-stack nil)
 
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
@@ -86,13 +85,14 @@
          (unless append (gimme-update-pos #'1+ (point-marker) (point-max))))))))
 
 (defun gimme-string (plist)
-  (let ((line (car gimme-playlist-formats)))
-    (dolist (token '(("%artist" artist) ("%title" title) ("%album" album)))
-      (setq line (replace-regexp-in-string (nth 0 token)
-                                           (or (getf plist (nth 1 token)) "nil")
-                                           line)))
-    (apply #'propertize (format "%s\n" (decode-coding-string line 'utf-8))
-           plist)))
+  "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
+  (eval `(let ((plist ',plist)
+          ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) (if (and (symbolp (cdr n)) (not (null (cdr n)))) (list 'quote (cdr n)) (cdr n))))
+                    (plist-to-alist plist)))
+      (eval (car gimme-playlist-formats)))))
+
+
+(defmacro what (number) `(format "%s3" ',(type-of number)))
 
 (defun gimme-update-playlist (plist)
   ;; FIXME: Deal with multiple playlists(?)
@@ -109,9 +109,9 @@
                (when (get-buffer gimme-buffer-name)
                  (with-current-buffer gimme-buffer-name
                    (unlocking-buffer
-                    (let* ((beg (text-property-any (point-min) (point-max) 'pos 
+                    (let* ((beg (text-property-any (point-min) (point-max) 'pos
                                                    (getf plist 'pos)))
-                           (end (or (next-property-change (or beg (point-min))) 
+                           (end (or (next-property-change (or beg (point-min)))
                                     (point-max))))
                       (when (and beg end)
                         (clipboard-kill-region beg end)
@@ -190,4 +190,5 @@
 (require 'gimme-tree)
 (require 'gimme-filter)
 (require 'gimme-utils)
+(require 'gimme-config)
 (provide 'gimme)

@@ -24,9 +24,7 @@
   (let* ((parent (car gimme-filter-collections))
          (name (read-from-minibuffer (format "%s > " parent)))
          (message (format "(subcol \"%s\" \"%s\")\n" parent name)))
-    (if (string-match ":" name)
-        (gimme-send-message message)
-      (message "Use the format 'key:val'"))))
+    (gimme-send-message message)))
 
 (defun gimme-parent-col ()
   (interactive)
@@ -49,7 +47,9 @@
 
 (defun gimme-filter-append-collection ()
   (interactive)
-  (gimme-send-message (format "(addcol \"%s\")\n" (car gimme-filter-collections))))
+  (loop for x = (point-min) then (next-property-change x) while x
+        collecting (gimme-send-message (format "(add %s)\n" (get-text-property x 'id)))
+        finally (message "Songs added!")))
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))

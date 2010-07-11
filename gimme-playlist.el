@@ -57,7 +57,7 @@
             (face (get-text-property (point) 'face)))
        (unless (plist-subset plist (text-properties-at beg))
          (let* ((plist (plist-put plist 'pos pos))
-                (plist (plist-put plist 'face face)))
+                (plist (plist-put plist 'face (list 'quote face))))
            (kill-region beg end)
            (save-excursion
              (goto-char beg)
@@ -87,8 +87,16 @@
   (let ((items (let ((last (car kill-ring)))
                  (loop for pos = 0 then (next-property-change pos last)
                        while pos collecting (get-text-property pos 'pos last)))))
-    (dolist (item items)
+    (setq gimme-delete-stack (mapcar (lambda (n) (car items)) items))
+    (gimme-continue-deleting)
+    (comment dolist (item items)
       (gimme-send-message (format "(remove %s)\n" (car items))))))
+
+(defun gimme-continue-deleting ()
+  ""
+  (when gimme-delete-stack
+    (gimme-send-message (format "(remove %s)\n" (car gimme-delete-stack)))
+    (setq gimme-delete-stack (cdr gimme-delete-stack))))
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
@@ -120,12 +128,13 @@
 
 (defun gimme-update-tags-prompt ()
   (interactive)
-  (let ((alist (mapcar (lambda (n) (if (member (car n) '(id face pos)) n
+  (let ((alist (mapcar (lambda (n) (if (member (car n) '(id pos)) n
                                 (list (car n) (format "\"%s\""
                                                       (read-from-minibuffer
                                                        (format "%s? " (car n))
                                                        (format "%s" (cadr n)))))))
-                       (plist-to-pseudo-alist (text-properties-at (point))))))
+                       (remove-if (lambda (n) (member (car n) '(face font-lock-face))) 
+                                  (plist-to-pseudo-alist (text-properties-at (point)))))))
     (gimme-send-message (format "%s\n" (list 'update_tags alist)))))
 
 
