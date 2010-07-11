@@ -5,24 +5,23 @@
   Next Steps:
   1. Finish working on filter-views's functions (filter-view)
   2. Write a preliminary version of Tree-view (tree-view)
-  3. Mess around with coloring and a mini-language for displaying the songs (playlist)
   4. Blog post (Etc)
   5. Colorize the songs (filter view)
   6. Refactor the code (Etc)
      
   Filter View:
   1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
-  2. Colorize the songs
   3. Better presentation of the current collection
   4. Allow complex search criteria
   5. Finish working on filter-views's functions (filter-view)
      
   Tree View:
-  1. Write a preliminary version of Tree-view
+  1. Fix the tree representation
+  2. Print the tree on the buffer
+  3. Org-mode coloring?
 
   Playlist View:
   1. Implement the move operation on the playlist-updated broadcast
-  3. Mess around with coloring and a mini-language for displaying the songs
   4. Recreate the undo function
   5. Recreate the kill/yank region functions
   7. Deal with multiple instances of a song (see gimme-update-tags etc)

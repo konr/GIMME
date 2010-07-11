@@ -43,10 +43,9 @@
 
 (defun plist-subset (small big)
   "Returns non-nil if all key/vals in small are also in big"
-  (comment let ((keys (loop for s = small then (cddr s) while s
+  (let ((keys (loop for s = small then (cddr s) while s
                     collecting (car s))))
-    (every (lambda (n) (equal (getf small n) (getf big n))) keys))
-  nil)
+    (every (lambda (n) (equal (getf small n) (getf big n))) keys)))
 
 (defun color-for (string)
   (let* ((colors cool-colors)

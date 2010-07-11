@@ -89,6 +89,12 @@ class GIMME
   def remove (pos); @async.playlist("_active").remove_entry(pos).notifier; end
   def add (id); @async.playlist("_active").add_entry(id).notifier; end
 
+  def url (id)
+    @async.medialib_get_info(id).notifier do |res|
+      message res[:url][:server]
+    end
+  end
+
   def addplay (id)
     @async.playlist("_active").add_entry(id).notifier do
       puts '(message "not yet implemented! appending to the playlist...")'
@@ -165,24 +171,27 @@ class GIMME
 
     key,val = pattern.split(":",2)
     parent = Xmms::Collection.universe
-    name = "0-#{pattern}"
-    if col != "*"
-      name = col.split("-")[0]+"0-#{pattern}"
-      parent = Xmms::Collection.new(Xmms::Collection::TYPE_REFERENCE)
-      parent.attributes["reference"] = col
-      parent.attributes["namespace"] = Xmms::Collection::NS_COLLECTIONS
+    parentcol = col == "*" ? "" : col.split("-")[0]
+
+    @async.coll_list.notifier do |name|
+      name = name.delete_if{|x| !x.match("^#{parentcol}[0-9]\+-")}
+      name = name.length > 0  ? (name.map{|x| x.split("-")[0]}.sort{|x,y| x[-1] <=> y[-1]}[-1].to_i + 1).to_s+"-#{pattern}" : "#{parentcol}0-#{pattern}"
+
+      if col != "*"
+        parent = Xmms::Collection.new(Xmms::Collection::TYPE_REFERENCE)
+        parent.attributes["reference"] = col
+        parent.attributes["namespace"] = Xmms::Collection::NS_COLLECTIONS
+      end
+
+      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+      match.attributes["field"] = key
+      match.attributes["value"] = val
+      #match = Xmms::Collection.parse(pattern)
+      match.operands.push(parent)
+
+      @async.coll_save(match,name,Xmms::Collection::NS_COLLECTIONS)
+      puts [:"gimme-filter-set-current-col", name].to_sexp
     end
-
-    match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
-    match.attributes["field"] = key
-    match.attributes["value"] = val
-    #match = Xmms::Collection.parse(pattern)
-    match.operands.push(parent)
-
-    # match.attributes.each_pair {|k,v| puts k,v}
-    # @async.coll_query_ids(match).notifier { |id| puts id }
-    @async.coll_save(match,name,Xmms::Collection::NS_COLLECTIONS)
-    puts [:"gimme-filter-set-current-col", name].to_sexp
   end
 
 
@@ -207,6 +216,27 @@ class GIMME
       end
     end
   end
+
+
+  def colls (session)
+    @async.coll_list.notifier do |res|
+      children = {}; name={}
+      res.delete_if {|x| !x.match("^[0-9]\+-")}
+      res.each {|x| x = x.split("-",2); name[x[0]]=x[1]}
+      name[""]="Root"
+
+      name.each_key do |k|
+        some = name.reject {|k2,v2| !k2.match("^#{k}[0-9]$")}.each{|k2,v2| children[k]=children[k].to_a+[[k2,v2]]}
+      end
+
+      name.sort { |x,y| y[0].length <=> x[0].length }.each do |i|
+        name[i[0]] = children.has_key?(i[0]) ? children[i[0]].map{|j| [j,name[j[0]]]} : "()"
+      end
+
+      puts [:"gimme-tree-colls",session,[:quote, name[""].to_a]].to_sexp
+    end
+  end
+
 
   private
 

@@ -1,56 +1,18 @@
 (defvar gimme-tree-header "GIMME - Tree View")
 (defvar gimme-tree-mode-functions
-  '(message))
+  '(message gimme-tree-colls))
 
-(defvar gimme-tree "                            +
-                           XXX
-                          XXXXX
-                         XXXXXXX
-                        XXXXXXXXX
-                       'BUON ANNO'
-                      'JOYEUX NOEL'
-                     'VESELE VANOCE'
-                    'MELE KALIKIMAKA'
-                   'NODLAG SONA DHUIT'
-                  'BLWYDDYN NEWYDD DDA'
-                       'GOD  JUL'
-                      'FELIZ NATAL'
-                      'BOAS FESTAS'
-                     'FELIZ NAVIDAD'
-                    'MERRY CHRISTMAS'
-                   'KALA CHRISTOUGENA'
-                  'VROLIJK  KERSTFEEST'
-                 'FROHLICHE WEIHNACHTEN'
-                'BUON  NATALE-GODT NYTAR'
-               'HUAN YING SHENG TAN CHIEH'
-              'WESOLYCH SWIAT-SRETAN BOZIC'
-             'MOADIM LESIMHA-LINKSMU KALEDU'
-            'HAUSKAA JOULUA-AID SAID MOUBARK'
-                 ''N  PRETTIG  KERSTMIS'
-                'ONNZLLISTA UUTTA VUOTTA'
-               'Z ROZHDESTYOM  KHRYSTOVYM'
-              'NADOLIG LLAWEN-GOTT NYTTSAR'
-             'FELIC NADAL-GOJAN KRISTNASKON'
-            'S  NOVYM  GODOM-FELIZ ANO NUEVO'
-           'GLEDILEG JOL-NOELINIZ KUTLU OLSUM'
-          'EEN GELUKKIG NIEUWJAAR-SRETAN BOSIC'
-         'KRIHSTLINDJA GEZUAR-KALA CHRISTOUGENA'
-        'SELAMAT HARI NATAL - LAHNINGU NAJU METU'
-             'SARBATORI FERICITE-BUON  ANNO'
-            'ZORIONEKO GABON-HRISTOS SE RODI'
-           'BOLDOG KARACSONNY-VESELE  VIANOCE '
-          'MERRY CHRISTMAS  - -  HAPPY NEW YEAR'
-         'ROOMSAID JOULU PUHI -KUNG HO SHENG TEN'
-        'FELICES PASUAS-EIN GLUCKICHES    NEWJAHR'
-       'PRIECIGUS ZIEMAN SVETKUS  SARBATORI VESLLE'
-      'BONNE ANNEBLWYDDYN NEWYDD DDADR  FELIZ  NATAL'
-                          XXXXX
-                          XXXXX
-                          XXXXX
-                      XXXXXXXXXXXXX ")
+
+(defun gimme-tree-colls (session tree)
+  (with-current-buffer gimme-buffer-name
+    (unlocking-buffer 
+    (save-excursion 
+        (dolist (branch tree)
+          (insert (format "%s\n" branch)))))))
 
 (defun gimme-tree ()
   (interactive)
+  (gimme-new-session)
   (get-buffer-create gimme-buffer-name)
   (setq gimme-current-mode 'tree)
   (with-current-buffer gimme-buffer-name
@@ -58,8 +20,9 @@
      (gimme-filter-mode)
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-tree-header)
-     (insert gimme-tree))
-    (switch-to-buffer (get-buffer gimme-buffer-name))))
+     (save-excursion
+       (gimme-send-message (format "(colls %s)\n" gimme-session)))
+    (switch-to-buffer (get-buffer gimme-buffer-name)))))
 
 (defvar gimme-tree-map
   (let ((map (make-sparse-keymap)))

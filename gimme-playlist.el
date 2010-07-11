@@ -98,6 +98,10 @@
     (gimme-send-message (format "(remove %s)\n" (car gimme-delete-stack)))
     (setq gimme-delete-stack (cdr gimme-delete-stack))))
 
+(defun gimme-focused-url ()
+  (interactive)
+  (gimme-send-message (format "(url %s)\n" (get-text-property (point) 'id))))
+
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "!") 'gimme-filter)
@@ -123,6 +127,7 @@
     (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
     (define-key map (kbd "+") 'gimme-inc_vol)
     (define-key map (kbd "-") 'gimme-dec_vol)
+    (define-key map (kbd "?") 'gimme-focused-url)
     map))
 
 
