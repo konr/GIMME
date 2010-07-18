@@ -1,4 +1,4 @@
-(defvar gimme-playlist-formats '((if (string= "" %starred)
+(defvar gimme-playlist-formats '((if (string= "nil" %starred)
                                      (apply #'propertize (decode-coding-string (format "%s\n" %title) 'utf-8)
                                             (plist-put plist 'font-lock-face `(:foreground ,(color-for %album))))
                                    (apply #'propertize (decode-coding-string (format "* %s\n" %title) 'utf-8)

@@ -182,8 +182,8 @@
   (interactive)
   (let* ((plist (text-properties-at (point)))
          (starredp (getf plist 'starred))
-         (starredp (if (string= "t" starredp) "" "t"))
-         (plist (plist-put plist 'starred starredp))
+         (string (if (string= "t" starredp) "nil" "t"))
+         (plist (append plist `(starred ,string)))
          (alist (plist-to-pseudo-alist plist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
 
@@ -197,7 +197,7 @@
                                                          (read-from-minibuffer
                                                           (format "%s? " (car n))
                                                           (format "%s" (cadr n)))))
-                                 n))
+                                 n)) ;; FIXME: Assuming no whitespace
                         alist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
 

@@ -9,7 +9,7 @@
 (defvar gimme-session 0)
 (defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
-(defvar gimme-debug t)
+(defvar gimme-debug nil)
 
 (defvar gimme-delete-stack nil)
 
