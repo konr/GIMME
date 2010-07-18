@@ -50,7 +50,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **17/7**: 5 messing around with git and tree-view. Going to commit more.
+  - **17/7**: 14 messing around with git tree-view and adding the sort and star features.
   - **16/7**: 8 pomodoros fixing minor things on the previous days
   - **11/7**: 8 working on tree-view. Too sleepy to be productive :P
   - **10/7**: 18 adding color support, exploring bugs and fixing minor issues
