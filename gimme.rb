@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 $: << File.join(File.dirname(__FILE__))
 
 require 'xmmsclient'
@@ -205,6 +206,7 @@ class GIMME
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
     ($atribs-["id"]).each do |key|
+      key=key.to_sym; dict[key] = dict[key].class == Symbol ? dict[key].to_s : dict[key]
       @async.medialib_entry_property_set(dict[:id], key.to_sym, dict[key.to_sym]).notifier {}
     end
   end
