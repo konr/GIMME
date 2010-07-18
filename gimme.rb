@@ -10,7 +10,7 @@ require 'pp'
 require 'gimme-aux'
 
 
-DEBUG = true
+DEBUG = nil
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
 $atribs=["title","id","artist","album","duration","starred"]
@@ -229,7 +229,9 @@ class GIMME
 
   def playtime
     @async.playback_playtime.notifier do |time|
-      puts [:"gimme-update-playtime",time].to_sexp
+      @async.playback_current_id.notifier do |id|
+        puts id
+      end
     end
   end
 

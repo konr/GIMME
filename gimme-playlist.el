@@ -184,7 +184,11 @@
          (starredp (getf plist 'starred))
          (string (if (string= "t" starredp) "nil" "t"))
          (plist (append plist `(starred ,string)))
-         (alist (plist-to-pseudo-alist plist)))
+         (alist (remove-if (lambda (n) (member (car n) '(face font-lock-face)))
+                           (plist-to-pseudo-alist plist)))
+         (alist (mapcar (lambda (n) `(,(car n) ,(if (stringp (cadr n)) 
+                                               (format "\"%s\"" (cadr n))
+                                             (cadr n)))) alist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
 
 (defun gimme-update-tags-prompt ()
@@ -197,7 +201,7 @@
                                                          (read-from-minibuffer
                                                           (format "%s? " (car n))
                                                           (format "%s" (cadr n)))))
-                                 n)) ;; FIXME: Assuming no whitespace
+                                 n)) ; FIXME: Assuming no whitespace. Allow only number/strings!
                         alist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
 
