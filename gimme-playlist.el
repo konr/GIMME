@@ -27,13 +27,14 @@
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "T") 'gimme-update-tags-prompt)
-    (define-key map (kbd "S") 'gimme-shuffle)
+    (define-key map (kbd "H") 'gimme-shuffle)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
     (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete t)))
     (define-key map (kbd "d") 'kill-line)
     (define-key map [remap yank] (lambda () (interactive) (gimme-paste-deleted nil)))
     (define-key map (kbd "p") 'yank)
-    (define-key map (kbd "s") 'gimme-stop)
+    (define-key map (kbd "s") 'gimme-sort)
+    (define-key map (kbd "S") 'gimme-sort)
     (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "l") 'gimme-center)
@@ -97,6 +98,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-sort ()
+  "Sorts the current playlist"
+  (interactive)
+  (gimme-send-message "(sort %s)\n" (car gimme-sort-criteria)))
+
+(defun gimme-toggle-sort ()
+  "Cycle through the sort criteria"
+  (interactive)
+  (setq gimme-sort-criteria (append (cdr gimme-sort-criteria) 
+                                    (list (car gimme-sort-criteria)))))
 
 (defun gimme-focused-play ()
   "Plays the currently focused song"

@@ -199,7 +199,7 @@ class GIMME
   end
 
   def sort (criteria)
-    @async.playlist("_active").sort(criteria.map{|x| x.to_str}).notifier {}
+    @async.playlist("_active").sort(criteria.map{|x| x.to_s}).notifier {}
   end
 
   def update_tags (alist)
