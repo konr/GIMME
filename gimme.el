@@ -77,8 +77,8 @@
 (defun gimme-send-message (&rest args)
   "Formats the arguments using (format) then sends the resulting string to the process."
   (let ((message (apply #'format args)))
-    (when gimme-debug (message message))
-    (process-send-string gimme-process message)))
+    (if gimme-debug (message message)
+      (process-send-string gimme-process message))))
 
 (defmacro gimme-generate-commands (&rest args)
   ;; FIXME: Too ugly :(

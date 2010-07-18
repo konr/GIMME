@@ -49,7 +49,8 @@
   (flet ((aux (branch s)
               (mapcan (lambda (n) (if (listp (car n)) (aux n (format "*%s" s))
                                (list (format "%s%s\n" s (cadar branch))))) branch)))
-    (reduce #'concat (aux branch " "))))
+    (replace-regexp-in-string "^\* " "\n\* "
+                              (reduce #'concat (aux branch " ")))))
 
 
 (provide 'gimme-tree)
