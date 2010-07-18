@@ -19,6 +19,13 @@
 
 (defun gimme-reset () (setq gimme-filter-remainder ""))
 
+(defun gimme-extract-needed-tags ()
+  (let* ((l (flatten gimme-playlist-formats))
+         (l (remove-if-not (lambda (n) (and (symbolp n)
+                                       (string-match "^%" (format "%s" n)))) l))
+         (l (mapcar (lambda (n) (substring (format "%s" n) 1))
+                    (remove-duplicates l))))
+    l))
 
 (defun eval-all-sexps (s)
   (let ((s (concat gimme-filter-remainder s)))
@@ -38,6 +45,23 @@
                         (when ok (eval (car x))))
                 finally (return (substring s position))))))
 
+(defun gimme-current-duration ()
+  ;; FIXME: Won't work on filter view etc
+  (with-current-buffer gimme-buffer-name
+    (let* ((cur (text-property-any (point-min) (point-max) 'face 'highlight))
+           (max (if cur (get-text-property cur 'duration) 0)))
+      max)))
+
+(defun gimme-update-playtime (time)
+  (when (get-buffer gimme-buffer-name)
+    (with-current-buffer gimme-buffer-name
+      (let* ((max (gimme-current-duration))
+             (msg (format "GIMME: %d:%.2d/%d:%.2d"
+                          (/ time 1000 60) (mod (/ time 1000) 60)
+                          (/ max 1000 60) (mod  (/ max  1000) 60))))
+        (setq gimme-buffer-name msg)
+        (rename-buffer gimme-buffer-name)))))
+
 (defun gimme-init ()
   "Creates the buffer and manages the processes"
   (get-buffer-create gimme-buffer-name)
@@ -50,9 +74,11 @@
          (format "ruby %s" gimme-fullpath )))
   (set-process-filter gimme-process (lambda (a b) (eval-all-sexps b))))
 
-(defun gimme-send-message (message)
-  (when gimme-debug (message message))
-  (process-send-string gimme-process message))
+(defun gimme-send-message (&rest args)
+  "Formats the arguments using (format) then sends the resulting string to the process."
+  (let ((message (apply #'format args)))
+    (when gimme-debug (message message))
+    (process-send-string gimme-process message)))
 
 (defmacro gimme-generate-commands (&rest args)
   ;; FIXME: Too ugly :(
@@ -87,9 +113,9 @@
 (defun gimme-string (plist)
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
   (eval `(let ((plist ',plist)
-          ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) (if (and (symbolp (cdr n)) (not (null (cdr n)))) (list 'quote (cdr n)) (cdr n))))
-                    (plist-to-alist plist)))
-      (eval (car gimme-playlist-formats)))))
+               ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) (if (and (symbolp (cdr n)) (not (null (cdr n)))) (list 'quote (cdr n)) (cdr n))))
+                         (plist-to-alist plist)))
+           (eval (car gimme-playlist-formats)))))
 
 
 (defmacro what (number) `(format "%s3" ',(type-of number)))
@@ -180,6 +206,7 @@
   (interactive)
   (gimme-reset)
   (gimme-init)
+  (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-current-mode))
 
 ;; Init

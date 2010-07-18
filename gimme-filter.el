@@ -2,7 +2,8 @@
 (defvar gimme-filter-header "GIMME - Filter View")
 (defvar gimme-filter-mode-functions
   '(gimme-insert-song gimme-set-title message
-                      gimme-filter-set-current-col))
+                      gimme-filter-set-current-col
+                      gimme-update-playtime))
 
 (defun gimme-filter ()
   (interactive)
@@ -15,8 +16,7 @@
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-filter-header)
      (save-excursion
-       (gimme-send-message (format "(pcol \"%s\" %s)\n"
-                                   (car gimme-filter-collections) gimme-session))))
+       (gimme-send-message "(pcol \"%s\" %s)\n" (car gimme-filter-collections) gimme-session)))
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 (defun gimme-child-col ()
@@ -39,16 +39,16 @@
 
 (defun gimme-filter-append-focused ()
   (interactive)
-  (gimme-send-message (format "(add %s)\n" (get-text-property (point) 'id))))
+  (gimme-send-message "(add %s)\n" (get-text-property (point) 'id)))
 
 (defun gimme-filter-play-focused ()
   (interactive)
-  (gimme-send-message (format "(addplay %s)\n" (get-text-property (point) 'id))))
+  (gimme-send-message "(addplay %s)\n" (get-text-property (point) 'id)))
 
 (defun gimme-filter-append-collection ()
   (interactive)
   (loop for x = (point-min) then (next-property-change x) while x
-        collecting (gimme-send-message (format "(add %s)\n" (get-text-property x 'id)))
+        collecting (gimme-send-message "(add %s)\n" (get-text-property x 'id))
         finally (message "Songs added!")))
 
 (defvar gimme-filter-map

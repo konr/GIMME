@@ -53,4 +53,20 @@
          (hash (string-to-number (substring (md5 (if (stringp string) string "")) 0 6) 16)))
     (nth (mod hash len) colors)))
 
+(defun flatten (l)
+  (cond ((null l) nil)
+        ((atom l) (list l))
+        (t (append (flatten (car l))
+                   (flatten (cdr l))))))
+
+(defmacro comment (&rest rest))
+
+(defun range-to-plists (p1 p2)
+  ""
+  (let ((min (min p1 p2)) (max (max p1 p2)))
+    (loop for point = min then (next-property-change point)
+          while (and point (> max point))
+          collecting (text-properties-at point))))
+
+
 (provide 'gimme-utils)

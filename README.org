@@ -14,6 +14,7 @@
   3. Better presentation of the current collection
   4. Allow complex search criteria
   5. Finish working on filter-views's functions (filter-view)
+  6. Sorting
      
   Tree View:
   1. Fix the tree representation
@@ -26,10 +27,13 @@
   5. Recreate the kill/yank region functions
   7. Deal with multiple instances of a song (see gimme-update-tags etc)
   8. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
+  9. Tickle, messages and hooks
 
   Etc:
   1. Blog post
   2. Refactor the code
+  3. More than one buffer
+  4. Colorize the header
 
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
@@ -45,6 +49,8 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **17/7**: 4 messing around with git and tree-view. Going to commit more.
+  - **16/7**: 8 pomodoros fixing minor things on the previous days
   - **11/7**: 8 working on tree-view. Too sleepy to be productive :P
   - **10/7**: 18 adding color support, exploring bugs and fixing minor issues
   - **08/7**: 20 studying x2c, reading docs, fixing bugs, experimenting with other issues and implementing an usable version of filter-view

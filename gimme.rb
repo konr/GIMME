@@ -9,9 +9,10 @@ require 'pp'
 require 'gimme-aux'
 
 
+DEBUG = false
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
-$atribs=["title","id","artist","album"]
+$atribs=["title","id","artist","album","duration"]
 
 class GIMME
 
@@ -84,6 +85,9 @@ class GIMME
 
   def clear; @async.playlist("_active").clear.notifier; end
   def shuffle; @async.playlist("_active").shuffle.notifier; end
+
+  def seek_rel (x); @async.playback_seek_ms_rel(x.to_i).notifier; end
+  def seek     (x); @async.playback_seek_ms(x.to_i).notifier; end
 
   # FIXME: Generate these automatically
   def remove (pos); @async.playlist("_active").remove_entry(pos).notifier; end
@@ -184,9 +188,9 @@ class GIMME
       end
 
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
-      match.attributes["field"] = key
-      match.attributes["value"] = val
-      #match = Xmms::Collection.parse(pattern)
+      #match.attributes["field"] = key
+      #match.attributes["value"] = val
+      match = Xmms::Collection.parse(pattern)
       match.operands.push(parent)
 
       @async.coll_save(match,name,Xmms::Collection::NS_COLLECTIONS)
@@ -217,6 +221,15 @@ class GIMME
     end
   end
 
+  def playtime
+    @async.playback_playtime.notifier do |time|
+      puts [:"gimme-update-playtime",time].to_sexp
+    end
+  end
+
+  def set_atribs (l)
+   $atribs |= l.map{|n| n.to_s}
+  end
 
   def colls (session)
     @async.coll_list.notifier do |res|
@@ -230,13 +243,12 @@ class GIMME
       end
 
       name.sort { |x,y| y[0].length <=> x[0].length }.each do |i|
-        name[i[0]] = children.has_key?(i[0]) ? children[i[0]].map{|j| [j,name[j[0]]]} : "()"
+        name[i[0]] = children.has_key?(i[0]) ? children[i[0]].map{|j| [j,*name[j[0]]]} : ""
       end
 
       puts [:"gimme-tree-colls",session,[:quote, name[""].to_a]].to_sexp
     end
   end
-
 
   private
 
@@ -257,6 +269,13 @@ end
 $ml = GLib::MainLoop.new(nil, false)
 client = GIMME.new
 $channel = GLib::IOChannel.new(STDIN)
+
+Thread.new do
+  while true
+    client.playtime if !DEBUG
+    sleep 1
+  end
+end
 
 Thread.new do
   while true
