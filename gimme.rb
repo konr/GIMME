@@ -12,7 +12,7 @@ require 'gimme-aux'
 DEBUG = true
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
-$atribs=["title","id","artist","album","duration"]
+$atribs=["title","id","artist","album","duration","starred"]
 
 class GIMME
 
@@ -205,7 +205,7 @@ class GIMME
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
     ($atribs-["id"]).each do |key|
-      @async.medialib_entry_property_set(dict[:id], key.to_sym, dict[key.to_sym]).notifier { puts "ok"}
+      @async.medialib_entry_property_set(dict[:id], key.to_sym, dict[key.to_sym]).notifier {}
     end
   end
 

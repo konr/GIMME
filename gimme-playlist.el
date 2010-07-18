@@ -33,8 +33,8 @@
     (define-key map (kbd "d") 'kill-line)
     (define-key map [remap yank] (lambda () (interactive) (gimme-paste-deleted nil)))
     (define-key map (kbd "p") 'yank)
-    (define-key map (kbd "s") 'gimme-sort)
     (define-key map (kbd "S") 'gimme-sort)
+    (define-key map (kbd "s") 'gimme-toggle-sort)
     (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "l") 'gimme-center)
@@ -107,8 +107,11 @@
 (defun gimme-toggle-sort ()
   "Cycle through the sort criteria"
   (interactive)
-  (setq gimme-sort-criteria (append (cdr gimme-sort-criteria) 
-                                    (list (car gimme-sort-criteria)))))
+  (setq gimme-sort-criteria (append (cdr gimme-sort-criteria)
+                                    (list (car gimme-sort-criteria))))
+  (message (format "Sorting now by %s%s" (caar gimme-sort-criteria)
+                   (apply #'concat (mapcar (lambda (n) (format " > %s" n))
+                                           (cdar gimme-sort-criteria))))))
 
 (defun gimme-focused-play ()
   "Plays the currently focused song"
@@ -179,7 +182,7 @@
   (interactive)
   (let* ((plist (text-properties-at (point)))
          (starredp (getf plist 'starred))
-         (starredp (not starredp))
+         (starredp (if (string= "t" starredp) "nil" "t"))
          (plist (plist-put plist 'starred starredp))
          (alist (plist-to-pseudo-alist plist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
