@@ -23,11 +23,12 @@
 
   Playlist View:
   1. Implement the move operation on the playlist-updated broadcast
-  4. Recreate the undo function
-  5. Recreate the kill/yank region functions
-  7. Deal with multiple instances of a song (see gimme-update-tags etc)
-  8. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
-  9. Tickle, messages and hooks
+  2. Recreate the undo function
+  3. Recreate the kill/yank region functions
+  4. Deal with multiple instances of a song (see gimme-update-tags etc)
+  5. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
+  6. Tickle, messages and hooks
+  7. Now the paste function won't also work :(
 
   Etc:
   1. Blog post

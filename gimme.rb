@@ -230,7 +230,10 @@ class GIMME
   def playtime
     @async.playback_playtime.notifier do |time|
       @async.playback_current_id.notifier do |id|
-        puts id
+        @async.medialib_get_info(id).notifier do |res|
+          duration = res[:duration] ? res[:duration].first.at(1) : NOTHING
+          puts [:"gimme-update-playtime",time,duration].to_sexp
+        end
       end
     end
   end

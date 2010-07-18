@@ -52,11 +52,10 @@
            (max (if cur (get-text-property cur 'duration) 0)))
       max)))
 
-(defun gimme-update-playtime (time)
+(defun gimme-update-playtime (time max)
   (when (get-buffer gimme-buffer-name)
     (with-current-buffer gimme-buffer-name
-      (let* ((max (gimme-current-duration))
-             (msg (format "GIMME: %d:%.2d/%d:%.2d"
+      (let* ((msg (format "GIMME: %d:%.2d/%d:%.2d"
                           (/ time 1000 60) (mod (/ time 1000) 60)
                           (/ max 1000 60) (mod  (/ max  1000) 60))))
         (setq gimme-buffer-name msg)
@@ -78,7 +77,7 @@
   "Formats the arguments using (format) then sends the resulting string to the process."
   (let ((message (apply #'format args)))
     (when gimme-debug (message message))
-      (process-send-string gimme-process message)))
+    (process-send-string gimme-process message)))
 
 (defmacro gimme-generate-commands (&rest args)
   ;; FIXME: Too ugly :(
