@@ -126,7 +126,7 @@ class GIMME
         @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
           wrapperdict.each do |dict|
             adict = {}
-            dict.each {|key,val| adict[key] = val }
+            dict.each {|key,val| adict[key] = val.class == Fixnum ? val : val.to_s } #FIXME make this a function 
             bdict[adict[:id]]=adict
           end
           @async.playlist("_active").entries.notifier do |list|
@@ -134,6 +134,7 @@ class GIMME
               bdict[el][:pos] = i
               bdict[el][:face] = :highlight if (i == pos[:position])
               puts ["gimme-insert-song".to_sym,session,[:quote, bdict[el].to_a.flatten],:t].to_sexp
+              #puts bdict.class
             end
             42 # FIXME: For some reason, an integer is required
           end
@@ -218,7 +219,7 @@ class GIMME
       @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
         wrapperdict.each do |dict|
           adict = {}
-          dict.each {|key,val| adict[key] = val }
+          dict.each {|key,val| adict[key] = val.class == Fixnum ? val : val.to_s } #FIXME
           puts ["gimme-insert-song".to_sym,session,[:quote, adict.to_a.flatten],:t].to_sexp
         end
         42 # FIXME: For some reason, an integer is required

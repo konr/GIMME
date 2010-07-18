@@ -182,7 +182,7 @@
   (interactive)
   (let* ((plist (text-properties-at (point)))
          (starredp (getf plist 'starred))
-         (starredp (if (string= "t" starredp) "nil" "t"))
+         (starredp (if (string= "t" starredp) "" "t"))
          (plist (plist-put plist 'starred starredp))
          (alist (plist-to-pseudo-alist plist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
