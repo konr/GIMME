@@ -10,7 +10,7 @@ require 'pp'
 require 'gimme-aux'
 
 
-DEBUG = nil
+DEBUG = false
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
 $atribs=["title","id","artist","album","duration","starred"]
@@ -54,7 +54,7 @@ class GIMME
                     end
       if (dict[:type] == :add or dict[:type] == :insert) then
         @async.medialib_get_info(dict[:id]).notifier do |res2|
-          [:title, :artist, :album].each do |e|
+          $atribs.map{|x| x.to_sym}.each do |e|
             dict[e] = res2[e] ? res2[e].first.at(1) : NOTHING
           end if res2
           puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
@@ -190,12 +190,13 @@ class GIMME
       end
 
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
-      #match.attributes["field"] = key
-      #match.attributes["value"] = val
       match = Xmms::Collection.parse(pattern)
-      match.operands.push(parent)
 
-      @async.coll_save(match,name,Xmms::Collection::NS_COLLECTIONS)
+      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
+      intersection.operands.push(parent)
+      intersection.operands.push(match)
+
+      @async.coll_save(intersection,name,Xmms::Collection::NS_COLLECTIONS)
       puts [:"gimme-filter-set-current-col", name].to_sexp
     end
   end

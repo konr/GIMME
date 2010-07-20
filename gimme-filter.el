@@ -51,6 +51,16 @@
         collecting (gimme-send-message "(add %s)\n" (get-text-property x 'id))
         finally (message "Songs added!")))
 
+(defun gimme-filter-same ()
+  "Creates a subcollection matching some this song's criterium"
+  (interactive)
+  (let* ((parent (car gimme-filter-collections))
+         (name (completing-read "Filter? "
+                                (mapcar (lambda (n) (format "%s:%s" (car n) (cdr n)))
+                                        (plist-to-alist (text-properties-at (point))))))
+         (message (format "(subcol \"%s\" \"%s\")\n" parent name)))
+    (gimme-send-message message)))
+
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "!") 'gimme-filter)
@@ -72,6 +82,7 @@
     (define-key map (kbd "a") 'gimme-filter-append-focused)
     (define-key map (kbd "RET") 'gimme-filter-play-focused)
     (define-key map (kbd "A") 'gimme-filter-append-collection)
+    (define-key map (kbd "f") 'gimme-filter-same)
     map))
 
 (provide 'gimme-filter)

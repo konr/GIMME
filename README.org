@@ -1,25 +1,17 @@
 * Status and next steps
   
-  Filter-view now partially works!
+  Search mechanism is now using the parse() function
 
-  Next Steps:
-  1. Finish working on filter-views's functions (filter-view)
-  2. Write a preliminary version of Tree-view (tree-view)
-  4. Blog post (Etc)
-  5. Colorize the songs (filter view)
-  6. Refactor the code (Etc)
-     
   Filter View:
   1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
-  3. Better presentation of the current collection
-  4. Allow complex search criteria
-  5. Finish working on filter-views's functions (filter-view)
-  6. Sorting
+  2. Better presentation of the current collection
+  3. Finish working on filter-views's functions (filter-view)
+  4. Sorting
      
   Tree View:
   1. Fix the tree representation
   2. Print the tree on the buffer
-  3. Org-mode coloring?
+  3. Org-mode coloring and commands
 
   Playlist View:
   1. Implement the move operation on the playlist-updated broadcast
@@ -28,13 +20,12 @@
   4. Deal with multiple instances of a song (see gimme-update-tags etc)
   5. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
   6. Tickle, messages and hooks
-  7. Now the paste function won't also work :(
 
   Etc:
   1. Blog post
-  2. Refactor the code
-  3. More than one buffer
-  4. Colorize the header
+  2. More than one buffer
+  3. Colorize the header
+  4. Manual
 
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
@@ -50,6 +41,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **18/7**: 5 on bug fixes and minor features
   - **17/7**: 14 messing around with git tree-view and adding the sort and star features.
   - **16/7**: 8 pomodoros fixing minor things on the previous days
   - **11/7**: 8 working on tree-view. Too sleepy to be productive :P

@@ -55,9 +55,9 @@
 (defun gimme-update-playtime (time max)
   (when (get-buffer gimme-buffer-name)
     (with-current-buffer gimme-buffer-name
-      (let* ((msg (format "GIMME: %d:%.2d/%d:%.2d"
-                          (/ time 1000 60) (mod (/ time 1000) 60)
-                          (/ max 1000 60) (mod  (/ max  1000) 60))))
+      (let* ((time (format-seconds "%.2m:%.2s" (/ time 1000)))
+             (max  (format-seconds "%.2m:%.2s" (/ max 1000)))
+             (msg (format "GIMME: %s/%s" time max)))
         (setq gimme-buffer-name msg)
         (rename-buffer gimme-buffer-name)))))
 

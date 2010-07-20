@@ -69,4 +69,5 @@
           collecting (text-properties-at point))))
 
 
+
 (provide 'gimme-utils)
