@@ -10,6 +10,7 @@
 (defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
 (defvar gimme-debug nil)
+(defvar gimme-buffers nil)
 
 (defvar gimme-delete-stack nil)
 
@@ -41,7 +42,7 @@
                                              (playlist gimme-playlist-mode-functions)
                                              (filter   gimme-filter-mode-functions)))))
                         (when gimme-debug
-                          (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") f)))
+                          (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") (if (= gimme-debug 2) s f))))
                         (when ok (eval (car x))))
                 finally (return (substring s position))))))
 
@@ -58,8 +59,9 @@
       (let* ((time (format-seconds "%.2m:%.2s" (/ time 1000)))
              (max  (format-seconds "%.2m:%.2s" (/ max 1000)))
              (msg (format "GIMME: %s/%s" time max)))
-        (setq gimme-buffer-name msg)
-        (rename-buffer gimme-buffer-name)))))
+        (comment setq gimme-buffer-name msg)
+        (comment rename-buffer gimme-buffer-name)
+        (gimme-set-title msg)))))
 
 (defun gimme-init ()
   "Creates the buffer and manages the processes"
@@ -93,10 +95,12 @@
   ;; FIXME: Not working
   (with-current-buffer gimme-buffer-name
     (loop for beg = min then end
-          and end = (next-property-change min) then (next-property-change end)
-          while (and end (<= end max))
-          doing (put-text-property beg end 'pos
-                                   (funcall fun (get-text-property beg 'pos))))))
+          and end = (or (next-property-change min) max)
+          then (or (next-property-change end) max)
+          while (and (<= end max) (< beg end))
+          doing (put-text-property
+                 beg end 'pos
+                 (funcall fun (get-text-property beg 'pos))))))
 
 (defun gimme-insert-song (session plist append)
   (when (= session gimme-session)
@@ -111,6 +115,7 @@
 
 (defun gimme-string (plist)
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
+  ;; FIXME: GENSYM
   (eval `(let ((plist ',plist)
                ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) (if (and (symbolp (cdr n)) (not (null (cdr n)))) (list 'quote (cdr n)) (cdr n))))
                          (plist-to-alist plist)))

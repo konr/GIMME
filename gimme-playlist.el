@@ -67,7 +67,8 @@
          (while h-beg
            (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
            (setq h-end (or (next-property-change (or h-beg (point-min))) (point-max)))
-           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
+           (when h-beg (remove-text-properties h-beg h-end '(face nil))
+                 (message (format "%d" h-beg)))))
        (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
               (end (next-property-change (or beg (point-min)))))
          (when beg (put-text-property beg (or end (point-max)) 'face 'highlight)))))))
@@ -79,21 +80,33 @@
     (setq gimme-delete-stack (cdr gimme-delete-stack))))
 
 
-(defun gimme-update-tags (plist)
+(defun gimme-update-tags (plist-b)
   ""
   (with-current-buffer gimme-buffer-name
-    (unlocking-buffer
-     (let* ((beg (text-property-any (point-min) (point-max) 'id (getf plist 'id)))
-            (end (or (next-property-change beg) (point-max)))
-            (pos (get-text-property (point) 'pos))
-            (face (get-text-property (point) 'face)))
-       (unless (plist-subset plist (text-properties-at beg))
-         (let* ((plist (plist-put plist 'pos pos))
-                (plist (plist-put plist 'face (list 'quote face))))
-           (kill-region beg end)
-           (save-excursion
-             (goto-char beg)
-             (insert (gimme-string (plist-put plist 'pos pos))))))))))
+    (let* ((id (getf plist-b 'id))
+           (pos-list (range-to-plists (point-min) (point-max)))
+           (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id))) pos-list))
+           (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
+      (dolist (pos pos-list)
+        (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
+               (end (or (next-property-change beg) (point-max))))
+          (unless (plist-subset plist-b (text-properties-at beg))
+            (unlocking-buffer
+             (plist-put plist-b 'pos pos)
+             (plist-put plist-b 'font-lock-face nil)
+                                        ; FIXME: For some reason,  when a duplicated
+                                        ; song is starred or changed, the plist will
+                                        ; contain font-lock-face, which can't be 
+                                        ; evaluated. The previous line """Fixes""" it,
+                                        ; but I guess that this bug will eventually 
+                                        ; show up in other parts of the code. 
+                                        ; 
+                                        ; FIXME: Double check the macros and rewrite
+                                        ; the code in a more functional style
+            (kill-region beg end)
+            (save-excursion
+              (goto-char beg)
+              (insert (gimme-string plist-b))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;
@@ -116,7 +129,8 @@
 (defun gimme-focused-play ()
   "Plays the currently focused song"
   (interactive)
-  (gimme-send-message "(playn %s)\n" (get-text-property (point) 'pos)))
+  (let ((pos (get-text-property (point) 'pos)))
+    (when pos (gimme-send-message "(playn %s)\n" pos))))
 
 (defun gimme-paste-deleted (undo)
   (interactive)
@@ -124,11 +138,14 @@
          (pos (get-text-property (point) 'pos))
          (ids (loop for pos = 0 then (next-property-change pos last)
                     while pos collecting (get-text-property pos 'id last))))
-    (dolist (id ids)
-      (setq pos (+ 1 pos))
-      (gimme-send-message "(insert %s %s)\n" id pos))))
+    (when (and pos ids)
+      (dolist (id ids)
+        (setq pos (+ 1 pos))
+        (gimme-send-message "(insert %s %s)\n" id pos)))))
 
 (defun gimme-focused-delete (delete-p)
+  "Deletes the currently focused song."
+  ;; FIXME: When you delete the currently playing song, the playlist state gets inconsistent on the server
   (interactive)
   (if (use-region-p)
       (let* ((min (min (point) (mark)))
@@ -137,13 +154,11 @@
              (max (+ 1 (progn (goto-char max) (line-end-position)))))
         (kill-ring-save min max))
     (kill-ring-save (line-beginning-position) (line-end-position)))
-  (let ((items (let ((last (car kill-ring)))
-                 (loop for pos = 0 then (next-property-change pos last)
-                       while pos collecting (get-text-property pos 'pos last)))))
-    (setq gimme-delete-stack (mapcar (lambda (n) (car items)) items))
-    (gimme-continue-deleting)
-    (comment dolist (item items)
-             (gimme-send-message "(remove %s)\n" (car items)))))
+  (let ((items (loop for pos = 0 then (next-property-change pos (car kill-ring))
+                     while pos collecting (get-text-property pos 'pos (car kill-ring)))))
+    (unless (null (car items))
+      (setq gimme-delete-stack (mapcar (lambda (n) (car items)) items))
+      (gimme-continue-deleting))))
 
 
 (defun gimme-focused-url ()
@@ -156,7 +171,7 @@
   (interactive)
   (with-current-buffer gimme-buffer-name
     (let ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight)))
-      (goto-char h-beg))))
+      (if h-beg (goto-char h-beg) (message "Not on the playlist.")))))
 
 (defun gimme-seek (time relativep)
   "Jumps to a different position. Time must be given in miliseconds."
@@ -186,9 +201,9 @@
          (plist (append plist `(starred ,string)))
          (alist (remove-if (lambda (n) (member (car n) '(face font-lock-face)))
                            (plist-to-pseudo-alist plist)))
-         (alist (mapcar (lambda (n) `(,(car n) ,(if (stringp (cadr n)) 
-                                               (format "\"%s\"" (cadr n))
-                                             (cadr n)))) alist)))
+         (alist (mapcar (lambda (n) `(,(car n) ,(if (stringp (cadr n))
+                                                    (format "\"%s\"" (decode-coding-string (cadr n) 'utf-8))
+                                                  (cadr n)))) alist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
 
 (defun gimme-update-tags-prompt ()
@@ -196,12 +211,15 @@
   (interactive)
   (let* ((alist (remove-if (lambda (n) (member (car n) '(face font-lock-face)))
                            (plist-to-pseudo-alist (text-properties-at (point)))))
+         (alist (mapcar (lambda (n) (if (stringp (cadr n))
+                                        (list (car n) (decode-coding-string (cadr n) 'utf-8))
+                                      n)) alist))
          (alist (mapcar (lambda (n) (if (member (car n) '(title album artist))
-                                   (list (car n) (format "\"%s\""
-                                                         (read-from-minibuffer
-                                                          (format "%s? " (car n))
-                                                          (format "%s" (cadr n)))))
-                                 n)) ; FIXME: Assuming no whitespace. Allow only number/strings!
+                                        (list (car n) (format "\"%s\""
+                                                              (read-from-minibuffer
+                                                               (format "%s? " (car n))
+                                                               (format "%s" (cadr n)))))
+                                      n)) ; FIXME: Assuming no whitespace. Allow only number/strings!
                         alist)))
     (gimme-send-message "(update_tags %s)\n" alist)))
 

@@ -7,11 +7,12 @@
   2. Better presentation of the current collection
   3. Finish working on filter-views's functions (filter-view)
   4. Sorting
+  5. Better Completion
+  6. NOT
+  7. Remap flush-lines and keep-lines
      
   Tree View:
-  1. Fix the tree representation
-  2. Print the tree on the buffer
-  3. Org-mode coloring and commands
+  1. Org-mode coloring and commands
 
   Playlist View:
   1. Implement the move operation on the playlist-updated broadcast
@@ -41,6 +42,8 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **26/7**: 11 fixing various bugs
+  - **23/7**: 3 on minor fixes
   - **18/7**: 5 on bug fixes and minor features
   - **17/7**: 14 messing around with git tree-view and adding the sort and star features.
   - **16/7**: 8 pomodoros fixing minor things on the previous days

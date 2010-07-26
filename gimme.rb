@@ -132,7 +132,11 @@ class GIMME
           @async.playlist("_active").entries.notifier do |list|
             list.each_with_index do |el,i|
               bdict[el][:pos] = i
-              bdict[el][:face] = :highlight if (i == pos[:position])
+              if (i == pos[:position])
+                bdict[el][:face] = :highlight
+              else
+                bdict[el].delete(:face)
+              end
               puts ["gimme-insert-song".to_sym,session,[:quote, bdict[el].to_a.flatten],:t].to_sexp
               #puts bdict.class
             end
@@ -230,10 +234,12 @@ class GIMME
 
   def playtime
     @async.playback_playtime.notifier do |time|
-      @async.playback_current_id.notifier do |id|
-        @async.medialib_get_info(id).notifier do |res|
-          duration = res[:duration] ? res[:duration].first.at(1) : NOTHING
-          puts [:"gimme-update-playtime",time,duration].to_sexp
+      if time
+        @async.playback_current_id.notifier do |id|
+          @async.medialib_get_info(id).notifier do |res|
+            duration = res[:duration] ? res[:duration].first.at(1) : NOTHING
+            puts [:"gimme-update-playtime",time,duration].to_sexp
+          end
         end
       end
     end
@@ -301,5 +307,4 @@ Thread.new do
     end
   end
 end
-
 $ml.run
