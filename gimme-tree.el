@@ -42,7 +42,8 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (save-excursion
-       (insert (format "%s\n" (gimme-process-branch tree)))))))
+       (insert (format "%s\n" (gimme-process-branch tree)))
+       ))))
 
 (defun gimme-process-branch (branch)
   "Formats a sexp that is either a node (number name) or a tree (node (children-tree) (childen-tree) ...) as '* parent 1\n**child 1\n**child 2\n*parent 1\n"
