@@ -42,7 +42,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **27/7**: 6 studying other packages and doing the status thing right. Still more to code.
+  - **27/7**: 10 studying other packages and doing the status thing right. Still more to code.
   - **26/7**: 11 fixing various bugs
   - **23/7**: 3 on minor fixes
   - **18/7**: 5 on bug fixes and minor features
@@ -68,7 +68,7 @@
   - **07/5**: 7 pomodoros: 1 watching ruby screencasts, 2 messing with the sexp library, 4 coding and looking for documentation
   - **06/5**: 6 pomodoros: 3 watching ruby screencasts and 3 working on code
   - **05/5**: 3 pomodoros watching Ruby screencasts on metaprogramming
-  - **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro :j(
+  - **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro :(
   - **30/4**: 1 pomodoro installing xmms and its libs in this machine
   - **29/4**: 5 pomodoros building a simple ruby+emacs example
 

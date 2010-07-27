@@ -23,6 +23,20 @@
 (defvar gimme-status-mode-timer nil
   "Interval timer object.")
 
+(defvar gimme-status-mode-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (vector 'mode-line 'mouse-1)
+      `(lambda (e)
+         (interactive "e")
+         (gimme-status-mode-toggle-format)
+         (gimme-status-mode-update-line)))
+    (define-key map (vector 'mode-line 'mouse-3)
+      `(lambda (e)
+         (interactive "e")
+         (gimme)))
+
+    map))
+
 (define-minor-mode gimme-status-mode
   "Toggle display of track information in the mode line.
 With a numeric arg, enable this display if arg is positive.
@@ -40,6 +54,9 @@ The mode line will be updated automatically every `gimme-status-mode-interval' s
                                                'gimme-status-mode-update-line))
     (gimme-status-mode-update-line)))
 
+
+
+
 (defun gimme-status-mode-toggle-format ()
   (interactive)
   (setq gimme-status-mode-formats
@@ -56,10 +73,13 @@ The mode line will be updated automatically every `gimme-status-mode-interval' s
            (msg (eval (car gimme-status-mode-formats))))
       (setq gimme-status-mode-string
             ;; FIXME: Random data
-            (propertize msg 
+            (propertize msg
                         'mouse-face 'mode-line-highlight
-                        'local-map mode-line-column-line-number-mode-map
-                        'help-echo "Foobar"))
+                        'local-map gimme-status-mode-keymap
+                        'help-echo "mouse-1: toggle status format\nmouse-2: jump to playlist\n"))
+      (put 'gimme-status-mode-string 'risky-local-variable t)
+      (comment setq gimme-status-mode-string (gimme-make-button))
+
 
       (force-mode-line-update)))
   (sit-for 0))
