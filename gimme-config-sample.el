@@ -8,5 +8,6 @@
 
 (defvar gimme-sort-criteria '((artist album tracknr) (artist title) (title)))
 
+(gimme-status-mode)
 
 (provide 'gimme-config)

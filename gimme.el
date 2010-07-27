@@ -11,6 +11,7 @@
 (defvar gimme-filter-remainder "")
 (defvar gimme-debug nil)
 (defvar gimme-buffers nil)
+(defvar gimme-playtime nil)
 
 (defvar gimme-delete-stack nil)
 
@@ -54,14 +55,8 @@
       max)))
 
 (defun gimme-update-playtime (time max)
-  (when (get-buffer gimme-buffer-name)
-    (with-current-buffer gimme-buffer-name
-      (let* ((time (format-seconds "%.2m:%.2s" (/ time 1000)))
-             (max  (format-seconds "%.2m:%.2s" (/ max 1000)))
-             (msg (format "GIMME: %s/%s" time max)))
-        (comment setq gimme-buffer-name msg)
-        (comment rename-buffer gimme-buffer-name)
-        (gimme-set-title msg)))))
+  "Updates the playtime in the gimme-playtime variable"
+  (setq gimme-playtime `((time . ,time) (max . ,max))))
 
 (defun gimme-init ()
   "Creates the buffer and manages the processes"
@@ -221,5 +216,6 @@
 (require 'gimme-tree)
 (require 'gimme-filter)
 (require 'gimme-utils)
+(require 'gimme-status-mode)
 (require 'gimme-config)
 (provide 'gimme)
