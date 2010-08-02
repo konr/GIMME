@@ -1,33 +1,31 @@
 * Status and next steps
   
-  Search mechanism is now using the parse() function
-
   Filter View:
-  1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
-  2. Better presentation of the current collection
-  3. Finish working on filter-views's functions (filter-view)
-  4. Sorting
-  5. Better Completion
-  6. NOT
-  7. Remap flush-lines and keep-lines
+  1. Better Completion
+  2. NOT
+  3. Escape quotes properly
      
   Tree View:
-  1. Org-mode coloring and commands
+  1. Org-mode coloring
+  2. Storing collections on 
+  3. Operations on Trees
 
   Playlist View:
-  1. Implement the move operation on the playlist-updated broadcast
-  2. Recreate the undo function
-  3. Recreate the kill/yank region functions
-  4. Deal with multiple instances of a song (see gimme-update-tags etc)
-  5. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
-  6. Tickle, messages and hooks
+  1. Tickle, messages and hooks
 
-  Etc:
-  1. Blog post
+  Bugs:
+  1. Spaces on filter view's search
+
+  Wishlist:
+  1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
   2. More than one buffer
   3. Colorize the header
-  4. Manual
+  4. Recreate the kill/yank region functions
+  5. Implement the move operation on the playlist-updated broadcast
+  6. Deal with multiple instances of a song (see gimme-update-tags etc)
+  7. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
 
+     
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
   Google's Summer of Code. You can read more about it at

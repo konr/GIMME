@@ -7,7 +7,6 @@
   (gimme-new-session)
   (get-buffer-create gimme-buffer-name)
   (setq gimme-current-mode 'tree)
-
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (gimme-filter-mode)
@@ -32,6 +31,9 @@
     (define-key map (kbd "+") 'gimme-inc_vol)
     (define-key map (kbd "-") 'gimme-dec_vol)
     map))
+
+(define-derived-mode gimme-tree-mode outline-mode
+  (setq mode-name "gimme-tree"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;

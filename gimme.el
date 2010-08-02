@@ -9,7 +9,7 @@
 (defvar gimme-session 0)
 (defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
-(defvar gimme-debug nil)
+(defvar gimme-debug 3)
 (defvar gimme-buffers nil)
 (defvar gimme-playtime nil)
 
@@ -42,9 +42,9 @@
                                              (tree  gimme-tree-mode-functions)
                                              (playlist gimme-playlist-mode-functions)
                                              (filter   gimme-filter-mode-functions)))))
-                        (when gimme-debug
-                          (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") (if (= gimme-debug 2) s f))))
-                        (when ok (eval (car x))))
+                        (when (> gimme-debug 0)
+                          (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") (if (>= gimme-debug 2) f s))))
+                        (when (and ok (> 3 gimme-debug)) (eval (car x))))
                 finally (return (substring s position))))))
 
 (defun gimme-current-duration ()
@@ -73,7 +73,7 @@
 (defun gimme-send-message (&rest args)
   "Formats the arguments using (format) then sends the resulting string to the process."
   (let ((message (apply #'format args)))
-    (when gimme-debug (message message))
+    (when (> gimme-debug 0) (message message))
     (process-send-string gimme-process message)))
 
 (defmacro gimme-generate-commands (&rest args)
@@ -130,7 +130,7 @@
     ('insert (progn (gimme-insert-song gimme-session plist nil) (message "Song added!")))
     ('remove (progn
                (setq gimme-last-del (getf plist 'pos))
-               (when gimme-debug (message (format "%s" plist)))
+               (when (> gimme-debug 0) (message (format "%s" plist)))
                (when (get-buffer gimme-buffer-name)
                  (with-current-buffer gimme-buffer-name
                    (unlocking-buffer
@@ -140,8 +140,7 @@
                                     (point-max))))
                       (when (and beg end)
                         (clipboard-kill-region beg end)
-                        (gimme-update-pos #'1- (point) (point-max)))))))
-               (message "Song removed!")))
+                        (gimme-update-pos #'1- (point) (point-max)))))))))
     ('move (progn (gimme-playlist) (message "Playlist shuffled!"))(message "Playlist updated! (moving element)"))
     ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
     ('clear   (progn (gimme-playlist) (message "Playlist cleared!")))
@@ -152,7 +151,7 @@
   "Where is my lexical scope when I need it? :("
   (setq gimme-playlist-header title)
   (setq header-line-format
-        '(:eval (substring gimme-playlist-header
+        '(:eval (substring (decode-coding-string gimme-playlist-header 'utf-8)
                            (min (length gimme-playlist-header)
                                 (window-hscroll))))))
 

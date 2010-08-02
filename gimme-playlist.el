@@ -73,11 +73,7 @@
               (end (next-property-change (or beg (point-min)))))
          (when beg (put-text-property beg (or end (point-max)) 'face 'highlight)))))))
 
-(defun gimme-continue-deleting ()
-  ""
-  (when gimme-delete-stack
-    (gimme-send-message "(remove %s)\n" (car gimme-delete-stack))
-    (setq gimme-delete-stack (cdr gimme-delete-stack))))
+
 
 
 (defun gimme-update-tags (plist-b)
@@ -143,6 +139,12 @@
         (setq pos (+ 1 pos))
         (gimme-send-message "(insert %s %s)\n" id pos)))))
 
+(defun gimme-continue-deleting ()
+  ""
+  (when gimme-delete-stack
+    (gimme-send-message "(remove %s)\n" (car gimme-delete-stack))
+    (setq gimme-delete-stack (cdr gimme-delete-stack))))
+
 (defun gimme-focused-delete (delete-p)
   "Deletes the currently focused song."
   ;; FIXME: When you delete the currently playing song, the playlist state gets inconsistent on the server
@@ -157,7 +159,7 @@
   (let ((items (loop for pos = 0 then (next-property-change pos (car kill-ring))
                      while pos collecting (get-text-property pos 'pos (car kill-ring)))))
     (unless (null (car items))
-      (setq gimme-delete-stack (mapcar (lambda (n) (car items)) items))
+      (gimme-send-message "(remove %s)\n" (car gimme-delete-stack))
       (gimme-continue-deleting))))
 
 

@@ -56,7 +56,7 @@
   (interactive)
   (let* ((parent (car gimme-filter-collections))
          (name (completing-read "Filter? "
-                                (mapcar (lambda (n) (format "%s:%s" (car n) (cdr n)))
+                                (mapcar (lambda (n) (format "%s:'%s'" (car n) (cdr n)))
                                         (plist-to-alist (text-properties-at (point))))))
          (message (format "(subcol \"%s\" \"%s\")\n" parent name)))
     (gimme-send-message message)))
