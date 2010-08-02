@@ -40,6 +40,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **02/8**: 4 fixing minor things
   - **27/7**: 10 studying other packages and doing the status thing right. Still more to code.
   - **26/7**: 11 fixing various bugs
   - **23/7**: 3 on minor fixes
