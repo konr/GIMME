@@ -9,7 +9,7 @@
 (defvar gimme-session 0)
 (defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
-(defvar gimme-debug 3)
+(defvar gimme-debug 0)
 (defvar gimme-buffers nil)
 (defvar gimme-playtime nil)
 
@@ -174,15 +174,6 @@
   (setq truncate-lines t)
   (setq major-mode 'gimme-playlist-mode
         mode-name "gimme-playlist"))
-
-(defun gimme-tree-mode ()
-  "FIXME: Write something here"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map gimme-tree-map)
-  (setq truncate-lines t)
-  (setq major-mode 'gimme-tree-mode
-        mode-name "gimme-tree"))
 
 (defun gimme-filter-mode ()
   "FIXME: Write something here"

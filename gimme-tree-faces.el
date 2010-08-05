@@ -4,79 +4,71 @@
   :group 'gimme)
 
 (defface gimme-tree-level-1 ;; originally copied from font-lock-function-name-face
-  (gimme-tree-compatible-face 'outline-1
     '((((class color) (min-colors 88) (background light)) (:foreground "Blue1"))
       (((class color) (min-colors 88) (background dark)) (:foreground "LightSkyBlue"))
       (((class color) (min-colors 16) (background light)) (:foreground "Blue"))
       (((class color) (min-colors 16) (background dark)) (:foreground "LightSkyBlue"))
       (((class color) (min-colors 8)) (:foreground "blue" :bold t))
-      (t (:bold t))))
+      (t (:bold t)))
   "Face used for level 1 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-2 ;; originally copied from font-lock-variable-name-face
-  (gimme-tree-compatible-face 'outline-2
     '((((class color) (min-colors 16) (background light)) (:foreground "DarkGoldenrod"))
       (((class color) (min-colors 16) (background dark))  (:foreground "LightGoldenrod"))
       (((class color) (min-colors 8)  (background light)) (:foreground "yellow"))
       (((class color) (min-colors 8)  (background dark))  (:foreground "yellow" :bold t))
-      (t (:bold t))))
+      (t (:bold t)))
   "Face used for level 2 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-3 ;; originally copied from font-lock-keyword-face
-  (gimme-tree-compatible-face 'outline-3
     '((((class color) (min-colors 88) (background light)) (:foreground "Purple"))
       (((class color) (min-colors 88) (background dark))  (:foreground "Cyan1"))
       (((class color) (min-colors 16) (background light)) (:foreground "Purple"))
       (((class color) (min-colors 16) (background dark))  (:foreground "Cyan"))
       (((class color) (min-colors 8)  (background light)) (:foreground "purple" :bold t))
       (((class color) (min-colors 8)  (background dark))  (:foreground "cyan" :bold t))
-      (t (:bold t))))
+      (t (:bold t)))
   "Face used for level 3 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-4   ;; originally copied from font-lock-comment-face
-  (gimme-tree-compatible-face 'outline-4
     '((((class color) (min-colors 88) (background light)) (:foreground "Firebrick"))
       (((class color) (min-colors 88) (background dark))  (:foreground "chocolate1"))
       (((class color) (min-colors 16) (background light)) (:foreground "red"))
       (((class color) (min-colors 16) (background dark))  (:foreground "red1"))
       (((class color) (min-colors 8) (background light))  (:foreground "red" :bold t))
       (((class color) (min-colors 8) (background dark))   (:foreground "red" :bold t))
-      (t (:bold t))))
+      (t (:bold t)))
   "Face used for level 4 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-5 ;; originally copied from font-lock-type-face
-  (gimme-tree-compatible-face 'outline-5
     '((((class color) (min-colors 16) (background light)) (:foreground "ForestGreen"))
       (((class color) (min-colors 16) (background dark)) (:foreground "PaleGreen"))
-      (((class color) (min-colors 8)) (:foreground "green"))))
+      (((class color) (min-colors 8)) (:foreground "green")))
   "Face used for level 5 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-6 ;; originally copied from font-lock-constant-face
-  (gimme-tree-compatible-face 'outline-6
     '((((class color) (min-colors 16) (background light)) (:foreground "CadetBlue"))
       (((class color) (min-colors 16) (background dark)) (:foreground "Aquamarine"))
-      (((class color) (min-colors 8)) (:foreground "magenta"))))
+      (((class color) (min-colors 8)) (:foreground "magenta")))
   "Face used for level 6 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-7 ;; originally copied from font-lock-builtin-face
-  (gimme-tree-compatible-face 'outline-7
     '((((class color) (min-colors 16) (background light)) (:foreground "Orchid"))
       (((class color) (min-colors 16) (background dark)) (:foreground "LightSteelBlue"))
-      (((class color) (min-colors 8)) (:foreground "blue"))))
+      (((class color) (min-colors 8)) (:foreground "blue")))
   "Face used for level 7 headlines."
   :group 'gimme-tree-faces)
 
 (defface gimme-tree-level-8 ;; originally copied from font-lock-string-face
-  (gimme-tree-compatible-face 'outline-8
     '((((class color) (min-colors 16) (background light)) (:foreground "RosyBrown"))
       (((class color) (min-colors 16) (background dark)) (:foreground "LightSalmon"))
-      (((class color) (min-colors 8)) (:foreground "green"))))
+      (((class color) (min-colors 8)) (:foreground "green")))
   "Face used for level 8 headlines."
   :group 'gimme-tree-faces)
 

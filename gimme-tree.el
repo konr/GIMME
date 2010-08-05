@@ -9,7 +9,7 @@
   (setq gimme-current-mode 'tree)
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
-     (gimme-filter-mode)
+     (gimme-tree-mode)
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-tree-header)
      (gimme-send-message "(colls %s)\n" gimme-session)
@@ -32,7 +32,21 @@
     (define-key map (kbd "-") 'gimme-dec_vol)
     map))
 
-(define-derived-mode gimme-tree-mode outline-mode
+(kill-all-local-variables)
+(define-derived-mode gimme-tree-mode font-lock-mode
+  (interactive)
+  (use-local-map gimme-tree-map)
+  (setq truncate-lines t)
+  (setq major-mode 'gimme-tree-mode)
+  (font-lock-add-keywords 'gimme-tree-mode
+                          '(("^\* .*" . 'gimme-tree-level-1)
+                            ("^\*\* .*" . 'gimme-tree-level-2)
+                            ("^\*\*\* .*" . 'gimme-tree-level-3)
+                            ("^\*\*\*\* .*" . 'gimme-tree-level-4)
+                            ("^\*\*\*\*\* .*" . 'gimme-tree-level-5)
+                            ("^\*\*\*\*\*\* .*" . 'gimme-tree-level-6)
+                            ("^\*\*\*\*\*\*\* .*" . 'gimme-tree-level-7)
+                            ("^\*\*\*\*\*\*\*\* .*" . 'gimme-tree-level-8)))
   (setq mode-name "gimme-tree"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,8 +58,7 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (save-excursion
-       (insert (format "%s\n" (gimme-process-branch tree)))
-       ))))
+       (insert (format "%s\n" (gimme-process-branch tree)))))))
 
 (defun gimme-process-branch (branch)
   "Formats a sexp that is either a node (number name) or a tree (node (children-tree) (childen-tree) ...) as '* parent 1\n**child 1\n**child 2\n*parent 1\n"

@@ -1,22 +1,19 @@
-* Status and next steps
-  
-  Filter View:
-  1. Better Completion
-  2. NOT
-  3. Escape quotes properly
-     
-  Tree View:
-  1. Org-mode coloring
-  2. Storing collections on 
-  3. Operations on Trees
+* Working on [0/10]
 
-  Playlist View:
-  1. Tickle, messages and hooks
+  1. [ ] Org-mode coloring
+  2. [ ] Storing the relationship of the trees on the hard drive
+  3. [ ] Storing collections on hard disk
+  4. [ ] Operations on Trees
+  5. [ ] Checking for inconsistencies
+  6. [ ] NOT operation on filter-view
+  7. [ ] Spaces on filter view's search
+  8. [ ] Escape quotes properly
+  9. [ ] Better Completion
+  10. [ ] Tickle, messages and hooks
+  11. [ ] Make the colors consistent with dark/light backgrounds.
 
-  Bugs:
-  1. Spaces on filter view's search
+* Next features
 
-  Wishlist:
   1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
   2. More than one buffer
   3. Colorize the header
@@ -25,7 +22,6 @@
   6. Deal with multiple instances of a song (see gimme-update-tags etc)
   7. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
 
-     
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
   Google's Summer of Code. You can read more about it at
