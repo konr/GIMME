@@ -268,6 +268,12 @@ class GIMME
     end
   end
 
+  def colls (session)
+    @async.coll_list.notifier do |res|
+      puts [:"gimme-tree-colls",session,[:quote, res.to_a]].to_sexp
+    end
+  end
+
   private
 
 

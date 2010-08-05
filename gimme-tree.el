@@ -1,6 +1,7 @@
 (defvar gimme-tree-header "GIMME - Tree View")
 (defvar gimme-tree-mode-functions
   '(message gimme-update-playtime gimme-tree-colls))
+(defvar gimme-trees (make-hash-table))
 
 (defun gimme-tree ()
   (interactive)
@@ -32,8 +33,8 @@
     (define-key map (kbd "-") 'gimme-dec_vol)
     map))
 
-(kill-all-local-variables)
-(define-derived-mode gimme-tree-mode font-lock-mode
+(define-derived-mode gimme-tree-mode outline-mode
+  ;; FIXME: Find out why deriving from font-lock-face won't colorize the the songs
   (interactive)
   (use-local-map gimme-tree-map)
   (setq truncate-lines t)
@@ -53,12 +54,17 @@
 ;; Called by the ruby process ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun gimme-tree-colls (session tree)
+(defun gimme-tree-colls (session list)
   "Prints the available collections as a tree"
-  (with-current-buffer gimme-buffer-name
-    (unlocking-buffer
-     (save-excursion
-       (insert (format "%s\n" (gimme-process-branch tree)))))))
+  (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
+         (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
+    (with-current-buffer gimme-buffer-name
+      (unlocking-buffer
+       (save-excursion
+         (comment insert (format "%s\n" (gimme-process-branch tree))) ;; FIXME: comment
+         (insert (format "* Saved collections\n"))
+         (dolist (el list)
+           (insert (format "** %s\n" el))))))))
 
 (defun gimme-process-branch (branch)
   "Formats a sexp that is either a node (number name) or a tree (node (children-tree) (childen-tree) ...) as '* parent 1\n**child 1\n**child 2\n*parent 1\n"
