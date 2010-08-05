@@ -1,4 +1,4 @@
-(defvar gimme-filter-collections (list "*")) ;; FIXME: Better name?
+(defvar gimme-filter-collections nil) ;; FIXME: Better name?
 (defvar gimme-filter-header "GIMME - Filter View")
 (defvar gimme-filter-mode-functions
   '(gimme-insert-song gimme-set-title message
@@ -16,21 +16,19 @@
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-filter-header)
      (save-excursion
-       (gimme-send-message "(pcol \"%s\" %s)\n" (car gimme-filter-collections) gimme-session)))
+       (gimme-send-message "(pcol %s %s)\n" (car gimme-filter-collections) gimme-session)))
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 (defun gimme-child-col ()
   (interactive)
   (let* ((parent (car gimme-filter-collections))
-         (name (read-from-minibuffer (format "%s > " parent)))
-         (message (format "(subcol \"%s\" \"%s\")\n" parent name)))
+         (name (read-from-minibuffer (format "%s > " "")))
+         (message (format "(subcol %s \"%s\")\n" parent name)))
     (gimme-send-message message)))
 
 (defun gimme-parent-col ()
   (interactive)
-  (setq gimme-filter-collections
-        (if (null (cddr gimme-filter-collections))
-            (list "*") (cdr gimme-filter-collections)))
+  (setq gimme-filter-collections (cdr gimme-filter-collections))
   (gimme-filter))
 
 (defun gimme-filter-set-current-col (name)

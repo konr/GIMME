@@ -196,30 +196,18 @@ class GIMME
     # "0-tracknr:1"
     # "00-artist:Foo"
 
-    key,val = pattern.split(":",2)
-    parent = Xmms::Collection.universe
-    parentcol = col == "*" ? "" : col.split("-")[0]
+    parent = getcol(col)
+    match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+    match = Xmms::Collection.parse(pattern)
 
-    @async.coll_list.notifier do |name|
-      name = name.delete_if{|x| !x.match("^#{parentcol}[0-9]\+-")}
-      name = name.length > 0  ? (name.map{|x| x.split("-")[0]}.sort{|x,y| x[-1] <=> y[-1]}[-1].to_i + 1).to_s+"-#{pattern}" : "#{parentcol}0-#{pattern}"
-
-      if col != "*"
-        parent = Xmms::Collection.new(Xmms::Collection::TYPE_REFERENCE)
-        parent.attributes["reference"] = col
-        parent.attributes["namespace"] = Xmms::Collection::NS_COLLECTIONS
-      end
-
-      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
-      match = Xmms::Collection.parse(pattern)
-
-      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
-      intersection.operands.push(parent)
-      intersection.operands.push(match)
-
-      @async.coll_save(intersection,name,Xmms::Collection::NS_COLLECTIONS)
-      puts [:"gimme-filter-set-current-col", name].to_sexp
+    intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
+    intersection.operands.push(parent)
+    intersection.operands.push(match)
+    @async.coll_query_ids(intersection).notifier do |list|
+      puts [:"gimme-filter-set-current-col", [:quote, list]].to_sexp
     end
+
+
   end
 
   def sort (criteria)
@@ -234,18 +222,16 @@ class GIMME
     end
   end
 
-  def pcol (name, session)
-    puts [:"gimme-set-title", "GIMME - Filter View (" +name + ")"].to_sexp
-    @async.coll_get(name).notifier do |coll|
-      coll = Xmms::Collection.universe if name == "*"
-      @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
-        wrapperdict.each do |dict|
-          adict = {}
-          dict.each {|key,val| adict[key] = val.class == NilClass ? "nil" : val} #FIXME make this a function
-          puts ["gimme-insert-song".to_sym,session,[:quote, adict.to_a.flatten],:t].to_sexp
-        end
-        42 # FIXME: For some reason, an integer is required
+  def pcol (data, session)
+    coll = getcol(data)
+    @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
+      #puts [:"gimme-set-title", "GIMME - Filter View (" +coll.name + ")"].to_sexp FIXME
+      wrapperdict.each do |dict|
+        adict = {}
+        dict.each {|key,val| adict[key] = val.class == NilClass ? "nil" : val} #FIXME make this a function
+        puts ["gimme-insert-song".to_sym,session,[:quote, adict.to_a.flatten],:t].to_sexp
       end
+      42 # FIXME: For some reason, an integer is required
     end
   end
 
@@ -280,6 +266,20 @@ class GIMME
 
   private
 
+  def getcol (data)
+    if data.class == String
+      @async.coll_get(data).notifier do |res|
+        coll = res
+      end
+    elsif data.class == Symbol and data == :nil
+      coll = Xmms::Collection.universe
+    elsif data.class == Array
+      coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
+      coll.idlist=data
+    else return nil
+    end
+    return coll
+  end
 
   def change_volume (inc)
     @async.playback_volume_get.notifier do |vol|
