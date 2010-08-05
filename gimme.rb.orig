@@ -21,23 +21,6 @@ class GIMME
     @async = Xmms::Client.new('GIMMEasync').connect(ENV['XMMS_PATH'])
     @async.add_to_glib_mainloop
 
-    last_time = 0
-    @async.signal_playback_playtime.notifier do |time|
-      if time == 0
-      elsif ((time / 1000) % 60) != ((last_time / 1000) % 60)
-        last_time = time
-        @async.playback_current_id.notifier do |id|
-          if id != 0
-            @async.medialib_get_info(id).notifier do |res|
-              duration = res[:duration] ? res[:duration].first.at(1) : NOTHING
-              puts [:"gimme-update-playtime",time,duration].to_sexp
-            end
-          end
-        end
-      end
-      true
-    end
-
     @async.broadcast_playback_current_id.notifier do |res|
       @async.playlist("_active").current_pos.notifier do |pos|
         puts ["gimme-set-playing".to_sym, pos[:position]].to_sexp
@@ -249,6 +232,19 @@ class GIMME
     end
   end
 
+  def playtime
+    @async.playback_playtime.notifier do |time|
+      if time
+        @async.playback_current_id.notifier do |id|
+          @async.medialib_get_info(id).notifier do |res|
+            duration = res[:duration] ? res[:duration].first.at(1) : NOTHING
+            puts [:"gimme-update-playtime",time,duration].to_sexp
+          end
+        end
+      end
+    end
+  end
+
   def set_atribs (l)
     $atribs |= l.map{|n| n.to_s}
   end
@@ -300,6 +296,13 @@ $channel = GLib::IOChannel.new(STDIN)
 
 Thread.new do
   while true
+    client.playtime if !DEBUG
+    sleep 1
+  end
+end
+
+Thread.new do
+  while true
     gets.strip.each do | command |
       parsed = command.parse_sexp.first
       if (parsed.class == Array && client.respond_to?(parsed.first))
@@ -310,5 +313,4 @@ Thread.new do
     end
   end
 end
-
 $ml.run

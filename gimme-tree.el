@@ -22,7 +22,7 @@
     (define-key map (kbd "@") 'gimme-tree)
     (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
-    (define-key map (kbd "SPC") 'gimme-toggle)
+    (define-key map (kbd "SPC") 'gimme-toggle-collection)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "J") 'gimme-next)
