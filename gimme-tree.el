@@ -1,7 +1,8 @@
 (defvar gimme-tree-header "GIMME - Tree View")
 (defvar gimme-tree-mode-functions
   '(message gimme-update-playtime gimme-tree-colls))
-(defvar gimme-trees (make-hash-table))
+(defvar gimme-trees '((name "All" ref nil)))
+(defvar gimme-position nil)
 
 (defun gimme-tree ()
   (interactive)
@@ -10,8 +11,9 @@
   (setq gimme-current-mode 'tree)
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
-     (gimme-tree-mode)
      (clipboard-kill-region 1 (point-max))
+     (gimme-tree-mode)
+     (ignore-errors (viper-change-state-to-emacs)) ;; FIXME: Temporary
      (gimme-set-title gimme-tree-header)
      (gimme-send-message "(colls %s)\n" gimme-session)
      (switch-to-buffer (get-buffer gimme-buffer-name)))))
@@ -48,7 +50,40 @@
                             ("^\*\*\*\*\*\* .*" . 'gimme-tree-level-6)
                             ("^\*\*\*\*\*\*\* .*" . 'gimme-tree-level-7)
                             ("^\*\*\*\*\*\*\*\* .*" . 'gimme-tree-level-8)))
-  (setq mode-name "gimme-tree"))
+  (setq mode-name "gimme-tree") )
+
+
+;;;;;;;;;
+;; Aux ;;
+;;;;;;;;;
+;;
+;; Tree is like (plist child1 child2 ...)
+
+(defun gimme-tree-get-node (position)
+  (loop for pos = position then (cdr pos)
+        and tree = gimme-trees then (nth (car pos) tree)
+        while pos
+        finally return tree))
+
+(defun gimme-tree-add-child (data position)
+  (nconc (gimme-tree-get-node position) (list (list data))))
+
+(defun gimme-tree-current-ref ()
+  (getf (car (gimme-tree-get-node gimme-position))
+        'ref))
+
+(defun gimme-tree-walk (function tree &optional depth)
+  (let ((depth (if depth depth 0)))
+    (if (null tree) nil
+      (cons (funcall function tree)
+            (mapcan (lambda (n) (gimme-tree-walk function n (1+ depth)))
+                    (cdr tree))))))
+
+(defun gimme-tree-get-trees ()
+  (gimme-tree-walk (lambda (n) (format "%s %s\n" 
+                                  (make-string depth ?*) 
+                                  (getf (car n) 'name)))
+                   gimme-trees 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
@@ -61,19 +96,9 @@
     (with-current-buffer gimme-buffer-name
       (unlocking-buffer
        (save-excursion
-         (comment insert (format "%s\n" (gimme-process-branch tree))) ;; FIXME: comment
-         (insert (format "* Saved collections\n"))
-         (dolist (el list)
-           (insert (format "** %s\n" el))))))))
-
-(defun gimme-process-branch (branch)
-  "Formats a sexp that is either a node (number name) or a tree (node (children-tree) (childen-tree) ...) as '* parent 1\n**child 1\n**child 2\n*parent 1\n"
-  (flet ((aux (branch s)
-              (mapcan (lambda (n) (if (listp (car n)) (aux n (format "*%s" s))
-                               (list (format "%s%s\n" s (cadar branch))))) branch)))
-    (replace-regexp-in-string "^\* " "\n\* "
-                              (reduce #'concat (aux branch " ")))))
-
+         (dolist (el (gimme-tree-get-trees)) (insert el))
+         (insert (format "\n* Saved collections\n"))
+         (dolist (el list) (insert (format "** %s\n" el))))))))
 
 (provide 'gimme-tree)
 

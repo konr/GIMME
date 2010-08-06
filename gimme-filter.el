@@ -1,4 +1,3 @@
-(defvar gimme-filter-collections nil) ;; FIXME: Better name?
 (defvar gimme-filter-header "GIMME - Filter View")
 (defvar gimme-filter-mode-functions
   '(gimme-insert-song gimme-set-title message
@@ -16,7 +15,7 @@
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title gimme-filter-header)
      (save-excursion
-       (gimme-send-message "(pcol %s %s)\n" (car gimme-filter-collections) gimme-session)))
+       (gimme-send-message "(pcol %s %s)\n" (gimme-tree-current-ref) gimme-session)))
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
 
 (defun gimme-child-col ()
