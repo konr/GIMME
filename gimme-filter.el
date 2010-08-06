@@ -1,4 +1,5 @@
 (defvar gimme-filter-header "GIMME - Filter View")
+(defvar gimme-new-collection-name "Untitled")
 (defvar gimme-filter-mode-functions
   '(gimme-insert-song gimme-set-title message
                       gimme-filter-set-current-col
@@ -20,18 +21,16 @@
 
 (defun gimme-child-col ()
   (interactive)
-  (let* ((parent (car gimme-filter-collections))
-         (name (read-from-minibuffer (format "%s > " "")))
+  (let* ((parent (gimme-tree-current-ref))
+         (name (getf (gimme-tree-current-data) 'name))
+         (name (read-from-minibuffer (format "%s > " name)))
          (message (format "(subcol %s \"%s\")\n" parent name)))
+    (setq gimme-new-collection-name (format "Untitled (%s)" message))
     (gimme-send-message message)))
 
 (defun gimme-parent-col ()
   (interactive)
-  (setq gimme-filter-collections (cdr gimme-filter-collections))
-  (gimme-filter))
-
-(defun gimme-filter-set-current-col (name)
-  (setq gimme-filter-collections (cons name gimme-filter-collections))
+  (setq gimme-position (butlast gimme-position))
   (gimme-filter))
 
 (defun gimme-filter-append-focused ()
@@ -51,11 +50,14 @@
 (defun gimme-filter-same ()
   "Creates a subcollection matching some this song's criterium"
   (interactive)
-  (let* ((parent (car gimme-filter-collections))
-         (name (completing-read "Filter? "
-                                (mapcar (lambda (n) (format "%s:'%s'" (car n) (cdr n)))
-                                        (plist-to-alist (text-properties-at (point))))))
-         (message (format "(subcol \"%s\" \"%s\")\n" parent name)))
+  (let* ((parent (gimme-tree-current-ref))
+         (name (completing-read
+                "Filter? "
+                (mapcar (lambda (n) (format "%s:'%s'" (car n) (cdr n)))
+                        (remove-if (lambda (m) (member (car m)
+                                                  '(id duration font-lock-face)))
+                                   (plist-to-alist (text-properties-at (point)))))))
+         (message (format "(subcol %s \"%s\")\n" parent name)))
     (gimme-send-message message)))
 
 (defvar gimme-filter-map
@@ -81,5 +83,17 @@
     (define-key map (kbd "A") 'gimme-filter-append-collection)
     (define-key map (kbd "f") 'gimme-filter-same)
     map))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Called by the ruby part ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-filter-set-current-col (ref)
+  (nconc gimme-position
+         (list (gimme-tree-add-child
+                `(name ,gimme-new-collection-name ref ,ref)
+                gimme-position)))
+  (gimme-filter))
+
 
 (provide 'gimme-filter)

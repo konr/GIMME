@@ -1,7 +1,7 @@
 (defvar gimme-tree-header "GIMME - Tree View")
 (defvar gimme-tree-mode-functions
   '(message gimme-update-playtime gimme-tree-colls))
-(defvar gimme-trees '((name "All" ref nil)))
+(defvar gimme-trees '((name "All" ref nil pos nil)))
 (defvar gimme-position nil)
 
 (defun gimme-tree ()
@@ -33,6 +33,7 @@
     (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
     (define-key map (kbd "+") 'gimme-inc_vol)
     (define-key map (kbd "-") 'gimme-dec_vol)
+    (define-key map (kbd "RET") 'gimme-tree-view-collection)
     map))
 
 (define-derived-mode gimme-tree-mode outline-mode
@@ -52,6 +53,15 @@
                             ("^\*\*\*\*\*\*\*\* .*" . 'gimme-tree-level-8)))
   (setq mode-name "gimme-tree") )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interactive function ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-tree-view-collection ()
+  (interactive)
+  (setq gimme-position (get-text-property (point) 'pos))
+  (gimme-filter))
+
 
 ;;;;;;;;;
 ;; Aux ;;
@@ -66,11 +76,18 @@
         finally return tree))
 
 (defun gimme-tree-add-child (data position)
-  (nconc (gimme-tree-get-node position) (list (list data))))
+  ;; FIXME: Ugliest function EVER
+  (let* ((tree (gimme-tree-get-node position))
+         (len (length tree)))
+    (nconc tree `((,(append `(pos ,(append position `(,len))) data))))
+    len))
 
 (defun gimme-tree-current-ref ()
   (getf (car (gimme-tree-get-node gimme-position))
-        'ref))
+              'ref))
+
+(defun gimme-tree-current-data ()
+  (car (gimme-tree-get-node gimme-position)))
 
 (defun gimme-tree-walk (function tree &optional depth)
   (let ((depth (if depth depth 0)))
@@ -80,10 +97,12 @@
                     (cdr tree))))))
 
 (defun gimme-tree-get-trees ()
-  (gimme-tree-walk (lambda (n) (format "%s %s\n" 
-                                  (make-string depth ?*) 
-                                  (getf (car n) 'name)))
-                   gimme-trees 1))
+  (gimme-tree-walk (lambda (n)
+                     (apply 'propertize (format "%s%s %s\n"
+                                                (case depth (0 "*") (1 "\n") (t ""))
+                                                (make-string depth ?*)
+                                                (getf (car n) 'name)) (car n)))
+                   gimme-trees 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
