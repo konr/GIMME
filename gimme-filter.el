@@ -25,13 +25,14 @@
          (name (getf (gimme-tree-current-data) 'name))
          (name (read-from-minibuffer (format "%s > " name)))
          (message (format "(subcol %s \"%s\")\n" parent name)))
-    (setq gimme-new-collection-name (format "Untitled (%s)" message))
+    (setq gimme-new-collection-name (format "Untitled (%s)" name))
     (gimme-send-message message)))
 
 (defun gimme-parent-col ()
   (interactive)
-  (setq gimme-position (butlast gimme-position))
-  (gimme-filter))
+  (if (listp gimme-current)
+      (setq gimme-current (butlast gimme-current))
+    (gimme-filter)))
 
 (defun gimme-filter-append-focused ()
   (interactive)
@@ -89,10 +90,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-filter-set-current-col (ref)
-  (nconc gimme-position
-         (list (gimme-tree-add-child
-                `(name ,gimme-new-collection-name ref ,ref)
-                gimme-position)))
+  (setq gimme-current
+        (append gimme-current
+                `(,(gimme-tree-add-child
+                    `(name ,gimme-new-collection-name ref ,ref)
+                    gimme-current))))
   (gimme-filter))
 
 

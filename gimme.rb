@@ -268,11 +268,16 @@ class GIMME
 
   def getcol (data)
     if data.class == String
-      @async.coll_get(data).notifier do |res|
-        coll = res
+      if data == "*"
+        coll = Xmms::Collection.universe
+      else
+        @async.coll_get(data).notifier do |res|
+          coll = res
+        end
       end
     elsif data.class == Symbol and data == :nil
-      coll = Xmms::Collection.universe
+      coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
+      coll.idlist=[]
     elsif data.class == Array
       coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
       coll.idlist=data
