@@ -81,4 +81,12 @@
                 ((and (not l) (not L)) t)
                 ((and l       L)       nil))))
 
+(defun get-bounds-where (f)
+  (loop for beg = (point-min) then end
+        and end = (next-property-change (point-min)) 
+        then (next-property-change (or end (point-min)))
+        while end
+        and when (funcall f beg)
+        collect (list beg end) end))
+
 (provide 'gimme-utils)

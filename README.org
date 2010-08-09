@@ -1,16 +1,16 @@
-* Working on [4/11]
+* Working on [8/11]
 
   1. [X] Org-mode coloring
   2. [X] Storing the relationship of the trees on the hard drive
   3. [X] Storing collections on hard disk
-  4. [ ] Operations on Trees
-  5. [ ] Checking for inconsistencies
-  6. [ ] NOT operation on filter-view
-  7. [ ] Spaces on filter view's search
-  8. [X] Escape quotes properly
-  9. [ ] Better Completion
-  10. [ ] Tickle, messages and hooks
-  11. [ ] Make the colors consistent with dark/light backgrounds.
+  4. [X] Spaces on filter view's search
+  5. [X] Escape quotes properly
+  6. [X] Better Completion
+  7. [X] Broadcasts
+  8. [X] Add and play
+  9. [ ] Tickle, messages and hooks
+  10. [ ] Make the colors consistent with dark/light backgrounds.
+  11. [ ] Rename and Save
 
 * Next features
 
@@ -22,6 +22,7 @@
   6. Deal with multiple instances of a song (see gimme-update-tags etc)
   7. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
   8. Remove-duplicates 
+  4. AND, OR, etc operations directly on the tree-view
 
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
@@ -37,6 +38,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **09/8**: 12 working on tree-view (including 08/08)
   - **05/8**: 17 (IIRC) rewriting the tree-mode functions
   - **02/8**: 4 fixing minor things
   - **27/7**: 10 studying other packages and doing the status thing right. Still more to code.
@@ -68,4 +70,5 @@
   - **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro :(
   - **30/4**: 1 pomodoro installing xmms and its libs in this machine
   - **29/4**: 5 pomodoros building a simple ruby+emacs example
+
 

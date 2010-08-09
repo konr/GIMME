@@ -42,6 +42,18 @@ class GIMME
       true
     end
 
+    @async.broadcast_coll_changed.notifier do |res|
+      dict = {}; res.each{|k,v| dict[k]=v}
+      dict[:type] = case dict[:type]
+                    when Xmms::Collection::ADD then :add
+                    when Xmms::Collection::UPDATE then :update
+                    when Xmms::Collection::RENAME then :rename
+                    when Xmms::Collection::REMOVE then :remove
+                    end
+      puts [:"gimme-coll-changed", [:quote, dict.to_a.flatten]].to_sexp
+      true
+    end
+
     @async.broadcast_playback_current_id.notifier do |res|
       @async.playlist("_active").current_pos.notifier do |pos|
         puts ["gimme-set-playing".to_sym, pos[:position]].to_sexp
@@ -123,7 +135,9 @@ class GIMME
 
   def addplay (id)
     @async.playlist("_active").add_entry(id).notifier do
-      puts '(message "not yet implemented! appending to the playlist...")'
+      @async.playlist("_active").entries.notifier do |list|
+        playn list.length-1
+      end
     end
   end
 
@@ -131,6 +145,12 @@ class GIMME
     @async.coll_get(name).notifier do |c|
       # FIXME: Doesn't work :(
       @async.playlist("_active").add_collection(c).notifier { message "did it work?" }
+    end
+  end
+
+  def dcol (name)
+    @async.coll_remove(name).notifier do |res|
+      message "collection removed!"
     end
   end
 

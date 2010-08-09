@@ -1,7 +1,8 @@
 (defvar gimme-tree-header "GIMME - Tree View")
 (defvar gimme-tree-mode-functions
-  '(message gimme-update-playtime gimme-tree-colls))
+  '(message gimme-update-playtime gimme-tree-colls gimme-coll-changed))
 (defvar gimme-current nil)
+(defvar gimme-trees nil)
 
 
 
@@ -13,8 +14,8 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (clipboard-kill-region 1 (point-max))
-     (gimme-tree-mode)
      (gimme-tree-read-from-disk)
+     (gimme-tree-mode)
      (ignore-errors (viper-change-state-to-emacs)) ;; FIXME: Temporary
      (gimme-set-title gimme-tree-header)
      (gimme-send-message "(colls %s)\n" gimme-session)
@@ -44,14 +45,14 @@
   (use-local-map gimme-tree-map)
   (setq major-mode 'gimme-tree-mode)
   (font-lock-add-keywords nil
-                          '(("^\\* .*"                         . 'gimme-tree-level-1)
-                            ("^\\*\\* .*"                      . 'gimme-tree-level-2)
-                            ("^\\*\\*\\* .*"                   . 'gimme-tree-level-3)
-                            ("^\\*\\*\\*\\* .*"                . 'gimme-tree-level-4)
-                            ("^\\*\\*\\*\\*\\* .*"             . 'gimme-tree-level-5)
-                            ("^\\*\\*\\*\\*\\*\\* .*"          . 'gimme-tree-level-6)
-                            ("^\\*\\*\\*\\*\\*\\*\\* .*"       . 'gimme-tree-level-7)
-                            ("^\\*\\*\\*\\*\\*\\*\\*\\** .*"   . 'gimme-tree-level-8)))
+                          '(("^\\* .*\n"                         . 'gimme-tree-level-1)
+                            ("^\\*\\* .*\n"                      . 'gimme-tree-level-2)
+                            ("^\\*\\*\\* .*\n"                   . 'gimme-tree-level-3)
+                            ("^\\*\\*\\*\\* .*\n"                . 'gimme-tree-level-4)
+                            ("^\\*\\*\\*\\*\\* .*\n"             . 'gimme-tree-level-5)
+                            ("^\\*\\*\\*\\*\\*\\* .*\n"          . 'gimme-tree-level-6)
+                            ("^\\*\\*\\*\\*\\*\\*\\* .*\n"       . 'gimme-tree-level-7)
+                            ("^\\*\\*\\*\\*\\*\\*\\*\\** .*\n"   . 'gimme-tree-level-8)))
   (setq mode-name "gimme-tree") )
 
 (defun gimme-tree-colls (session list)
@@ -86,20 +87,31 @@
              (pos (get-text-property (point) 'pos))
              (parent (gimme-tree-get-node (butlast pos)))
              (el (gimme-tree-get-node pos)))
-        (loop for beg = (point-min) then end
-              and end = (next-property-change (or beg (point-min)))
-              while end
-              and when (not (sublistp pos (get-text-property beg 'pos)))
-              collect (buffer-substring beg end) into strings end
-              finally do
-              (unlocking-buffer
-               (kill-region (point-min) (point-max))
-               (dolist (s strings) (insert s))
-               (goto-char initial)))
+        (comment loop for beg = (point-min) then end
+                 and end = (next-property-change (or beg (point-min)))
+                 while end
+                 and when (not (sublistp pos (get-text-property beg 'pos)))
+                 collect (buffer-substring beg end) into strings end
+                 finally do
+                 (unlocking-buffer
+                  (kill-region (point-min) (point-max))
+                  (dolist (s strings) (insert s))
+                  (goto-char initial)))
         (gimme-tree-delete-from-tree pos))
     (when (get-text-property (point) 'ref)
-      (gimme-send-message "(dcol \"%s\")" (get-text-property (point) 'ref)))))
+      (gimme-send-message "(dcol %s)\n" 
+                          (prin1-to-string (get-text-property (point) 'ref))))))
 
+
+(defun gimme-tree-rename-coll ()
+  (interactive)
+  (if (get-text-property (point) 'pos)
+      (let* ((old (get-text-property (point) 'name))
+             (new (read-from-minibuffer "New name: "))
+             (pos (get-text-property (point) 'pos)))
+        (setcar (gimme-tree-get-node pos) (plist-put (car (gimme-tree-get-node pos))
+                    'name "xoxo"))
+        )))
 
 ;;;;;;;;;
 ;; Aux ;;
@@ -116,7 +128,7 @@
 
 (defun gimme-tree-delete-from-tree (pos)
   ""
-  (delete (gimme-tree-get-node pos) 
+  (delete (gimme-tree-get-node pos)
           (gimme-tree-get-node (butlast pos)))
   (gimme-tree-write-to-disk))
 
@@ -176,6 +188,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-coll-changed (plist)
+  ""
+  (with-current-buffer gimme-buffer-name
+    (unlocking-buffer
+     (let ((type      (getf plist 'type))
+           (name      (getf plist 'name))
+           (namespace (getf plist 'namespace))
+           (newname   (getf plist 'newname)))
+       (case type
+         ('add
+          (save-excursion
+            (goto-char (point-max))
+            (insert (propertize (format "** %s\n" name) 'ref name))
+            (message (format "Collection %s added!" name))))
+         ('update (message (format "Collection %s updated!" name)))
+         ('rename
+          (let ((bounds (car (get-bounds-where
+                              (lambda (n) (equal (get-text-property n 'ref) name))))))
+            (apply 'kill-region bounds)
+            (save-excursion (goto-char (car bounds))
+                            (insert (propertize (format "** %s\n" name) 'ref name)))))
+         ('remove
+          (progn (apply 'kill-region
+                        (car (get-bounds-where
+                              (lambda (n) (equal (get-text-property n 'ref) name)))))
+                 (message (format "Collection %s removed!" name)))))))))
 
 (require 'gimme-tree-faces)
 (provide 'gimme-tree)
