@@ -14,6 +14,7 @@
     (unlocking-buffer
      (clipboard-kill-region 1 (point-max))
      (gimme-tree-mode)
+     (gimme-tree-read-from-disk)
      (ignore-errors (viper-change-state-to-emacs)) ;; FIXME: Temporary
      (gimme-set-title gimme-tree-header)
      (gimme-send-message "(colls %s)\n" gimme-session)
@@ -95,7 +96,7 @@
                (kill-region (point-min) (point-max))
                (dolist (s strings) (insert s))
                (goto-char initial)))
-        (delete (gimme-tree-get-node pos) (gimme-tree-get-node (butlast pos))))
+        (gimme-tree-delete-from-tree pos))
     (when (get-text-property (point) 'ref)
       (gimme-send-message "(dcol \"%s\")" (get-text-property (point) 'ref)))))
 
@@ -107,16 +108,23 @@
 ;; Tree is like (plist child1 child2 ...)
 
 (defun gimme-tree-get-node (position)
+  ""
   (loop for pos = position then (cdr pos)
         and tree = gimme-trees then (nth (car pos) tree)
         while pos
         finally return tree))
 
+(defun gimme-tree-delete-from-tree (pos)
+  ""
+  (delete (gimme-tree-get-node pos) 
+          (gimme-tree-get-node (butlast pos)))
+  (gimme-tree-write-to-disk))
+
 (defun gimme-tree-add-child (data position)
-  ;; FIXME: Ugliest function EVER
   (let* ((tree (gimme-tree-get-node position))
          (len (length tree)))
     (nconc tree `((,data)))
+    (gimme-tree-write-to-disk)
     len))
 
 (defun gimme-tree-current-ref ()
@@ -150,29 +158,20 @@
 
 (defun gimme-tree-read-from-disk ()
   ""
-  (read
-   (if (file-readable-p gimme-tree-file)
-       (shell-command-to-string (format "cat %s" gimme-tree-file))
-     (progn (gimme-tree-write-to-disk '((name "All" ref "\"*\"")))
-            (gimme-tree-read-from-disk)))))
+  (setq gimme-trees
+        (read
+         (if (file-readable-p gimme-tree-file)
+             (shell-command-to-string (format "cat %s" gimme-tree-file))
+           (progn (gimme-tree-write-to-disk '((name "All" ref "\"*\"")))
+                  (shell-command-to-string (format "cat %s" gimme-tree-file)))))))
 
 (defun gimme-tree-write-to-disk (&optional tree)
-  (write-region (format "%s" (or tree gimme-trees)) nil
-                                   gimme-tree-file))
+  ""
+  (write-region (prin1-to-string (or tree gimme-trees)) nil
+                gimme-tree-file))
 
 
 
-(defvar gimme-trees '((name "All" ref "\"*\"")))
-(defun process-file (file)
-  "Read the contents of a file into a temp buffer and then do
- something there."
-  (when (file-readable-p file)
-    (with-temp-buffer
-      (insert-file-contents file)
-      (goto-char (point-min))
-      (while (not (eobp))
-        ;; do something here with buffer content
-        (forward-line)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;

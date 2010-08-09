@@ -57,11 +57,13 @@
   (let* ((parent (gimme-tree-current-ref))
          (name (completing-read
                 "Filter? "
-                (mapcar (lambda (n) (format "%s:'%s'" (car n) (cdr n)))
+                (mapcar (lambda (n) (format "%s:%s"
+                                       (car n) (prin1-to-string
+                                                (decode-coding-string (cdr n) 'utf-8))))
                         (remove-if (lambda (m) (member (car m)
                                                   '(id duration font-lock-face)))
                                    (plist-to-alist (text-properties-at (point)))))))
-         (message (format "(subcol %s \"%s\")\n" parent name)))
+         (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
     (gimme-send-message message)))
 
 (defun gimme-filter-get-breadcrumbs ()
