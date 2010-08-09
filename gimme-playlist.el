@@ -161,7 +161,7 @@
 (defun gimme-focused-url ()
   "Asks for the song's current URL."
   (interactive)
-  (gimme-send-message "(url %s)\n" (get-text-property (point) 'id)))
+  (gimme-send-message "(url %d)\n" (get-text-property (point) 'id)))
 
 (defun gimme-center ()
   "Centers buffer on currently playing song"
@@ -199,9 +199,9 @@
          (alist (remove-if (lambda (n) (member (car n) '(face font-lock-face)))
                            (plist-to-pseudo-alist plist)))
          (alist (mapcar (lambda (n) `(,(car n) ,(if (stringp (cadr n))
-                                                    (format "\"%s\"" (decode-coding-string (cadr n) 'utf-8))
+                                                    (format "%s" (decode-coding-string (cadr n) 'utf-8))
                                                   (cadr n)))) alist)))
-    (gimme-send-message "(update_tags %s)\n" alist)))
+    (gimme-send-message "(update_tags %s)\n" (prin1-to-string alist))))
 
 (defun gimme-update-tags-prompt ()
   "Prompts and updates title/artist and album"
@@ -212,13 +212,13 @@
                                         (list (car n) (decode-coding-string (cadr n) 'utf-8))
                                       n)) alist))
          (alist (mapcar (lambda (n) (if (member (car n) '(title album artist))
-                                        (list (car n) (format "\"%s\""
+                                        (list (car n) (format "%s"
                                                               (read-from-minibuffer
                                                                (format "%s? " (car n))
                                                                (format "%s" (cadr n)))))
                                       n)) ; FIXME: Assuming no whitespace. Allow only number/strings!
                         alist)))
-    (gimme-send-message "(update_tags %s)\n" alist)))
+    (gimme-send-message "(update_tags %s)\n" (prin1-to-string alist))))
 
 
 

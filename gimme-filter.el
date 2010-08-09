@@ -1,5 +1,4 @@
 (defvar gimme-filter-header (propertize "GIMME" 'font-lock-face '(:foreground "#ff0000" :weight bold))) ;; FIXME: Find why why it isn't coloring
-(defvar gimme-new-collection-name "Untitled")
 (defvar gimme-filter-mode-functions
   '(gimme-insert-song gimme-set-title message
                       gimme-filter-set-current-col
@@ -26,8 +25,8 @@
   (let* ((parent (gimme-tree-current-ref))
          (name (getf (gimme-tree-current-data) 'name))
          (name (read-from-minibuffer (format "%s > " name)))
-         (message (format "(subcol %s \"%s\")\n" parent name)))
-    (setq gimme-new-collection-name (format "Untitled (%s)" name))
+         (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
+    (setq gimme-new-collection-name (format "%s" name))
     (gimme-send-message message)))
 
 (defun gimme-parent-col ()
@@ -69,7 +68,7 @@
 (defun gimme-filter-get-breadcrumbs ()
   "Returns the current position as, eg, foo > bar > baz"
   (if (listp gimme-current)
-      (loop for x = gimme-current then (cdr x)
+      (loop for x = gimme-current then (butlast x)
             collecting (getf (car (gimme-tree-get-node x)) 'name) into names
             while x
             finally return (format "%s%s"

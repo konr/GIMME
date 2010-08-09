@@ -130,7 +130,7 @@
 (defun gimme-tree-current-ref ()
   (if (listp gimme-current)
       (getf (car (gimme-tree-get-node gimme-current)) 'ref)
-    (format "\"%s\"" gimme-current)))
+    (prin1-to-string gimme-current)))
 
 (defun gimme-tree-current-data ()
   (car (gimme-tree-get-node gimme-current)))
