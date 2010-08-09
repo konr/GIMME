@@ -1,8 +1,9 @@
 (defvar gimme-tree-header "GIMME - Tree View")
 (defvar gimme-tree-mode-functions
   '(message gimme-update-playtime gimme-tree-colls))
-(defvar gimme-trees '((name "All" ref "\"*\"" pos nil)))
 (defvar gimme-current nil)
+
+
 
 (defun gimme-tree ()
   (interactive)
@@ -40,7 +41,6 @@
   ;; FIXME: Find out why deriving from font-lock-face won't colorize the the songs
   (interactive)
   (use-local-map gimme-tree-map)
-  (setq truncate-lines t)
   (setq major-mode 'gimme-tree-mode)
   (font-lock-add-keywords nil
                           '(("^\\* .*"                         . 'gimme-tree-level-1)
@@ -70,18 +70,34 @@
 
 (defun gimme-tree-view-collection ()
   (interactive)
-  (setq gimme-current (if (get-text-property (point) 'pos)
-                          (get-text-property (point) 'pos)
-                        (get-text-property (point) 'ref)))
-  (gimme-filter))
+  (cond ((get-text-property (point) 'pos)
+         (setq gimme-current (get-text-property (point) 'pos))
+         (gimme-filter))
+        ((get-text-property (point) 'ref)
+         (setq gimme-current (get-text-property (point) 'ref))
+         (gimme-filter))
+        (gimme-current)))
 
 (defun gimme-tree-delete-coll ()
   (interactive)
   (if (get-text-property (point) 'pos)
-      (let* ((pos (get-text-property (point) 'pos))
-             (parent (gimme-tree-get-node (butlast pos))))
-        (setcar parent (remove-if (lambda (n) (equal pos (getf (car n) 'pos))) parent))))
-  (gimme-tree))
+      (let* ((initial (point))
+             (pos (get-text-property (point) 'pos))
+             (parent (gimme-tree-get-node (butlast pos)))
+             (el (gimme-tree-get-node pos)))
+        (loop for beg = (point-min) then end
+              and end = (next-property-change (or beg (point-min)))
+              while end
+              and when (not (sublistp pos (get-text-property beg 'pos)))
+              collect (buffer-substring beg end) into strings end
+              finally do
+              (unlocking-buffer
+               (kill-region (point-min) (point-max))
+               (dolist (s strings) (insert s))
+               (goto-char initial)))
+        (delete (gimme-tree-get-node pos) (gimme-tree-get-node (butlast pos))))
+    (when (get-text-property (point) 'ref)
+      (gimme-send-message "(dcol \"%s\")" (get-text-property (point) 'ref)))))
 
 
 ;;;;;;;;;
@@ -100,7 +116,7 @@
   ;; FIXME: Ugliest function EVER
   (let* ((tree (gimme-tree-get-node position))
          (len (length tree)))
-    (nconc tree `((,(append `(pos ,(append position `(,len))) data))))
+    (nconc tree `((,data)))
     len))
 
 (defun gimme-tree-current-ref ()
@@ -111,19 +127,52 @@
 (defun gimme-tree-current-data ()
   (car (gimme-tree-get-node gimme-current)))
 
-(defun gimme-tree-walk (function tree &optional depth)
+(defun gimme-tree-walk (function tree &optional depth mapcarp)
   (let ((depth (if depth depth 0)))
     (if (null tree) nil
       (cons (funcall function tree)
-            (mapcan (lambda (n) (gimme-tree-walk function n (1+ depth)))
-                    (cdr tree))))))
+            (funcall (if mapcarp #'mapcar #'mapcan)
+                     (lambda (n) (gimme-tree-walk function n (1+ depth) mapcarp))
+                     (cdr tree))))))
 
 (defun gimme-tree-get-trees ()
   (cdr (gimme-tree-walk (lambda (n)
                           (apply 'propertize (format "%s %s\n"
                                                      (make-string depth ?*)
                                                      (getf (car n) 'name)) (car n)))
-                        gimme-trees 0)))
+                        (gimme-tree-add-pos gimme-trees))))
+
+(defun gimme-tree-add-pos (tree &optional pos)
+  (loop for p from 1 upto (1- (length tree))
+        collecting (gimme-tree-add-pos (nth p tree) (append pos (list p)))
+        into children
+        finally return (cons (append (car tree) `(pos ,pos)) children)))
+
+(defun gimme-tree-read-from-disk ()
+  ""
+  (read
+   (if (file-readable-p gimme-tree-file)
+       (shell-command-to-string (format "cat %s" gimme-tree-file))
+     (progn (gimme-tree-write-to-disk '((name "All" ref "\"*\"")))
+            (gimme-tree-read-from-disk)))))
+
+(defun gimme-tree-write-to-disk (&optional tree)
+  (write-region (format "%s" (or tree gimme-trees)) nil
+                                   gimme-tree-file))
+
+
+
+(defvar gimme-trees '((name "All" ref "\"*\"")))
+(defun process-file (file)
+  "Read the contents of a file into a temp buffer and then do
+ something there."
+  (when (file-readable-p file)
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (while (not (eobp))
+        ;; do something here with buffer content
+        (forward-line)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;

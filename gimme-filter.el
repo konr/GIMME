@@ -1,4 +1,4 @@
-(defvar gimme-filter-header "GIMME - Filter View")
+(defvar gimme-filter-header (propertize "GIMME" 'font-lock-face '(:foreground "#ff0000" :weight bold))) ;; FIXME: Find why why it isn't coloring
 (defvar gimme-new-collection-name "Untitled")
 (defvar gimme-filter-mode-functions
   '(gimme-insert-song gimme-set-title message
@@ -14,7 +14,9 @@
     (unlocking-buffer
      (gimme-filter-mode)
      (clipboard-kill-region 1 (point-max))
-     (gimme-set-title gimme-filter-header)
+     (gimme-set-title (format "%s - %s"
+                              gimme-filter-header
+                              (gimme-filter-get-breadcrumbs)))
      (save-excursion
        (gimme-send-message "(pcol %s %s)\n" (gimme-tree-current-ref) gimme-session)))
     (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
@@ -32,7 +34,8 @@
   (interactive)
   (if (listp gimme-current)
       (setq gimme-current (butlast gimme-current))
-    (gimme-filter)))
+    )
+  (gimme-filter))
 
 (defun gimme-filter-append-focused ()
   (interactive)
@@ -60,6 +63,19 @@
                                    (plist-to-alist (text-properties-at (point)))))))
          (message (format "(subcol %s \"%s\")\n" parent name)))
     (gimme-send-message message)))
+
+(defun gimme-filter-get-breadcrumbs ()
+  "Returns the current position as, eg, foo > bar > baz"
+  (if (listp gimme-current)
+      (loop for x = gimme-current then (cdr x)
+            collecting (getf (car (gimme-tree-get-node x)) 'name) into names
+            while x
+            finally return (format "%s%s"
+                                   (apply #'concat (mapcar (lambda (n) (format "%s > " n))
+                                                           (reverse (cdr names))))
+                                   (car names)))
+    (format "%s" gimme-current)))
+
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))

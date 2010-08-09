@@ -139,11 +139,6 @@
         (setq pos (+ 1 pos))
         (gimme-send-message "(insert %s %s)\n" id pos)))))
 
-(defun gimme-continue-deleting ()
-  ""
-  (when gimme-delete-stack
-    (gimme-send-message "(remove %s)\n" (car gimme-delete-stack))
-    (setq gimme-delete-stack (cdr gimme-delete-stack))))
 
 (defun gimme-focused-delete (delete-p)
   "Deletes the currently focused song."
@@ -159,8 +154,8 @@
   (let ((items (loop for pos = 0 then (next-property-change pos (car kill-ring))
                      while pos collecting (get-text-property pos 'pos (car kill-ring)))))
     (unless (null (car items))
-      (gimme-send-message "(remove %s)\n" (car gimme-delete-stack))
-      (gimme-continue-deleting))))
+      (dolist (item items) 
+        (gimme-send-message "(remove %d)\n" item)))))
 
 
 (defun gimme-focused-url ()
