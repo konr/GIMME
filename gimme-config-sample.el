@@ -11,7 +11,7 @@
                                           (plist-put plist 'font-lock-face `(:foreground ,(color-for %artist)))))))
 
 (defvar gimme-sort-criteria '((artist album tracknr) (artist title) (title)))
-(defvar gimme-tree-file "~/Git/GIMME/.gimmetree")
+(defvar gimme-tree-file "~/.gimmetree")
 
 (gimme-status-mode)
 
