@@ -10,9 +10,9 @@
   "String to display in the mode line.")
 
 (defvar gimme-status-mode-formats
-  '((format "[%s/%s]" time max)
-    (format "[%s]" time)
-    (format "[%d%%]" (/ (* 100 time-raw) max-raw)))
+  '((format "-[%s/%s]" time max)
+    (format "-[%s]" time)
+    (format "-[%d%%]" (/ (* 100 time-raw) max-raw)))
   "Not customizable due to free variables")
 
 (defcustom gimme-status-mode-interval 1

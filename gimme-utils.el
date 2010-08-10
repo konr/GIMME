@@ -8,13 +8,13 @@
 (defun alpha-blend (c1 c2 a)
   "The resulting color of merging the c1 with alpha a on a background of color c2"
   (let* ((colors (mapcar (lambda (c) (list (substring c 1 3)
-                                           (substring c 3 5)
-                                           (substring c 5 7)))
+                                      (substring c 3 5)
+                                      (substring c 5 7)))
                          (list c1 c2)))
          (colors (mapcar (lambda (c) (mapcar (lambda (e) (string-to-number e 16)) c))
                          colors))
          (color (map 'list (lambda (c1 c2) (format "%.2x" (+ (* (- 1 a) c1)
-                                                             (* a c2))))
+                                                        (* a c2))))
                      (nth 0 colors) (nth 1 colors))))
     (apply 'concat "#" color)))
 
@@ -70,23 +70,25 @@
 
 
 (defun sublistp (l1 l2)
-  "Is l a sublist of L?"
+  "Is l1 a sublist of l2?"
+  (when (and (listp l1) (listp l2))
     (loop for l = l1 then (cdr l)
           and L = l2 then (cdr L)
           while (and l L (equal (car l) (car L)))
           collecting (list l L) into mu
-          finally return 
+          finally return
           (cond ((and (not l)  L)      t)
                 ((and l       (not L)) nil)
                 ((and (not l) (not L)) t)
-                ((and l       L)       nil))))
+                ((and l       L)       nil)))))
 
 (defun get-bounds-where (f)
   (loop for beg = (point-min) then end
-        and end = (next-property-change (point-min)) 
+        and end = (next-property-change (point-min))
         then (next-property-change (or end (point-min)))
         while end
         and when (funcall f beg)
         collect (list beg end) end))
+
 
 (provide 'gimme-utils)

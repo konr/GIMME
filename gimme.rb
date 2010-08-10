@@ -275,6 +275,17 @@ class GIMME
     end
   end
 
+  def rcol (old, new)
+    @async.coll_rename("foox","xoxotinha").notifier {|res| puts "oi"}
+    #@async.coll_rename(old,new).notifier {|res|}
+  end
+
+  def scol (data,name)
+    coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
+    coll.idlist=data
+    @async.coll_save(coll,name).notifier {|res| message "oi"}
+  end
+
   def set_atribs (l)
     $atribs |= l.map{|n| n.to_s}
   end

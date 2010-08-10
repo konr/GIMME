@@ -38,6 +38,9 @@
     (define-key map (kbd "-") 'gimme-dec_vol)
     (define-key map (kbd "RET") 'gimme-tree-view-collection)
     (define-key map (kbd "d") 'gimme-tree-delete-coll)
+    (define-key map (kbd "r") 'gimme-tree-rename-coll)
+    (define-key map (kbd "s") 'gimme-tree-save-collection)
+    (define-key map (kbd "S") '(lambda () (interactive) (gimme-tree-save-collection t)))
     map))
 (define-derived-mode gimme-tree-mode font-lock-mode
   ;; FIXME: Find out why deriving from font-lock-face won't colorize the the songs
@@ -86,33 +89,49 @@
       (let* ((initial (point))
              (pos (get-text-property (point) 'pos))
              (parent (gimme-tree-get-node (butlast pos)))
-             (el (gimme-tree-get-node pos)))
-        (comment loop for beg = (point-min) then end
-                 and end = (next-property-change (or beg (point-min)))
-                 while end
-                 and when (not (sublistp pos (get-text-property beg 'pos)))
-                 collect (buffer-substring beg end) into strings end
-                 finally do
-                 (unlocking-buffer
-                  (kill-region (point-min) (point-max))
-                  (dolist (s strings) (insert s))
-                  (goto-char initial)))
-        (gimme-tree-delete-from-tree pos))
+             (el (gimme-tree-get-node pos))
+             (bounds (get-bounds-where
+                      (lambda (n) (sublistp pos (get-text-property n 'pos))))))
+        (gimme-tree-delete-from-tree pos)
+        (unlocking-buffer (save-excursion (dolist (b (reverse bounds))
+                                            (apply #'kill-region b)))))
     (when (get-text-property (point) 'ref)
-      (gimme-send-message "(dcol %s)\n" 
+      (gimme-send-message "(dcol %s)\n"
                           (prin1-to-string (get-text-property (point) 'ref))))))
 
 
 (defun gimme-tree-rename-coll ()
   (interactive)
   (if (get-text-property (point) 'pos)
-      (let* ((old (get-text-property (point) 'name))
-             (new (read-from-minibuffer "New name: "))
-             (pos (get-text-property (point) 'pos)))
-        (setcar (gimme-tree-get-node pos) (plist-put (car (gimme-tree-get-node pos))
-                    'name "xoxo"))
-        )))
+      (let* ((old  (get-text-property (point) 'name))
+             (new  (read-from-minibuffer "New name: "))
+             (pos  (get-text-property (point) 'pos))
+             (node (gimme-tree-get-node pos))
+             (data (plist-put (car node) 'name new))
+             (bounds (list (line-beginning-position) (line-end-position))))
+        (setcar node data)
+        (unlocking-buffer
+         (save-excursion
+           (apply #'kill-region bounds)
+           (goto-char (car bounds))
+           (insert (apply #'propertize
+                          (format "%s %s" (make-string (length pos) ?*) new)
+                          (plist-put data 'pos pos)))))
+        (gimme-tree-write-to-disk))
+    (when (get-text-property (point) 'ref)
+      (gimme-send-message "(rcol %s %s)\n"
+                          (prin1-to-string (get-text-property (point) 'ref))
+                          (prin1-to-string (read-from-minibuffer "New name: "))))))
 
+
+(defun gimme-tree-save-collection (&optional ask)
+  ""
+  (interactive)
+  (let* ((ref (get-text-property (point) 'ref)) 
+         (name (if ask (read-from-minibuffer "Save as: ") ref)))
+    (when ref (gimme-send-message (format "(scol %s %s)\n"
+                                          (prin1-to-string ref)
+                                          (prin1-to-string name))))))
 ;;;;;;;;;
 ;; Aux ;;
 ;;;;;;;;;
@@ -187,7 +206,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-coll-changed (plist)
   ""
@@ -207,9 +226,11 @@
          ('rename
           (let ((bounds (car (get-bounds-where
                               (lambda (n) (equal (get-text-property n 'ref) name))))))
-            (apply 'kill-region bounds)
-            (save-excursion (goto-char (car bounds))
-                            (insert (propertize (format "** %s\n" name) 'ref name)))))
+            (when bounds
+              (apply 'kill-region bounds)
+              (save-excursion (goto-char (car bounds))
+                              (insert (propertize (format "** %s\n" newname) 'ref newname)))
+              (message (format "Collection %s renamed to %s!" name newname)))))
          ('remove
           (progn (apply 'kill-region
                         (car (get-bounds-where
