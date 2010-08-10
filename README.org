@@ -1,28 +1,21 @@
-* Working on [8/11]
+* Working on [0/6]
 
-  1. [X] Org-mode coloring
-  2. [X] Storing the relationship of the trees on the hard drive
-  3. [X] Storing collections on hard disk
-  4. [X] Spaces on filter view's search
-  5. [X] Escape quotes properly
-  6. [X] Better Completion
-  7. [X] Broadcasts
-  8. [X] Add and play
-  9. [ ] Tickle, messages and hooks
-  10. [ ] Make the colors consistent with dark/light backgrounds.
-  11. [ ] Rename and Save
+  1. [ ] Add missing features?
+  2. [ ] Add Emacs stuff (hooks, variables, wrap into a package)
+  3. [ ] Write docs (perhaps a screencast)
+  4. [ ] Clean up the code
+  5. [ ] ???
+  6. [ ] Profit!
 
-* Next features
+* Coming next
 
-  1. Work on some rudimentary alternative way of displaying the songs on the collection (perhaps by grouping them?)
-  2. More than one buffer
-  3. Colorize the header
+  1. Alternative ways of grouping the songs together.
+  2. Multiple buffers
+  3. Advanced tag writer, dealing with regions and multiple files
   4. Recreate the kill/yank region functions
   5. Implement the move operation on the playlist-updated broadcast
-  6. Deal with multiple instances of a song (see gimme-update-tags etc)
-  7. Create some sort of debouncer to remove the unnecessary extra calls to gimme-update-tags
-  8. Remove-duplicates 
-  4. AND, OR, etc operations directly on the tree-view
+  6. Remove-duplicates 
+  7. AND, OR, and misc operations directly on the tree-view
 
 * Info
   GIMME is an XMMS2 client for Emacs currently being developed for
@@ -38,6 +31,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **10/8**: 7 working on various features
   - **09/8**: 12 working on tree-view (including 08/08)
   - **05/8**: 17 (IIRC) rewriting the tree-mode functions
   - **02/8**: 4 fixing minor things

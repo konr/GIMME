@@ -130,7 +130,6 @@
     ('insert (progn (gimme-insert-song gimme-session plist nil) (message "Song added!")))
     ('remove (progn
                (setq gimme-last-del (getf plist 'pos))
-               (when (> gimme-debug 0) (message (format "%s" plist)))
                (when (get-buffer gimme-buffer-name)
                  (with-current-buffer gimme-buffer-name
                    (unlocking-buffer
@@ -141,7 +140,7 @@
                       (when (and beg end)
                         (clipboard-kill-region beg end)
                         (gimme-update-pos #'1- (point) (point-max)))))))))
-    ('move (progn (gimme-playlist) (message "Playlist shuffled!"))(message "Playlist updated! (moving element)"))
+    ('move    (progn (gimme-playlist) (message "Playlist updated! (moving element)")))
     ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
     ('clear   (progn (gimme-playlist) (message "Playlist cleared!")))
     ('sort    (progn (gimme-playlist) (message "Playlist updated! (sorting list)")))

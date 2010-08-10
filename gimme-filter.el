@@ -23,7 +23,7 @@
 (defun gimme-child-col ()
   (interactive)
   (let* ((parent (gimme-tree-current-ref))
-         (name (getf (gimme-tree-current-data) 'name))
+         (name (if (stringp parent) parent (getf (gimme-tree-current-data) 'name)))
          (name (read-from-minibuffer (format "%s > " name)))
          (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
     (setq gimme-new-collection-name (format "%s" name))
@@ -32,8 +32,7 @@
 (defun gimme-parent-col ()
   (interactive)
   (if (listp gimme-current)
-      (setq gimme-current (butlast gimme-current))
-    )
+      (setq gimme-current (butlast gimme-current)))
   (gimme-filter))
 
 (defun gimme-filter-append-focused ()
@@ -108,10 +107,10 @@
 
 (defun gimme-filter-set-current-col (ref)
   (setq gimme-current
-        (append gimme-current
+        (append (if (listp gimme-current) gimme-current nil)
                 `(,(gimme-tree-add-child
                     `(name ,gimme-new-collection-name ref ,ref)
-                    gimme-current))))
+                    (when (listp gimme-current) gimme-current)))))
   (gimme-filter))
 
 

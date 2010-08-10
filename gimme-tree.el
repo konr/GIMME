@@ -127,8 +127,9 @@
 (defun gimme-tree-save-collection (&optional ask)
   ""
   (interactive)
-  (let* ((ref (get-text-property (point) 'ref)) 
-         (name (if ask (read-from-minibuffer "Save as: ") ref)))
+  (let* ((ref  (get-text-property (point) 'ref)) 
+         (name (get-text-property (point) 'name))
+         (name (if ask (read-from-minibuffer "Save as: ") name)))
     (when ref (gimme-send-message (format "(scol %s %s)\n"
                                           (prin1-to-string ref)
                                           (prin1-to-string name))))))
@@ -213,9 +214,9 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (let ((type      (getf plist 'type))
-           (name      (getf plist 'name))
+           (name      (decode-coding-string (getf plist 'name) 'utf-8))
            (namespace (getf plist 'namespace))
-           (newname   (getf plist 'newname)))
+           (newname   (decode-coding-string (or (getf plist 'newname) "") 'utf-8)))
        (case type
          ('add
           (save-excursion

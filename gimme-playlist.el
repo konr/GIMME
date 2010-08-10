@@ -67,8 +67,7 @@
          (while h-beg
            (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
            (setq h-end (or (next-property-change (or h-beg (point-min))) (point-max)))
-           (when h-beg (remove-text-properties h-beg h-end '(face nil))
-                 (message (format "%d" h-beg)))))
+           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
        (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
               (end (next-property-change (or beg (point-min)))))
          (when beg (put-text-property beg (or end (point-max)) 'face 'highlight)))))))

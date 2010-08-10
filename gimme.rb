@@ -108,7 +108,7 @@ class GIMME
       'stop' => 'playback_stop',
       'tickle' => 'playback_tickle',
     }.each do |k,v|
-      define_method(k) { @async.send(v).notifier {|id| message (k)} }
+      define_method(k) { @async.send(v).notifier }
     end
   end
 
@@ -138,13 +138,6 @@ class GIMME
       @async.playlist("_active").entries.notifier do |list|
         playn list.length-1
       end
-    end
-  end
-
-  def addcol (name)
-    @async.coll_get(name).notifier do |c|
-      # FIXME: Doesn't work :(
-      @async.playlist("_active").add_collection(c).notifier { message "did it work?" }
     end
   end
 
@@ -276,14 +269,13 @@ class GIMME
   end
 
   def rcol (old, new)
-    @async.coll_rename("foox","xoxotinha").notifier {|res| puts "oi"}
-    #@async.coll_rename(old,new).notifier {|res|}
+    @async.coll_rename(old,new,Xmms::Collection::NS_COLLECTIONS).notifier {|res|}
   end
 
   def scol (data,name)
     coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
     coll.idlist=data
-    @async.coll_save(coll,name).notifier {|res| message "oi"}
+    @async.coll_save(coll,name,Xmms::Collection::NS_COLLECTIONS)
   end
 
   def set_atribs (l)
@@ -321,10 +313,10 @@ class GIMME
 
   def change_volume (inc)
     @async.playback_volume_get.notifier do |vol|
-      @async.playback_volume_set(:left, vol[:left]+inc).notifier {}
-      @async.playback_volume_set(:right, vol[:right]+inc).notifier {}
-      # Not exactly right, but who in this world uses left/right channels?!
-      message "Volume set to " + [0,[100,(vol[:left] + inc)].min].max.to_s
+      new = [0,[100,(vol[:left] + inc)].min].max
+      @async.playback_volume_set(:left, new).notifier {}
+      @async.playback_volume_set(:right, new).notifier {}
+      message "Volume set to " + new.to_s
     end
   end
 
