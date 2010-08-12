@@ -127,7 +127,7 @@
 (defun gimme-tree-save-collection (&optional ask)
   ""
   (interactive)
-  (let* ((ref  (get-text-property (point) 'ref)) 
+  (let* ((ref  (get-text-property (point) 'ref))
          (name (get-text-property (point) 'name))
          (name (if ask (read-from-minibuffer "Save as: ") name)))
     (when ref (gimme-send-message (format "(scol %s %s)\n"
@@ -141,10 +141,11 @@
 
 (defun gimme-tree-get-node (position)
   ""
-  (loop for pos = position then (cdr pos)
-        and tree = gimme-trees then (nth (car pos) tree)
-        while pos
-        finally return tree))
+  (when (listp position)
+      (loop for pos = position then (cdr pos)
+            and tree = gimme-trees then (nth (car pos) tree)
+            while pos
+            finally return tree)))
 
 (defun gimme-tree-delete-from-tree (pos)
   ""
@@ -154,7 +155,8 @@
 
 (defun gimme-tree-add-child (data position)
   (let* ((tree (gimme-tree-get-node position))
-         (len (length tree)))
+         (len (length tree))
+         (position (if (stringp position) nil position)))
     (nconc tree `((,data)))
     (gimme-tree-write-to-disk)
     len))

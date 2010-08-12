@@ -2,41 +2,22 @@
 ;; Utilities ;;
 ;;;;;;;;;;;;;;;
 
-(defvar cool-colors (appropriate-colors))
 
-(defun alpha-blend (c1 c2 a)
-  "The resulting color of merging the c1 with alpha a on a background of color c2"
-  (let* ((colors (mapcar (lambda (c) (list (substring c 1 3)
-                                      (substring c 3 5)
-                                      (substring c 5 7)))
-                         (list c1 c2)))
-         (colors (mapcar (lambda (c) (mapcar (lambda (e) (string-to-number e 16)) c))
-                         colors))
-         (color (map 'list (lambda (c1 c2) (format "%.2x" (+ (* (- 1 a) c1)
-                                                        (* a c2))))
-                     (nth 0 colors) (nth 1 colors))))
-    (apply 'concat "#" color)))
-
-(defun gimme-new-session () (setq gimme-session (random)))
+(defun gimme-new-session () 
+  "The session is used to not mix data from two requests"
+  (setq gimme-session (random)))
 
 (defmacro unlocking-buffer (&rest body)
   `(progn (toggle-read-only nil)
           ,@body
           (toggle-read-only t)))
 
-(defun gimme-debug (&rest args)
-  (let ((buffer-name (format "%s-debug" gimme-buffer-name)))
-    (get-buffer-create buffer-name)
-    (with-current-buffer buffer-name
-      (goto-char (point-max))
-      (mapcar #'insert args))))
-
 (defun plist-to-alist (p)
   (loop for x = p then (cddr x) while x
         collecting (cons (car x) (cadr x))))
 
 (defun plist-to-pseudo-alist (p)
-  ;; FIXME: The sexp library won't work otherwise
+  "((foo bar)) instead of ((foo . bar)). The sexp library won't work otherwise :("
   (loop for x = p then (cddr x) while x
         collecting (list (car x) (cadr x))))
 
@@ -47,6 +28,7 @@
     (every (lambda (n) (equal (getf small n) (getf big n))) keys)))
 
 (defun color-for (string)
+  "Deterministic way of selecting a color for a string"
   (let* ((colors cool-colors)
          (len (length colors))
          (hash (string-to-number (substring (md5 (if (stringp string) string "")) 0 6) 16)))
@@ -58,10 +40,11 @@
         (t (append (flatten (car l))
                    (flatten (cdr l))))))
 
-(defmacro comment (&rest rest))
+(defmacro comment (&rest rest)
+  "For debugging purposes")
 
 (defun range-to-plists (p1 p2)
-  ""
+  "Returns all plists between points p1 and p2"
   (let ((min (min p1 p2)) (max (max p1 p2)))
     (loop for point = min then (next-property-change point)
           while (and point (> max point))
@@ -82,6 +65,7 @@
                 ((and l       L)       nil)))))
 
 (defun get-bounds-where (f)
+  "Returns the bounds where (f point) returns non-nil cycling through text-properties"
   (loop for beg = (point-min) then end
         and end = (next-property-change (point-min))
         then (next-property-change (or end (point-min)))
@@ -90,6 +74,7 @@
         collect (list beg (or end (point-max))) end))
 
 (defun appropriate-colors ()
+  "Returns all colors that, according to w3c, will be readable on your background"
   (flet ((brightness (n) (/ (apply #'+ (map 'list (lambda (x y) (* x y)) '(299 587 114) n))
                             1000)))
     (let* ((step #x30)
@@ -105,5 +90,6 @@
            (all (mapcar (lambda (n) (apply #'format "#%.2x%.2x%.2x" n)) all)))
       all)))
 
+(defvar cool-colors (appropriate-colors))
 
 (provide 'gimme-utils)

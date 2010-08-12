@@ -7,7 +7,6 @@ require 'glib2'
 require 'rubygems'
 require 'sexp'
 require 'pp'
-require 'gimme-aux'
 
 
 DEBUG = false
@@ -21,9 +20,13 @@ class GIMME
     begin
       @async = Xmms::Client.new('GIMMEasync').connect(ENV['XMMS_PATH'])
     rescue
-      message "Failed to connect to the core. Make sure xmms2d is running"
+      to_emacs [:message, "Failed to connect to the core. Make sure xmms2d is running"]
     end
     @async.add_to_glib_mainloop
+
+    ##################
+    ### Broadcasts ###
+    ##################
 
     last_time = 0
     @async.signal_playback_playtime.notifier do |time|
@@ -34,13 +37,9 @@ class GIMME
           if id != 0
             @async.medialib_get_info(id).notifier do |res|
               duration = res[:duration] ? res[:duration].first.at(1) : NOTHING
-              puts [:"gimme-update-playtime",time,duration].to_sexp
-            end
-          end
-        end
-      end
-      true
-    end
+              to_emacs [:"gimme-update-playtime",time,duration]
+            end;end;end;end
+      true;end
 
     @async.broadcast_coll_changed.notifier do |res|
       dict = {}; res.each{|k,v| dict[k]=v}
@@ -50,16 +49,14 @@ class GIMME
                     when Xmms::Collection::RENAME then :rename
                     when Xmms::Collection::REMOVE then :remove
                     end
-      puts [:"gimme-coll-changed", [:quote, dict.to_a.flatten]].to_sexp
-      true
-    end
+      to_emacs [:"gimme-coll-changed", [:quote, dict.to_a.flatten]]
+      true;end
 
     @async.broadcast_playback_current_id.notifier do |res|
       @async.playlist("_active").current_pos.notifier do |pos|
-        puts ["gimme-set-playing".to_sym, pos[:position]].to_sexp
+        to_emacs [:"gimme-set-playing", pos[:position]]
       end
-      true
-    end
+      true;end
 
     @async.broadcast_medialib_entry_changed.notifier do |id|
       dict = {}
@@ -67,10 +64,10 @@ class GIMME
         $atribs.map{|i| i.to_sym}.each do |e|
           dict[e] = res[e] ? res[e].first.at(1) : NOTHING
         end
-        puts [:"gimme-update-tags", [:quote, dict.to_a.flatten]].to_sexp
+        to_emacs [:"gimme-update-tags", [:quote, dict.to_a.flatten]]
       end
-      true
-    end
+      true;end
+
     @async.broadcast_playlist_changed.notifier do |res|
       dict = {}; res.each {|key,val| dict[key] = val }
       dict[:pos] = dict[:position]
@@ -90,106 +87,62 @@ class GIMME
           $atribs.map{|x| x.to_sym}.each do |e|
             dict[e] = res2[e] ? res2[e].first.at(1) : NOTHING
           end if res2
-          puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
-          42 # 3 freaking hours debugging because I forgot about this :(
+          to_emacs [:"gimme-update-playlist", [:quote, dict.to_a.flatten]]
+          true
         end
       else
-        puts ["gimme-update-playlist".to_sym, [:quote, dict.to_a.flatten]].to_sexp
+        to_emacs [:"gimme-update-playlist", [:quote, dict.to_a.flatten]]
       end
-
       true
     end
   end
 
+  #########################
+  ### Shorter Functions ###
+  #########################
+
   def self.gen_methods
-    {
-      'play' => 'playback_start',
-      'pause' => 'playback_pause',
-      'stop' => 'playback_stop',
+
+    # Client
+    
+    { 'play'   => 'playback_start',
+      'pause'  => 'playback_pause',
+      'stop'   => 'playback_stop',
       'tickle' => 'playback_tickle',
-    }.each do |k,v|
-      define_method(k) { @async.send(v).notifier }
-    end
-  end
+      'dcol'   => 'coll_remove'}.each do |k,v| 
+      define_method(k) { |*args| @async.send(v,*args).notifier };end
 
-  gen_methods
+    # Playlist
+    
+    { 'add'     => 'add_entry',
+      'remove'  => 'remove_entry',
+      'insert'  => 'insert_entry',
+      'clear'   => 'clear',
+      'shuffle' => 'shuffle'}. each do |k,v|
+      define_method(k) { |*args| @async.playlist("_active").send(v,*args).notifier}; end
 
-  def prev; @async.playlist_set_next_rel(-1).notifier { tickle }; end
-  def next; @async.playlist_set_next_rel( 1).notifier { tickle }; end
+    # Misc
 
-  def clear; @async.playlist("_active").clear.notifier; end
-  def shuffle; @async.playlist("_active").shuffle.notifier; end
+    { 'seek'     => 'playback_seek_ms',
+      'seek_rel' => 'playback_seek_ms_rel'}. each do |k,v|
+      define_method(k) { |x| @async.send(v,x.to_s.to_i).notifier}; end
 
-  def seek_rel (x); @async.playback_seek_ms_rel(x.to_i).notifier; end
-  def seek     (x); @async.playback_seek_ms(x.to_i).notifier; end
+    { 'prev' => -1, 'next' => 1}. each do |k,v|
+      define_method(k) { @async.playlist_set_next_rel(v).notifier { tickle }}; end
+  end; gen_methods
 
-  # FIXME: Generate these automatically
-  def remove (pos); @async.playlist("_active").remove_entry(pos).notifier; end
-  def add (id); @async.playlist("_active").add_entry(id).notifier; end
+  ########################
+  ### Longer Functions ###
+  ########################
 
-  def url (id)
-    @async.medialib_get_info(id).notifier do |res|
-      message res[:url][:server]
-    end
-  end
+  def sort (crit); @async.playlist("_active").sort(crit.map{|x| x.to_s}).notifier; end
 
   def addplay (id)
     @async.playlist("_active").add_entry(id).notifier do
-      @async.playlist("_active").entries.notifier do |list|
-        playn list.length-1
-      end
-    end
-  end
-
-  def dcol (name)
-    @async.coll_remove(name).notifier do |res|
-      message "collection removed!"
-    end
-  end
-
-
-  def insert (id,pos); @async.playlist("_active").insert_entry(pos,id).notifier {|id| message id}; end
-
-  def list (session)
-    # FIXME: Clean up this mess
-    @async.playlist("_active").current_pos.notifier do |pos|
-      pos = pos ? pos : {:name => NOTHING, :position => -1} #FIXME: In case the it isn't on the playlist
-      puts [:"gimme-set-title", "GIMME - Playlist View (" + pos[:name] + ")"].to_sexp
-      bdict={}
-      @async.coll_get("_active").notifier do |coll|
-        @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
-          wrapperdict.each do |dict|
-            adict = {}
-            dict.each {|key,val| adict[key] = val.class == NilClass ? "nil" : val} #FIXME make this a function
-            bdict[adict[:id]]=adict
-          end
-          @async.playlist("_active").entries.notifier do |list|
-            list.each_with_index do |el,i|
-              bdict[el][:pos] = i
-              if (i == pos[:position])
-                bdict[el][:face] = :highlight
-              else
-                bdict[el].delete(:face)
-              end
-              puts ["gimme-insert-song".to_sym,session,[:quote, bdict[el].to_a.flatten],:t].to_sexp
-              #puts bdict.class
-            end
-            42 # FIXME: For some reason, an integer is required
-          end
-          42 # FIXME: For some reason, an integer is required
-        end
-      end
-    end
-  end
-
-  def inc_vol; change_volume 5; end
-  def dec_vol; change_volume -5; end
+      @async.playlist("_active").entries.notifier { |l| playn l.length-1 }; end; end
 
   def toggle
-    @async.playback_status.notifier do |s|
-      s == Xmms::Client::PAUSE ? play : pause
-    end
-  end
+    @async.playback_status.notifier {|s| s == Xmms::Client::PAUSE ? play : pause}; end
 
 
   def playn (id)
@@ -198,75 +151,69 @@ class GIMME
         case s
         when Xmms::Client::PLAY then tickle
         when Xmms::Client::STOP then play
-        when Xmms::Client::PAUSE then tickle; play # FIXME: Doesn't actually work
-        end
-      end
-    end
-  end
+        when Xmms::Client::PAUSE then play; tickle
+        end; end; end; end
 
-  def subcol (data,pattern)
-    # FIXME: Complex patterns!
-    #
-    # Collections will follow this pattern:
-    #
-    # "*"
-    # "0-tracknr:1"
-    # "00-artist:Foo"
-    @async.coll_get(data.to_s).notifier do |parent|
-      if data.class == String and data == "*"
-        parent = Xmms::Collection.universe
-      elsif data.class == Symbol and data == :nil
-        parent = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-        parent.idlist=[]
-      elsif data.class == Array
-        parent = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-        parent.idlist=data
-      end
-      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
-      match = Xmms::Collection.parse(pattern)
-
-      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
-      intersection.operands.push(parent)
-      intersection.operands.push(match)
-      @async.coll_query_ids(intersection).notifier do |list|
-        puts [:"gimme-filter-set-current-col", [:quote, list]].to_sexp
-      end
-    end
-  end
-
-  def sort (criteria)
-    @async.playlist("_active").sort(criteria.map{|x| x.to_s}).notifier {}
-  end
+  def list (session)
+    @async.playlist("_active").current_pos.notifier do |pos|
+      bdict={}; pos = pos || {:name => NOTHING, :position => -1}
+      to_emacs [:"gimme-set-title", "GIMME - Playlist View (#{pos[:name]})"]
+      @async.coll_get("_active").notifier do |coll|
+        @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
+          wrapperdict.each do |dict|
+            adict = {}
+            dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+            bdict[adict[:id]]=adict
+          end
+          @async.playlist("_active").entries.notifier do |list|
+            list.each_with_index do |el,i|
+              bdict[el][:pos] = i; bdict[el].delete(:face)
+              bdict[el][:face] = :highlight if (i == pos[:position])
+              data = [:quote, bdict[el].to_a.flatten]
+              to_emacs [:"gimme-insert-song",session,data,:t]
+            end
+            true; end
+          true;end;end;end;end
 
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
     ($atribs-["id"]).each do |key|
       key=key.to_sym; dict[key] = dict[key].class == Symbol ? dict[key].to_s : dict[key]
-      @async.medialib_entry_property_set(dict[:id], key.to_sym, dict[key.to_sym]).notifier {}
-    end
-  end
+      @async.medialib_entry_property_set(dict[:id], key, dict[key]).notifier;end;end
+
+  def vol (inc)
+    @async.playback_volume_get.notifier do |vol|
+      inc = inc.to_s.to_i # The sexp library translates -5 into a symbol :P
+      new = [0,[100,(vol[:left] + inc)].min].max
+      @async.playback_volume_set(:left, new).notifier {}
+      @async.playback_volume_set(:right, new).notifier {}
+      to_emacs [:message, "Volume set to " + new.to_s]; end; end
+
+
+  ###################
+  ### Collections ###
+  ###################
+
+  def subcol (data,pattern)
+    with_col(data) do |parent|
+      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+      match = Xmms::Collection.parse(pattern)
+      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
+      intersection.operands.push(parent)
+      intersection.operands.push(match)
+      @async.coll_query_ids(intersection).notifier do |list|
+        to_emacs [:"gimme-filter-set-current-col", [:quote, list]]
+      end;end;end
 
   def pcol (data, session)
-    @async.coll_get(data.to_s).notifier do |coll|
-      if data.class == String and data == "*"
-        coll = Xmms::Collection.universe
-      elsif data.class == Symbol and data == :nil
-        coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-        coll.idlist=[]
-      elsif data.class == Array
-        coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-        coll.idlist=data
-      end
+    with_col(data) do |coll|
       @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
         wrapperdict.each do |dict|
           adict = {}
-          dict.each {|key,val| adict[key] = val.class == NilClass ? "nil" : val}
-          puts ["gimme-insert-song".to_sym,session,[:quote, adict.to_a.flatten],:t].to_sexp
+          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+          to_emacs [:"gimme-insert-song",session,[:quote, adict.to_a.flatten],:t]
         end
-        42 # FIXME: For some reason, an integer is required
-      end
-    end
-  end
+        true;end;end;end
 
   def rcol (old, new)
     @async.coll_rename(old,new,Xmms::Collection::NS_COLLECTIONS).notifier {|res|}
@@ -278,67 +225,48 @@ class GIMME
     @async.coll_save(coll,name,Xmms::Collection::NS_COLLECTIONS)
   end
 
-  def set_atribs (l)
-    $atribs |= l.map{|n| n.to_s}
-  end
-
   def colls (session)
     @async.coll_list.notifier do |res|
-      children = {}; name={}
-      res.delete_if {|x| !x.match("^[0-9]\+-")}
-      res.each {|x| x = x.split("-",2); name[x[0]]=x[1]}
-      name[""]="Root"
-
-      name.each_key do |k|
-        some = name.reject {|k2,v2| !k2.match("^#{k}[0-9]$")}.each{|k2,v2| children[k]=children[k].to_a+[[k2,v2]]}
-      end
-
-      name.sort { |x,y| y[0].length <=> x[0].length }.each do |i|
-        name[i[0]] = children.has_key?(i[0]) ? children[i[0]].map{|j| [j,*name[j[0]]]} : ""
-      end
-
-      puts [:"gimme-tree-colls",session,[:quote, name[""].to_a]].to_sexp
+      to_emacs [:"gimme-tree-colls",session,[:quote, res.to_a]]
     end
   end
 
-  def colls (session)
-    @async.coll_list.notifier do |res|
-      puts [:"gimme-tree-colls",session,[:quote, res.to_a]].to_sexp
-    end
-  end
+  ########################
+  ### Misc and Private ###
+  ########################
 
+  def set_atribs (l); $atribs |= l.map{|n| n.to_s}; end
 
   private
 
+  def to_emacs (array); puts array.to_sexp; end
 
-  def change_volume (inc)
-    @async.playback_volume_get.notifier do |vol|
-      new = [0,[100,(vol[:left] + inc)].min].max
-      @async.playback_volume_set(:left, new).notifier {}
-      @async.playback_volume_set(:right, new).notifier {}
-      message "Volume set to " + new.to_s
-    end
-  end
-
+  def with_col (data)
+    @async.coll_get(data.to_s).notifier do |coll|
+      if data.class == String and data == "*"
+        coll = Xmms::Collection.universe
+      elsif data.class == Symbol and data == :nil
+        coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
+        coll.idlist=[]
+      elsif data.class == Array
+        coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
+        coll.idlist=data
+      end
+      yield coll
+    end;end
 end
 
 
 
 $ml = GLib::MainLoop.new(nil, false)
-client = GIMME.new
 $channel = GLib::IOChannel.new(STDIN)
+client = GIMME.new
 
 Thread.new do
   while true
-    gets.strip.each do | command |
-      parsed = command.parse_sexp.first
-      if (parsed.class == Array && client.respond_to?(parsed.first))
-        client.send(*parsed)
-      else
-        message ["wat", "does not compute", "can you explain with oranges?"][rand(3)]
-      end
-    end
-  end
-end
+    gets.strip.each do |command|
+      p = command.parse_sexp.first
+      client.send(*p) if (p.class == Array && client.respond_to?(p.first))
+    end;end;end
 
 $ml.run

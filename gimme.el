@@ -19,9 +19,8 @@
 ;; Functions ;;
 ;;;;;;;;;;;;;;;
 
-(defun gimme-reset () (setq gimme-filter-remainder ""))
-
 (defun gimme-extract-needed-tags ()
+  "Informs the ruby client of all %variables required by the config file"
   (let* ((l (flatten gimme-playlist-formats))
          (l (remove-if-not (lambda (n) (and (symbolp n)
                                        (string-match "^%" (format "%s" n)))) l))
@@ -30,6 +29,7 @@
     l))
 
 (defun eval-all-sexps (s)
+  "Evaluates all sexps from the string. As it will probably encounter a broken sexp, a variable is used to store the remainder to be used in future calls"
   (let ((s (concat gimme-filter-remainder s)))
     (setq gimme-filter-remainder
           (loop for x = (ignore-errors (read-from-string s))
@@ -46,13 +46,6 @@
                           (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") (if (>= gimme-debug 2) f s))))
                         (when (and ok (> 3 gimme-debug)) (eval (car x))))
                 finally (return (substring s position))))))
-
-(defun gimme-current-duration ()
-  ;; FIXME: Won't work on filter view etc
-  (with-current-buffer gimme-buffer-name
-    (let* ((cur (text-property-any (point-min) (point-max) 'face 'highlight))
-           (max (if cur (get-text-property cur 'duration) 0)))
-      max)))
 
 (defun gimme-update-playtime (time max)
   "Updates the playtime in the gimme-playtime variable"
@@ -77,77 +70,28 @@
     (process-send-string gimme-process message)))
 
 (defmacro gimme-generate-commands (&rest args)
-  ;; FIXME: Too ugly :(
+  "Generates commands that don't require arguments"
   `(mapcar 'eval
            ',(mapcar (lambda (f)
                        `(fset ',(read (format "gimme-%s" f))
                               (lambda () (interactive)
-                                (process-send-string gimme-process ,(format "%s\n" (list f))))))
+                                (process-send-string gimme-process 
+                                                     ,(format "%s\n" (list f))))))
                      args)))
 
 
-(defun gimme-update-pos (fun min max)
-  ;; FIXME: Not working
-  (with-current-buffer gimme-buffer-name
-    (loop for beg = min then end
-          and end = (or (next-property-change min) max)
-          then (or (next-property-change end) max)
-          while (and (<= end max) (< beg end))
-          doing (put-text-property
-                 beg end 'pos
-                 (funcall fun (get-text-property beg 'pos))))))
-
-(defun gimme-insert-song (session plist append)
-  (when (= session gimme-session)
-    (with-current-buffer gimme-buffer-name
-      (save-excursion
-        (unlocking-buffer
-         (goto-char (if append (point-max)
-                      (or (text-property-any (point-min) (point-max)
-                                             'pos (getf plist 'pos)) (point-max))))
-         (insert (gimme-string plist))
-         (unless append (gimme-update-pos #'1+ (point-marker) (point-max))))))))
-
 (defun gimme-string (plist)
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
-  ;; FIXME: GENSYM
   (eval `(let ((plist ',plist)
-               ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) (if (and (symbolp (cdr n)) (not (null (cdr n)))) (list 'quote (cdr n)) (cdr n))))
+               ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) 
+                                      (if (and (symbolp (cdr n)) (not (null (cdr n)))) 
+                                          (list 'quote (cdr n)) (cdr n))))
                          (plist-to-alist plist)))
            (eval (car gimme-playlist-formats)))))
 
 
-(defmacro what (number) `(format "%s3" ',(type-of number)))
-
-(defun gimme-update-playlist (plist)
-  ;; FIXME: Deal with multiple playlists(?)
-  ;; FIXME: Bloody mess and weird variable names!
-  ;; FIXME: add ?== insert?
-  ;; Not-Implemented:
-  ;;  - Move
-  (case (getf plist 'type)
-    ('add    (progn (gimme-insert-song gimme-session plist t)   (message "Song added!")))
-    ('insert (progn (gimme-insert-song gimme-session plist nil) (message "Song added!")))
-    ('remove (progn
-               (setq gimme-last-del (getf plist 'pos))
-               (when (get-buffer gimme-buffer-name)
-                 (with-current-buffer gimme-buffer-name
-                   (unlocking-buffer
-                    (let* ((beg (text-property-any (point-min) (point-max) 'pos
-                                                   (getf plist 'pos)))
-                           (end (or (next-property-change (or beg (point-min)))
-                                    (point-max))))
-                      (when (and beg end)
-                        (clipboard-kill-region beg end)
-                        (gimme-update-pos #'1- (point) (point-max)))))))))
-    ('move    (progn (gimme-playlist) (message "Playlist updated! (moving element)")))
-    ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
-    ('clear   (progn (gimme-playlist) (message "Playlist cleared!")))
-    ('sort    (progn (gimme-playlist) (message "Playlist updated! (sorting list)")))
-    ('update  (progn (gimme-playlist) (message "Playlist updated! (updating list)")))))
-
 (defun gimme-set-title (title)
-  "Where is my lexical scope when I need it? :("
+  "Changes the header of a buffer"
   (setq gimme-playlist-header title)
   (setq header-line-format
         '(:eval (substring (decode-coding-string gimme-playlist-header 'utf-8)
@@ -156,34 +100,15 @@
 
 
 (defun gimme-toggle-view ()
-  ;; FIXME: check perfomance on large playlists,
-  ;; but I think I'll change it avoid reloading the playlist
+  "Cycle through the views defined in gimme-config"
   (interactive)
   (setq gimme-playlist-formats
         (append (cdr gimme-playlist-formats)
                 (list (car gimme-playlist-formats))))
   (gimme-current-mode))
 
-
-(defun gimme-playlist-mode ()
-  "FIXME: Write something here"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map gimme-playlist-map)
-  (setq truncate-lines t)
-  (setq major-mode 'gimme-playlist-mode
-        mode-name "gimme-playlist"))
-
-(defun gimme-filter-mode ()
-  "FIXME: Write something here"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map gimme-filter-map)
-  (setq truncate-lines t)
-  (setq major-mode 'gimme-filter-mode
-        mode-name "gimme-filter"))
-
 (defun gimme-current-mode ()
+  "Funcalls the current mode"
   (interactive)
   (funcall (case gimme-current-mode
              (tree 'gimme-tree)
@@ -191,20 +116,22 @@
              (playlist 'gimme-playlist))))
 
 (defun gimme ()
+  "The XMMS2 player we all love"
   (interactive)
-  (gimme-reset)
+  (setq gimme-filter-remainder "")
   (gimme-init)
   (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-current-mode))
 
-;; Init
+;;;;;;;;;;
+;; Init ;;
+;;;;;;;;;;
 
-(gimme-generate-commands clear shuffle play pause next prev stop toggle
-                         inc_vol dec_vol current)
+(gimme-generate-commands clear shuffle play pause next prev stop toggle current)
+(require 'gimme-utils)
 (require 'gimme-playlist)
 (require 'gimme-tree)
 (require 'gimme-filter)
-(require 'gimme-utils)
 (require 'gimme-status-mode)
 (require 'gimme-config)
 (provide 'gimme)

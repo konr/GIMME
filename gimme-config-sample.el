@@ -12,6 +12,7 @@
 
 (defvar gimme-sort-criteria '((artist album tracknr) (artist title) (title)))
 (defvar gimme-tree-file "~/.gimmetree")
+(defvar gimme-vol-delta 5)
 
 (gimme-status-mode)
 

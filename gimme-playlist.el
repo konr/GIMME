@@ -42,9 +42,9 @@
     (define-key map (kbd "J") 'gimme-next)
     (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
-    (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
-    (define-key map (kbd "+") 'gimme-inc_vol)
-    (define-key map (kbd "-") 'gimme-dec_vol)
+    (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
+    (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
+    (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
     (define-key map (kbd "?") 'gimme-focused-url)
     (define-key map (kbd "*") 'gimme-toggle-star)
     (define-key map (kbd "[") (lambda () (interactive) (gimme-seek -1000  t)))
@@ -54,9 +54,48 @@
     (define-key map (kbd "g") 'gimme-goto-pos)
     map))
 
+(defun gimme-update-playlist (plist)
+  ;; FIXME: Deal with multiple playlists(?)
+  ;; FIXME: Bloody mess and weird variable names!
+  ;; FIXME: add ?== insert?
+  ;; Not-Implemented:
+  ;;  - Move
+  (case (getf plist 'type)
+    ('add    (progn (gimme-insert-song gimme-session plist t)   (message "Song added!")))
+    ('insert (progn (gimme-insert-song gimme-session plist nil) (message "Song added!")))
+    ('remove (progn
+               (setq gimme-last-del (getf plist 'pos))
+               (when (get-buffer gimme-buffer-name)
+                 (with-current-buffer gimme-buffer-name
+                   (unlocking-buffer
+                    (let* ((beg (text-property-any (point-min) (point-max) 'pos
+                                                   (getf plist 'pos)))
+                           (end (or (next-property-change (or beg (point-min)))
+                                    (point-max))))
+                      (when (and beg end)
+                        (clipboard-kill-region beg end)
+                        (gimme-update-pos #'1- (point) (point-max)))))))))
+    ('move    (progn (gimme-playlist) (message "Playlist updated! (moving element)")))
+    ('shuffle (progn (gimme-playlist) (message "Playlist shuffled!")))
+    ('clear   (progn (gimme-playlist) (message "Playlist cleared!")))
+    ('sort    (progn (gimme-playlist) (message "Playlist updated! (sorting list)")))
+    ('update  (progn (gimme-playlist) (message "Playlist updated! (updating list)")))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-update-pos (fun min max)
+  ""
+  (with-current-buffer gimme-buffer-name
+    (loop for beg = min then end
+          and end = (or (next-property-change min) max)
+          then (or (next-property-change end) max)
+          while (and (<= end max) (< beg end))
+          doing (put-text-property
+                 beg end 'pos
+                 (funcall fun (get-text-property beg 'pos))))))
 
 (defun gimme-set-playing (pos)
   "Highlights the currently played song"
@@ -72,11 +111,8 @@
               (end (next-property-change (or beg (point-min)))))
          (when beg (put-text-property beg (or end (point-max)) 'face 'highlight)))))))
 
-
-
-
 (defun gimme-update-tags (plist-b)
-  ""
+  "Updates the tags of song, whose id must be at the plist"
   (with-current-buffer gimme-buffer-name
     (let* ((id (getf plist-b 'id))
            (pos-list (range-to-plists (point-min) (point-max)))
@@ -103,9 +139,39 @@
               (goto-char beg)
               (insert (gimme-string plist-b))))))))))
 
+(defun gimme-playlist-mode ()
+  "FIXME: Write something here"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map gimme-playlist-map)
+  (setq truncate-lines t)
+  (setq major-mode 'gimme-playlist-mode
+        mode-name "gimme-playlist"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Auxiliary Functions ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-insert-song (session plist append)
+  (when (= session gimme-session)
+    (with-current-buffer gimme-buffer-name
+      (save-excursion
+        (unlocking-buffer
+         (goto-char (if append (point-max)
+                      (or (text-property-any (point-min) (point-max)
+                                             'pos (getf plist 'pos)) (point-max))))
+         (insert (gimme-string plist))
+         (unless append (gimme-update-pos #'1+ (point-marker) (point-max))))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-vol (delta)
+  "Increases the current volume by delta (can be non-positive, too)"
+  (interactive)
+  (when (integerp delta)
+      (gimme-send-message "(vol %d)\n" delta)))
 
 (defun gimme-sort ()
   "Sorts the current playlist"
@@ -128,6 +194,7 @@
     (when pos (gimme-send-message "(playn %s)\n" pos))))
 
 (defun gimme-paste-deleted (undo)
+  "Pastes a song at the car of the kill-ring"
   (interactive)
   (let* ((last (car kill-ring))
          (pos (get-text-property (point) 'pos))
@@ -141,7 +208,6 @@
 
 (defun gimme-focused-delete (delete-p)
   "Deletes the currently focused song."
-  ;; FIXME: When you delete the currently playing song, the playlist state gets inconsistent on the server
   (interactive)
   (if (use-region-p)
       (let* ((min (min (point) (mark)))
@@ -160,7 +226,7 @@
 (defun gimme-focused-url ()
   "Asks for the song's current URL."
   (interactive)
-  (gimme-send-message "(url %d)\n" (get-text-property (point) 'id)))
+  (message (get-text-property (point) 'url)))
 
 (defun gimme-center ()
   "Centers buffer on currently playing song"
@@ -182,7 +248,7 @@
                       (reduce (lambda (x y) (+ (* 60 x) y))
                               (mapcar #'string-to-int (split-string input ":"))))
                      ((string-match "^[0-9]\+%$" input)
-                      (/ (* (gimme-current-duration)
+                      (/ (* (or (cdr (assoc 'max gimme-playtime)) 0)
                             (string-to-int (substring input 0 -1)))
                          100000))
                      (t nil))))
@@ -215,7 +281,7 @@
                                                               (read-from-minibuffer
                                                                (format "%s? " (car n))
                                                                (format "%s" (cadr n)))))
-                                      n)) ; FIXME: Assuming no whitespace. Allow only number/strings!
+                                      n))
                         alist)))
     (gimme-send-message "(update_tags %s)\n" (prin1-to-string alist))))
 

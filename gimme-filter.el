@@ -5,6 +5,7 @@
                       gimme-update-playtime))
 
 (defun gimme-filter ()
+  "Sets up the buffer"
   (interactive)
   (gimme-new-session)
   (get-buffer-create gimme-buffer-name)
@@ -18,9 +19,47 @@
                               (gimme-filter-get-breadcrumbs)))
      (save-excursion
        (gimme-send-message "(pcol %s %s)\n" (gimme-tree-current-ref) gimme-session)))
-    (switch-to-buffer (get-buffer gimme-buffer-name)))) ;; FIXME: Quite redundant and ugly
+   (switch-to-buffer (get-buffer gimme-buffer-name))))
+
+(defvar gimme-filter-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "!") 'gimme-filter)
+    (define-key map (kbd "@") 'gimme-tree)
+    (define-key map (kbd "#") 'gimme-playlist)
+    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
+    (define-key map (kbd "SPC") 'gimme-toggle)
+    (define-key map (kbd "j") 'next-line)
+    (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "J") 'gimme-next)
+    (define-key map (kbd "K") 'gimme-prev)
+    (define-key map (kbd "TAB") 'gimme-toggle-view)
+    (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
+    (define-key map (kbd "+") 'gimme-inc_vol)
+    (define-key map (kbd "-") 'gimme-dec_vol)
+
+    (define-key map (kbd "<") 'gimme-parent-col)
+    (define-key map (kbd ">") 'gimme-child-col)
+    (define-key map (kbd "a") 'gimme-filter-append-focused)
+    (define-key map (kbd "RET") 'gimme-filter-play-focused)
+    (define-key map (kbd "A") 'gimme-filter-append-collection)
+    (define-key map (kbd "f") 'gimme-filter-same)
+    map))
+
+(defun gimme-filter-mode ()
+  "FIXME: Write something here"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map gimme-filter-map)
+  (setq truncate-lines t)
+  (setq major-mode 'gimme-filter-mode
+        mode-name "gimme-filter"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interactive Functions ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-child-col ()
+  "Creates and displays a new collection intersecting the search criteria and the current collection"
   (interactive)
   (let* ((parent (gimme-tree-current-ref))
          (name (if (stringp parent) parent (getf (gimme-tree-current-data) 'name)))
@@ -30,27 +69,31 @@
     (gimme-send-message message)))
 
 (defun gimme-parent-col ()
+  "Jumps to the current collection's parent collection."
   (interactive)
   (if (listp gimme-current)
       (setq gimme-current (butlast gimme-current)))
   (gimme-filter))
 
 (defun gimme-filter-append-focused ()
+  "Appends to the current playlist the focused song"
   (interactive)
   (gimme-send-message "(add %s)\n" (get-text-property (point) 'id)))
 
 (defun gimme-filter-play-focused ()
+  "Appends to the current playlist the focused song and then play it"
   (interactive)
   (gimme-send-message "(addplay %s)\n" (get-text-property (point) 'id)))
 
 (defun gimme-filter-append-collection ()
+  "Appends to the current playlist the entire collection"
   (interactive)
-  (loop for x = (point-min) then (next-property-change x) while x
-        collecting (gimme-send-message "(add %s)\n" (get-text-property x 'id))
-        finally (message "Songs added!")))
+  (message "Appending songs to the playlist...")
+  (dolist (el (range-to-plists (point-min) (point-max)))
+    (gimme-send-message (format "(add %d)\n" (getf el 'id)))))
 
 (defun gimme-filter-same ()
-  "Creates a subcollection matching some this song's criterium"
+  "Creates a subcollection matching some this song's criteria"
   (interactive)
   (let* ((parent (gimme-tree-current-ref))
          (name (completing-read
@@ -77,35 +120,13 @@
     (format "%s" gimme-current)))
 
 
-(defvar gimme-filter-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "!") 'gimme-filter)
-    (define-key map (kbd "@") 'gimme-tree)
-    (define-key map (kbd "#") 'gimme-playlist)
-    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
-    (define-key map (kbd "SPC") 'gimme-toggle)
-    (define-key map (kbd "j") 'next-line)
-    (define-key map (kbd "k") 'previous-line)
-    (define-key map (kbd "J") 'gimme-next)
-    (define-key map (kbd "K") 'gimme-prev)
-    (define-key map (kbd "TAB") 'gimme-toggle-view)
-    (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
-    (define-key map (kbd "+") 'gimme-inc_vol)
-    (define-key map (kbd "-") 'gimme-dec_vol)
-
-    (define-key map (kbd "<") 'gimme-parent-col)
-    (define-key map (kbd ">") 'gimme-child-col)
-    (define-key map (kbd "a") 'gimme-filter-append-focused)
-    (define-key map (kbd "RET") 'gimme-filter-play-focused)
-    (define-key map (kbd "A") 'gimme-filter-append-collection)
-    (define-key map (kbd "f") 'gimme-filter-same)
-    map))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby part ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-filter-set-current-col (ref)
+  "Sets the current collection. Can be either a string or a list"
   (setq gimme-current
         (append (if (listp gimme-current) gimme-current nil)
                 `(,(gimme-tree-add-child
