@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 $: << File.join(File.dirname(__FILE__))
 
-require 'xmmsclient'
-require 'xmmsclient_glib'
-require 'glib2'
-require 'rubygems'
-require 'sexp'
-require 'pp'
+['xmmsclient', 'xmmsclient_glib', 'glib2', 'rubygems', 'sexp'].each do |lib|
+  begin
+    require lib
+  rescue LoadError
+    warn "(message \"Awn! Something didn't go right. 
+I bet 3 internets that '#{lib}' is missing\")"
+  end
+end
 
 
 DEBUG = false
@@ -104,16 +106,16 @@ class GIMME
   def self.gen_methods
 
     # Client
-    
+
     { 'play'   => 'playback_start',
       'pause'  => 'playback_pause',
       'stop'   => 'playback_stop',
       'tickle' => 'playback_tickle',
-      'dcol'   => 'coll_remove'}.each do |k,v| 
+      'dcol'   => 'coll_remove'}.each do |k,v|
       define_method(k) { |*args| @async.send(v,*args).notifier };end
 
     # Playlist
-    
+
     { 'add'     => 'add_entry',
       'remove'  => 'remove_entry',
       'insert'  => 'insert_entry',

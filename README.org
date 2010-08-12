@@ -1,9 +1,16 @@
-* Working on [2/7]
+* Working on [3/7]
 
   1. [X] Add missing features
   2. [X] Clean up the code
-  3. [ ] Test on new environments
+  3. [X] Test on new environments [3/3]
+         - [X] No .gimmetree
+         - [X] No medialib (fresh xmms2)
+         - [X] No libraries (sexp)
   4. [ ] Add Emacs stuff (hooks, variables, wrap into a package)
+         - [ ] Hooks
+         - [ ] Set up variables correctly
+         - [ ] ELPA?
+         - [ ] Install-all-required-packages
   5. [ ] Write docs (perhaps a screencast)
   6. [ ] ???
   7. [ ] Profit!
@@ -35,7 +42,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **12/8**: 6 polishing the ruby client
+  - **12/8**: 6 polishing the ruby client, 1 testing
   - **11/8**: 5 polishing the elisp client
   - **10/8**: 7 working on various features
   - **09/8**: 12 working on tree-view (including 08/08)
