@@ -1,9 +1,3 @@
-(defvar gimme-filter-header (propertize "GIMME" 'font-lock-face '(:foreground "#ff0000" :weight bold))) ;; FIXME: Find why why it isn't coloring
-(defvar gimme-filter-mode-functions
-  '(gimme-insert-song gimme-set-title message
-                      gimme-filter-set-current-col
-                      gimme-update-playtime))
-
 (defun gimme-filter ()
   "Sets up the buffer"
   (interactive)
@@ -13,6 +7,7 @@
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (gimme-filter-mode)
+     (gimme-tree-read-from-disk)
      (clipboard-kill-region 1 (point-max))
      (gimme-set-title (format "%s - %s"
                               gimme-filter-header

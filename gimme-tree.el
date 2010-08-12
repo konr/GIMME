@@ -1,11 +1,3 @@
-(defvar gimme-tree-header "GIMME - Tree View")
-(defvar gimme-tree-mode-functions
-  '(message gimme-update-playtime gimme-tree-colls gimme-coll-changed))
-(defvar gimme-current nil)
-(defvar gimme-trees nil)
-
-
-
 (defun gimme-tree ()
   (interactive)
   (gimme-new-session)

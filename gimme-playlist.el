@@ -1,10 +1,3 @@
-(defvar gimme-playlist-header "GIMME - Playlist view")
-(defvar gimme-playlist-mode-functions
-  '(gimme-set-playing gimme-update-playlist
-                      gimme-insert-song gimme-set-title message
-                      gimme-update-tags gimme-update-playtime))
-
-
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)

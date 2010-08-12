@@ -42,7 +42,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **12/8**: 6 polishing the ruby client, 1 testing
+  - **12/8**: 6 polishing the ruby client, 3 testing
   - **11/8**: 5 polishing the elisp client
   - **10/8**: 7 working on various features
   - **09/8**: 12 working on tree-view (including 08/08)

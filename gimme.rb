@@ -5,7 +5,7 @@ $: << File.join(File.dirname(__FILE__))
   begin
     require lib
   rescue LoadError
-    warn "(message \"Awn! Something didn't go right. 
+    warn "(message \"Oops! Something didn't go right. \
 I bet 3 internets that '#{lib}' is missing\")"
   end
 end

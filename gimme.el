@@ -7,13 +7,23 @@
 (defvar gimme-current-mode 'playlist)
 (defvar gimme-buffer-name "GIMME")
 (defvar gimme-session 0)
-(defvar gimme-colls-prefix "gimme-")
 (defvar gimme-filter-remainder "")
 (defvar gimme-debug 0)
-(defvar gimme-buffers nil)
 (defvar gimme-playtime nil)
+(defvar gimme-current nil)
+(defvar gimme-trees nil)
 
-(defvar gimme-delete-stack nil)
+(defvar gimme-tree-header "GIMME - Tree View")
+(defvar gimme-playlist-header "GIMME - Playlist view")
+(defvar gimme-filter-header "GIMME")
+
+(defvar gimme-tree-mode-functions
+  '(message gimme-update-playtime gimme-tree-colls gimme-coll-changed))
+(defvar gimme-filter-mode-functions
+  '(gimme-insert-song gimme-set-title message gimme-filter-set-current-col gimme-update-playtime))
+(defvar gimme-playlist-mode-functions
+  '(gimme-set-playing gimme-update-playlist gimme-insert-song gimme-set-title message gimme-update-tags gimme-update-playtime))
+
 
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
