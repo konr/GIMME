@@ -1,1 +1,0 @@
-gimme-config-sample.el
