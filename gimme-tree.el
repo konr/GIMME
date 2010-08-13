@@ -34,9 +34,9 @@
     (define-key map (kbd "s") 'gimme-tree-save-collection)
     (define-key map (kbd "S") '(lambda () (interactive) (gimme-tree-save-collection t)))
     map))
+
 (define-derived-mode gimme-tree-mode font-lock-mode
   ;; FIXME: Find out why deriving from font-lock-face won't colorize the the songs
-  (interactive)
   (use-local-map gimme-tree-map)
   (setq major-mode 'gimme-tree-mode)
   (font-lock-add-keywords nil
@@ -48,7 +48,9 @@
                             ("^\\*\\*\\*\\*\\*\\* .*\n"          . 'gimme-tree-level-6)
                             ("^\\*\\*\\*\\*\\*\\*\\* .*\n"       . 'gimme-tree-level-7)
                             ("^\\*\\*\\*\\*\\*\\*\\*\\** .*\n"   . 'gimme-tree-level-8)))
-  (setq mode-name "gimme-tree") )
+  (setq mode-name "gimme-tree"))
+
+
 
 (defun gimme-tree-colls (session list)
   "Prints the available collections as a tree"
@@ -134,10 +136,10 @@
 (defun gimme-tree-get-node (position)
   ""
   (when (listp position)
-      (loop for pos = position then (cdr pos)
-            and tree = gimme-trees then (nth (car pos) tree)
-            while pos
-            finally return tree)))
+    (loop for pos = position then (cdr pos)
+          and tree = gimme-trees then (nth (car pos) tree)
+          while pos
+          finally return tree)))
 
 (defun gimme-tree-delete-from-tree (pos)
   ""
@@ -184,12 +186,14 @@
 
 (defun gimme-tree-read-from-disk ()
   ""
-  (setq gimme-trees
-        (read
-         (if (file-readable-p gimme-tree-file)
-             (shell-command-to-string (format "cat %s" gimme-tree-file))
-           (progn (gimme-tree-write-to-disk '((name "All" ref "\"*\"")))
-                  (shell-command-to-string (format "cat %s" gimme-tree-file)))))))
+  (if (file-readable-p gimme-tree-file)
+      (setq gimme-trees
+            (with-temp-buffer (insert-file-contents gimme-tree-file)
+                              (read (buffer-string))))
+    (let ((new '((name "All" ref "\"*\""))))
+      (gimme-tree-write-to-disk new)
+      (gimme-tree-read-from-disk))))))
+
 
 (defun gimme-tree-write-to-disk (&optional tree)
   ""

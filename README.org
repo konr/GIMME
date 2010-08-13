@@ -6,7 +6,7 @@
          - [X] No .gimmetree
          - [X] No medialib (fresh xmms2)
          - [X] No libraries (sexp)
-  4. [ ] Add Emacs stuff (hooks, variables, wrap into a package)
+  4. [ ] Add Emacs stuff [0/4]
          - [ ] Hooks
          - [ ] Set up variables correctly
          - [ ] ELPA?
@@ -42,7 +42,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
-  - **12/8**: 6 polishing the ruby client, 3 testing
+  - **12/8**: 9 polishing the ruby client and testing
   - **11/8**: 5 polishing the elisp client
   - **10/8**: 7 working on various features
   - **09/8**: 12 working on tree-view (including 08/08)
