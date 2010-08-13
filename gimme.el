@@ -1,3 +1,34 @@
+;;; gimme.el --- GIMME Interesting Music on My Emacs
+
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary
+
+;; GIMME (GIMME Interesting Music on My Emacs) is an XMMS2 client 
+;; originally developed for Google's Summer of Code. Kudos to them
+;; and to DraX for the Support. 
+
+;; GIMME works by using collections as search results, and its multiple
+;; views allows you to do that in multiple ways. As of GIMME 1.0, you
+;; can search and narrow searching using filter-view and better visualize
+;; it using tree-view.
+
+;;; Code
+
 (defvar gimme-process)
 (defvar gimme-executable "gimme.rb")
 (defvar gimme-fullpath (expand-file-name
@@ -85,7 +116,7 @@
            ',(mapcar (lambda (f)
                        `(fset ',(read (format "gimme-%s" f))
                               (lambda () (interactive)
-                                (process-send-string gimme-process 
+                                (process-send-string gimme-process
                                                      ,(format "%s\n" (list f))))))
                      args)))
 
@@ -93,9 +124,9 @@
 (defun gimme-string (plist)
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
   (eval `(let ((plist ',plist)
-               ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n))) 
-                                      (if (and (symbolp (cdr n)) (not (null (cdr n)))) 
-                                          (list 'quote (cdr n)) (cdr n))))
+               ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n)))
+                                           (if (and (symbolp (cdr n)) (not (null (cdr n))))
+                                               (list 'quote (cdr n)) (cdr n))))
                          (plist-to-alist plist)))
            (eval (car gimme-playlist-formats)))))
 
@@ -143,5 +174,7 @@
 (require 'gimme-tree)
 (require 'gimme-filter)
 (require 'gimme-status-mode)
-(require 'gimme-config)
+(require 'gimme-custom)
 (provide 'gimme)
+
+;;; gimme.el ends here

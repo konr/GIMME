@@ -1,6 +1,26 @@
+;;; gimme-tree-faces.el --- faces for GIMME's tree-view
+
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code
+
 (defgroup gimme-tree-faces nil
   "Faces in Org-mode."
-  :tag "Org Faces"
+  :tag "Faces for tree-view"
   :group 'gimme)
 
 (defface gimme-tree-level-1 ;; originally copied from font-lock-function-name-face
@@ -79,3 +99,4 @@
     ))
 
 (provide 'gimme-tree-faces)
+;;; gimme-tree-faces.el ends here

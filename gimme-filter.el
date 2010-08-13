@@ -1,3 +1,23 @@
+;;; gimme-filter.el --- GIMME's filter-view
+
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code
+
 (defun gimme-filter ()
   "Sets up the buffer"
   (interactive)
@@ -28,9 +48,9 @@
     (define-key map (kbd "J") 'gimme-next)
     (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
-    (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
-    (define-key map (kbd "+") 'gimme-inc_vol)
-    (define-key map (kbd "-") 'gimme-dec_vol)
+    (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
+    (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
+    (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
 
     (define-key map (kbd "<") 'gimme-parent-col)
     (define-key map (kbd ">") 'gimme-child-col)
@@ -41,7 +61,7 @@
     map))
 
 (defun gimme-filter-mode ()
-  "FIXME: Write something here"
+  "Manipulate collections"
   (interactive)
   (kill-all-local-variables)
   (use-local-map gimme-filter-map)
@@ -131,3 +151,4 @@
 
 
 (provide 'gimme-filter)
+;;; gimme-filter.el ends here

@@ -1,10 +1,26 @@
+;;; gimme-status-mode.el --- GIMME's modeline utility
+
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code
+
 ;; Shamelessly copied from lunar-mode-line.el
 
 (require 'timer)
-
-(defgroup gimme-mode-line nil
-  "Display GIMME information in mode line of Emacs."
-  :group 'modeline)
 
 (defvar gimme-status-mode-string nil
   "String to display in the mode line.")
@@ -14,11 +30,6 @@
     (format "-[%s]" time)
     (format "-[%d%%]" (/ (* 100 time-raw) max-raw)))
   "Not customizable due to free variables")
-
-(defcustom gimme-status-mode-interval 1
-  "*Seconds between updates of the mode line."
-  :type 'integer
-  :group 'gimme-mode-line)
 
 (defvar gimme-status-mode-timer nil
   "Interval timer object.")
@@ -34,14 +45,13 @@
       `(lambda (e)
          (interactive "e")
          (gimme)))
-
     map))
 
 (define-minor-mode gimme-status-mode
   "Toggle display of track information in the mode line.
 With a numeric arg, enable this display if arg is positive.
 
-The mode line will be updated automatically every `gimme-status-mode-interval' seconds"
+The mode line will be updated automatically every second"
   :global t :group 'gimme-mode-line
   (setq gimme-status-mode-string "")
   (or global-mode-string (setq global-mode-string '("")))
@@ -50,8 +60,7 @@ The mode line will be updated automatically every `gimme-status-mode-interval' s
       (setq global-mode-string
             (delq 'gimme-status-mode-string global-mode-string))
     (add-to-list 'global-mode-string 'gimme-status-mode-string t)
-    (setq gimme-status-mode-timer (run-at-time nil gimme-status-mode-interval
-                                               'gimme-status-mode-update-line))
+    (setq gimme-status-mode-timer (run-at-time nil 1 'gimme-status-mode-update-line))
     (gimme-status-mode-update-line)))
 
 
@@ -72,7 +81,6 @@ The mode line will be updated automatically every `gimme-status-mode-interval' s
            (max  (format-seconds "%.2m:%.2s" (/ max-raw 1000)))
            (msg (eval (car gimme-status-mode-formats))))
       (setq gimme-status-mode-string
-            ;; FIXME: Random data
             (propertize msg
                         'mouse-face 'mode-line-highlight
                         'local-map gimme-status-mode-keymap
@@ -86,3 +94,4 @@ The mode line will be updated automatically every `gimme-status-mode-interval' s
 
 
 (provide 'gimme-status-mode)
+;;; gimme-status-mode.el ends here

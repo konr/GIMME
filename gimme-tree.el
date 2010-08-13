@@ -1,3 +1,23 @@
+;;; gimme-tree.el --- GIMME's tree-view
+
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code
+
 (defun gimme-tree ()
   (interactive)
   (gimme-new-session)
@@ -8,7 +28,6 @@
      (clipboard-kill-region 1 (point-max))
      (gimme-tree-read-from-disk)
      (gimme-tree-mode)
-     (ignore-errors (viper-change-state-to-emacs)) ;; FIXME: Temporary
      (gimme-set-title gimme-tree-header)
      (gimme-send-message "(colls %s)\n" gimme-session)
      (switch-to-buffer (get-buffer gimme-buffer-name)))))
@@ -25,9 +44,9 @@
     (define-key map (kbd "J") 'gimme-next)
     (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
-    (define-key map (kbd "=") 'gimme-inc_vol) ;; FIXME: Better names, please!
-    (define-key map (kbd "+") 'gimme-inc_vol)
-    (define-key map (kbd "-") 'gimme-dec_vol)
+    (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
+    (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
+    (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
     (define-key map (kbd "RET") 'gimme-tree-view-collection)
     (define-key map (kbd "d") 'gimme-tree-delete-coll)
     (define-key map (kbd "r") 'gimme-tree-rename-coll)
@@ -192,7 +211,7 @@
                               (read (buffer-string))))
     (let ((new '((name "All" ref "\"*\""))))
       (gimme-tree-write-to-disk new)
-      (gimme-tree-read-from-disk))))))
+      (gimme-tree-read-from-disk))))
 
 
 (defun gimme-tree-write-to-disk (&optional tree)
@@ -238,4 +257,4 @@
 
 (require 'gimme-tree-faces)
 (provide 'gimme-tree)
-
+;;; gimme-tree.el ends here

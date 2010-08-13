@@ -6,15 +6,18 @@
          - [X] No .gimmetree
          - [X] No medialib (fresh xmms2)
          - [X] No libraries (sexp)
-  4. [ ] Add Emacs stuff [0/4]
-         - [ ] Hooks
-         - [ ] Set up variables correctly
+  4. [-] Add Emacs stuff [2/5]
+         - [ ] Hooks [0/2]
+               - [ ] Broadcasts
+               - [ ] Open window and (ignore-errors (viper-change-state-to-emacs))
+         - [X] Set up variables correctly
+         - [X] Headers
          - [ ] ELPA?
          - [ ] Install-all-required-packages
   5. [ ] Write docs (perhaps a screencast)
   6. [ ] ???
   7. [ ] Profit!
-
+         
 * Coming next
 
   1. Alternative ways of grouping the songs together.
@@ -35,6 +38,8 @@
 * Known bugs
   - When you delete the currently playing song, the playlist state
     gets inconsistent on the server
+  - Sometimes when you jump to another view, the buffer is displayed
+    without colors until you press a key. Perhaps an Emacs issue?
 * Reference:
   - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
   - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
@@ -42,6 +47,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **13/8**: 4 working on custom variables and general emacs stuff
   - **12/8**: 9 polishing the ruby client and testing
   - **11/8**: 5 polishing the elisp client
   - **10/8**: 7 working on various features
@@ -74,7 +80,7 @@
   - **07/5**: 7 pomodoros: 1 watching ruby screencasts, 2 messing with the sexp library, 4 coding and looking for documentation
   - **06/5**: 6 pomodoros: 3 watching ruby screencasts and 3 working on code
   - **05/5**: 3 pomodoros watching Ruby screencasts on metaprogramming
-  - **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro =[
+  - **03/5**: 6 pomodoros: 3 wresting with output plugins and 3 wrestling with an ugly macro
   - **30/4**: 1 pomodoro installing xmms and its libs in this machine
   - **29/4**: 5 pomodoros building a simple ruby+emacs example
 

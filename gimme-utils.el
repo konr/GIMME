@@ -1,7 +1,22 @@
-;;;;;;;;;;;;;;;
-;; Utilities ;;
-;;;;;;;;;;;;;;;
+;;; gimme-utils.el --- Utility functions used on GIMME
 
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code
 
 (defun gimme-new-session () 
   "The session is used to not mix data from two requests"
@@ -29,7 +44,7 @@
 
 (defun color-for (string)
   "Deterministic way of selecting a color for a string"
-  (let* ((colors cool-colors)
+  (let* ((colors gimme-colors)
          (len (length colors))
          (hash (string-to-number (substring (md5 (if (stringp string) string "")) 0 6) 16)))
     (nth (mod hash len) colors)))
@@ -73,11 +88,11 @@
         and when (funcall f beg)
         collect (list beg (or end (point-max))) end))
 
-(defun appropriate-colors ()
+(defun appropriate-colors (&optional step)
   "Returns all colors that, according to w3c, will be readable on your background"
   (flet ((brightness (n) (/ (apply #'+ (map 'list (lambda (x y) (* x y)) '(299 587 114) n))
                             1000)))
-    (let* ((step #x30)
+    (let* ((step (or step #x30))
            (bg (color-values (cdr (assoc 'background-color (frame-parameters)))))
            (background-brightness (brightness bg))
            (max-diff 125) ;; According to w3c
@@ -90,6 +105,6 @@
            (all (mapcar (lambda (n) (apply #'format "#%.2x%.2x%.2x" n)) all)))
       all)))
 
-(defvar cool-colors (appropriate-colors))
 
 (provide 'gimme-utils)
+;;; gimme-utils.el ends here

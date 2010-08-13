@@ -1,3 +1,24 @@
+;;; gimme-playlist.el ends here
+;;; gimme-playlist.el --- GIMME's playlist-view
+
+;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Keywords: XMMS2, mp3
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code
+
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)
@@ -48,11 +69,7 @@
     map))
 
 (defun gimme-update-playlist (plist)
-  ;; FIXME: Deal with multiple playlists(?)
-  ;; FIXME: Bloody mess and weird variable names!
-  ;; FIXME: add ?== insert?
-  ;; Not-Implemented:
-  ;;  - Move
+  ;; Not seriouly implemented: Move
   (case (getf plist 'type)
     ('add    (progn (gimme-insert-song gimme-session plist t)   (message "Song added!")))
     ('insert (progn (gimme-insert-song gimme-session plist nil) (message "Song added!")))
@@ -106,6 +123,7 @@
 
 (defun gimme-update-tags (plist-b)
   "Updates the tags of song, whose id must be at the plist"
+  (when (get-buffer gimme-buffer-name)
   (with-current-buffer gimme-buffer-name
     (let* ((id (getf plist-b 'id))
            (pos-list (range-to-plists (point-min) (point-max)))
@@ -130,10 +148,10 @@
             (kill-region beg end)
             (save-excursion
               (goto-char beg)
-              (insert (gimme-string plist-b))))))))))
+              (insert (gimme-string plist-b)))))))))))
 
 (defun gimme-playlist-mode ()
-  "FIXME: Write something here"
+  "Displays a playlist"
   (interactive)
   (kill-all-local-variables)
   (use-local-map gimme-playlist-map)
@@ -212,7 +230,7 @@
   (let ((items (loop for pos = 0 then (next-property-change pos (car kill-ring))
                      while pos collecting (get-text-property pos 'pos (car kill-ring)))))
     (unless (null (car items))
-      (dolist (item items) 
+      (dolist (item (list (car items)))  ;; FIXME
         (gimme-send-message "(remove %d)\n" item)))))
 
 
@@ -281,3 +299,4 @@
 
 
 (provide 'gimme-playlist)
+;;; gimme-playlist.el ends here
