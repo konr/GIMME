@@ -232,7 +232,7 @@
     (when (and pos ids)
       (dolist (id ids)
         (setq pos (+ 1 pos))
-        (gimme-send-message "(insert %s %s)\n" id pos)))))
+        (gimme-send-message "(insert %s %s)\n" pos id)))))
 
 
 (defun gimme-focused-delete (delete-p)
