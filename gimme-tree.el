@@ -19,17 +19,19 @@
 ;;; Code
 
 (defun gimme-tree ()
+  "Tree-view"
   (interactive)
   (gimme-new-session)
   (get-buffer-create gimme-buffer-name)
-  (setq gimme-current-mode 'tree)
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (clipboard-kill-region 1 (point-max))
      (gimme-tree-read-from-disk)
-     (gimme-tree-mode)
+     (when (not (equal gimme-current-mode 'tree)) (gimme-tree-mode))
+     (setq gimme-current-mode 'tree)
      (gimme-set-title gimme-tree-header)
      (gimme-send-message "(colls %s)\n" gimme-session)
+     (run-hooks 'gimme-goto-buffer-hook)
      (switch-to-buffer (get-buffer gimme-buffer-name)))))
 
 (defvar gimme-tree-map
@@ -52,7 +54,8 @@
     (define-key map (kbd "r") 'gimme-tree-rename-coll)
     (define-key map (kbd "s") 'gimme-tree-save-collection)
     (define-key map (kbd "S") '(lambda () (interactive) (gimme-tree-save-collection t)))
-    map))
+    map)
+  "Tree-map's keymap")
 
 (define-derived-mode gimme-tree-mode font-lock-mode
   ;; FIXME: Find out why deriving from font-lock-face won't colorize the the songs
@@ -87,6 +90,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-tree-view-collection ()
+  "Jumps to filter-view with the focused collection as the current"
   (interactive)
   (cond ((get-text-property (point) 'pos)
          (setq gimme-current (get-text-property (point) 'pos))
@@ -97,6 +101,7 @@
         (gimme-current)))
 
 (defun gimme-tree-delete-coll ()
+  "Deletes focused collection"
   (interactive)
   (if (get-text-property (point) 'pos)
       (let* ((initial (point))
@@ -114,6 +119,7 @@
 
 
 (defun gimme-tree-rename-coll ()
+  "Renames the focused coll"
   (interactive)
   (if (get-text-property (point) 'pos)
       (let* ((old  (get-text-property (point) 'name))
@@ -138,7 +144,7 @@
 
 
 (defun gimme-tree-save-collection (&optional ask)
-  ""
+  "Saves the focused collection on the core"
   (interactive)
   (let* ((ref  (get-text-property (point) 'ref))
          (name (get-text-property (point) 'name))
@@ -153,7 +159,7 @@
 ;; Tree is like (plist child1 child2 ...)
 
 (defun gimme-tree-get-node (position)
-  ""
+  "Gets the node - (plist child1 child2 ...) - referenced by the arg"
   (when (listp position)
     (loop for pos = position then (cdr pos)
           and tree = gimme-trees then (nth (car pos) tree)
@@ -161,12 +167,13 @@
           finally return tree)))
 
 (defun gimme-tree-delete-from-tree (pos)
-  ""
+  "Deletes the node referenced by the argument"
   (delete (gimme-tree-get-node pos)
           (gimme-tree-get-node (butlast pos)))
   (gimme-tree-write-to-disk))
 
 (defun gimme-tree-add-child (data position)
+  "A new child at the given position"
   (let* ((tree (gimme-tree-get-node position))
          (len (length tree))
          (position (if (stringp position) nil position)))
@@ -175,14 +182,17 @@
     len))
 
 (defun gimme-tree-current-ref ()
+  "Returns either a string or an idlist"
   (if (listp gimme-current)
       (getf (car (gimme-tree-get-node gimme-current)) 'ref)
     (prin1-to-string gimme-current)))
 
 (defun gimme-tree-current-data ()
+  "Gets the plist of the current collection"
   (car (gimme-tree-get-node gimme-current)))
 
 (defun gimme-tree-walk (function tree &optional depth mapcarp)
+  "Walks on the tree collecting the funcall. Note that you can use the depth variable."
   (let ((depth (if depth depth 0)))
     (if (null tree) nil
       (cons (funcall function tree)
@@ -191,6 +201,7 @@
                      (cdr tree))))))
 
 (defun gimme-tree-get-trees ()
+  "Prints gimme-trees with the right number of asterisks."
   (cdr (gimme-tree-walk (lambda (n)
                           (apply 'propertize (format "%s %s\n"
                                                      (make-string depth ?*)
@@ -198,13 +209,14 @@
                         (gimme-tree-add-pos gimme-trees))))
 
 (defun gimme-tree-add-pos (tree &optional pos)
+  "Returns a tree with a 'pos' attribute on the plist"
   (loop for p from 1 upto (1- (length tree))
         collecting (gimme-tree-add-pos (nth p tree) (append pos (list p)))
         into children
         finally return (cons (append (car tree) `(pos ,pos)) children)))
 
 (defun gimme-tree-read-from-disk ()
-  ""
+  "Reads from disk :P"
   (if (file-readable-p gimme-tree-file)
       (setq gimme-trees
             (with-temp-buffer (insert-file-contents gimme-tree-file)
@@ -215,7 +227,7 @@
 
 
 (defun gimme-tree-write-to-disk (&optional tree)
-  ""
+  "Writes to disk :P"
   (write-region (prin1-to-string (or tree gimme-trees)) nil
                 gimme-tree-file))
 
@@ -224,10 +236,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-coll-changed (plist)
-  ""
+  "Called by the braodcast functions"
   (with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (let ((type      (getf plist 'type))
@@ -235,22 +247,25 @@
            (namespace (getf plist 'namespace))
            (newname   (decode-coding-string (or (getf plist 'newname) "") 'utf-8)))
        (case type
-         ('add
-          (save-excursion
-            (goto-char (point-max))
-            (insert (propertize (format "** %s\n" name) 'ref name))
-            (message (format "Collection %s added!" name))))
-         ('update (message (format "Collection %s updated!" name)))
+         ('add (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
+               (save-excursion
+                 (goto-char (point-max))
+                 (insert (propertize (format "** %s\n" name) 'ref name))
+                 (message (format "Collection %s added!" name))))
+         ('update (progn (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
+                         (message (format "Collection %s updated!" name))))
          ('rename
           (let ((bounds (car (get-bounds-where
                               (lambda (n) (equal (get-text-property n 'ref) name))))))
+            (run-hook-with-args 'gimme-broadcast-coll-rename-hook plist)
             (when bounds
               (apply 'kill-region bounds)
               (save-excursion (goto-char (car bounds))
                               (insert (propertize (format "** %s\n" newname) 'ref newname)))
               (message (format "Collection %s renamed to %s!" name newname)))))
          ('remove
-          (progn (apply 'kill-region
+          (progn (run-hook-with-args 'gimme-broadcast-coll-remove-hook plist)
+                 (apply 'kill-region
                         (car (get-bounds-where
                               (lambda (n) (equal (get-text-property n 'ref) name)))))
                  (message (format "Collection %s removed!" name)))))))))

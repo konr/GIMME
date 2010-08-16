@@ -62,7 +62,6 @@
   :group 'gimme
   :type 'integer)
 
-(gimme-status-mode)
 
 (provide 'gimme-custom)
 ;;; gimme-custom.el ends here

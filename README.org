@@ -6,20 +6,20 @@
          - [X] No .gimmetree
          - [X] No medialib (fresh xmms2)
          - [X] No libraries (sexp)
-  4. [-] Add Emacs stuff [2/5]
-         - [ ] Hooks [0/2]
-               - [ ] Broadcasts
-               - [ ] Open window and (ignore-errors (viper-change-state-to-emacs))
+  4. [-] Add Emacs stuff [4/5]
+         - [X] Hooks [2/2]
+               - [X] Broadcasts
+               - [X] Open window and (ignore-errors (viper-change-state-to-emacs))
          - [X] Set up variables correctly
          - [X] Headers
-         - [ ] ELPA?
-         - [ ] Install-all-required-packages
+         - [X] ELPA?
   5. [ ] Write docs (perhaps a screencast)
   6. [ ] ???
   7. [ ] Profit!
          
 * Coming next
 
+  1. Add it to ELPA (e-mails pending)
   1. Alternative ways of grouping the songs together.
   2. Multiple buffers
   3. Advanced tag writer, dealing with regions and multiple files
@@ -47,6 +47,7 @@
 
   I wonder how much time I'll end up dedicating to GIMME...
 
+  - **16/8**: 3 adding hooks, reading docs and wrapping it up
   - **13/8**: 4 working on custom variables and general emacs stuff
   - **12/8**: 9 polishing the ruby client and testing
   - **11/8**: 5 polishing the elisp client

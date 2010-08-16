@@ -19,7 +19,7 @@
 ;;; Code
 
 (defgroup gimme-tree-faces nil
-  "Faces in Org-mode."
+  "Faces in gimme-tree-mode."
   :tag "Faces for tree-view"
   :group 'gimme)
 

@@ -45,7 +45,8 @@
       `(lambda (e)
          (interactive "e")
          (gimme)))
-    map))
+    map)
+  "Actually a 'mousemap'")
 
 (define-minor-mode gimme-status-mode
   "Toggle display of track information in the mode line.
@@ -67,13 +68,14 @@ The mode line will be updated automatically every second"
 
 
 (defun gimme-status-mode-toggle-format ()
+  "Toggles between the various formats of displaying the current position"
   (interactive)
   (setq gimme-status-mode-formats
         (append (cdr gimme-status-mode-formats)
                 (list (car gimme-status-mode-formats)))))
 
 (defun gimme-status-mode-update-line ()
-  "Updates the mode line."
+  "Updates the modeline."
   (when gimme-playtime
     (let* ((time-raw (cdr (assoc 'time gimme-playtime)))
            (max-raw  (cdr (assoc 'max  gimme-playtime)))

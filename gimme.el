@@ -29,31 +29,49 @@
 
 ;;; Code
 
-(defvar gimme-process)
-(defvar gimme-executable "gimme.rb")
+(defvar gimme-process nil
+  "Reference to the ruby process")
+(defvar gimme-executable "gimme.rb"
+  "The name of the ruby file")
 (defvar gimme-fullpath (expand-file-name
                         (concat
                          (file-name-directory (or load-file-name buffer-file-name))
-                         gimme-executable)))
-(defvar gimme-current-mode 'playlist)
-(defvar gimme-buffer-name "GIMME")
-(defvar gimme-session 0)
-(defvar gimme-filter-remainder "")
-(defvar gimme-debug 0)
-(defvar gimme-playtime nil)
-(defvar gimme-current nil)
-(defvar gimme-trees nil)
+                         gimme-executable))
+  "The fullname of the ruby file")
+(defvar gimme-current-mode 'playlist
+  "In which mode GIMME current is")
+(defvar gimme-buffer-name "GIMME"
+  "GIMME's buffer name")
+(defvar gimme-session 0
+  "Number used to identify the session")
+(defvar gimme-filter-remainder ""
+  "Variable used to hold incomplete sexps received from the ruby process")
+(defvar gimme-debug 0
+  "To debug. 
+  0: Do nothing extra
+  1: Prints the functions being called by the ruby process
+  2: Print the whole sexps
+  3: Print the whole sexps and do not evaluate them")
+(defvar gimme-playtime nil
+  "Variable used to hold the current track's duration and playtime")
+(defvar gimme-current nil
+  "The current collection. Can be a string or an idlist")
+(defvar gimme-trees nil
+  "Collections not saved on the core")
 
-(defvar gimme-tree-header "GIMME - Tree View")
-(defvar gimme-playlist-header "GIMME - Playlist view")
-(defvar gimme-filter-header "GIMME")
+(defvar gimme-tree-header "GIMME - Tree View" "Initial header")
+(defvar gimme-playlist-header "GIMME - Playlist view" "Initial header")
+(defvar gimme-filter-header "GIMME" "Initial header")
 
 (defvar gimme-tree-mode-functions
-  '(message gimme-update-playtime gimme-tree-colls gimme-coll-changed))
+  '(message gimme-update-playtime gimme-tree-colls gimme-coll-changed)
+  "Functions that can be run when the current mode is gimme-tree")
 (defvar gimme-filter-mode-functions
-  '(gimme-insert-song gimme-set-title message gimme-filter-set-current-col gimme-update-playtime))
+  '(gimme-insert-song gimme-set-title message gimme-filter-set-current-col gimme-update-playtime)
+  "Functions that can be run when the current mode is gimme-filter")
 (defvar gimme-playlist-mode-functions
-  '(gimme-set-playing gimme-update-playlist gimme-insert-song gimme-set-title message gimme-update-tags gimme-update-playtime))
+  '(gimme-set-playing gimme-update-playlist gimme-insert-song gimme-set-title message gimme-update-tags gimme-update-playtime)
+  "Functions that can be run when the current mode is gimme-playlist")
 
 
 ;;;;;;;;;;;;;;;

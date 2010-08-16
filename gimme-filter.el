@@ -34,7 +34,8 @@
                               (gimme-filter-get-breadcrumbs)))
      (save-excursion
        (gimme-send-message "(pcol %s %s)\n" (gimme-tree-current-ref) gimme-session)))
-   (switch-to-buffer (get-buffer gimme-buffer-name))))
+    (run-hooks 'gimme-goto-buffer-hook)
+    (switch-to-buffer (get-buffer gimme-buffer-name))))
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
@@ -58,7 +59,8 @@
     (define-key map (kbd "RET") 'gimme-filter-play-focused)
     (define-key map (kbd "A") 'gimme-filter-append-collection)
     (define-key map (kbd "f") 'gimme-filter-same)
-    map))
+    map)
+  "Filter-view's keymap")
 
 (defun gimme-filter-mode ()
   "Manipulate collections"
@@ -120,6 +122,7 @@
                                                   '(id duration font-lock-face)))
                                    (plist-to-alist (text-properties-at (point)))))))
          (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
+    (setq gimme-new-collection-name (format "%s" name))
     (gimme-send-message message)))
 
 (defun gimme-filter-get-breadcrumbs ()
