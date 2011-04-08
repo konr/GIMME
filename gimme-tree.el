@@ -43,6 +43,8 @@
     (define-key map (kbd "SPC") 'gimme-toggle-collection)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "C-f") 'scroll-up)
+    (define-key map (kbd "C-b") 'scroll-down)
     (define-key map (kbd "J") 'gimme-next)
     (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-toggle-view)

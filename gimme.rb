@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 $: << File.join(File.dirname(__FILE__))
 
-['xmmsclient', 'xmmsclient_glib', 'glib2', 'rubygems', 'sexp'].each do |lib|
+
+['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'sexp'].each do |lib|
   begin
     require lib
   rescue LoadError
     warn "(message \"Oops! Something didn't go right. \
 I bet 3 internets that '#{lib}' is missing\")"
+    exit
   end
 end
 
@@ -14,6 +16,7 @@ end
 DEBUG = false
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
+
 $atribs=["title","id","artist","album","duration","starred"]
 
 class GIMME
@@ -172,7 +175,7 @@ class GIMME
               bdict[el][:pos] = i; bdict[el].delete(:face)
               bdict[el][:face] = :highlight if (i == pos[:position])
               data = [:quote, bdict[el].to_a.flatten]
-              to_emacs [:"gimme-insert-song",session,data,:t]
+              to_emacs [:"gimme-insert-song",session.to_i,data,:t]
             end
             true; end
           true;end;end;end;end
@@ -266,9 +269,8 @@ client = GIMME.new
 
 Thread.new do
   while true
-    gets.strip.each do |command|
-      p = command.parse_sexp.first
-      client.send(*p) if (p.class == Array && client.respond_to?(p.first))
-    end;end;end
+    p = gets.strip.parse_sexp.first
+    client.send(*p) if (p.class == Array && client.respond_to?(p.first))
+  end;end
 
 $ml.run

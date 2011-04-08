@@ -18,7 +18,7 @@
 
 ;;; Code
 
-(defun gimme-new-session () 
+(defun gimme-new-session ()
   "The session is used to not mix data from two requests"
   (setq gimme-session (random)))
 
@@ -104,6 +104,11 @@
                  all))
            (all (mapcar (lambda (n) (apply #'format "#%.2x%.2x%.2x" n)) all)))
       all)))
+
+(defmacro with-focused-file-on-dired-mode-as-%file (&rest body)
+  "To be used on dired-mode"
+  `(let ((%file ,(dired-filename-at-point)))
+     ,@body))
 
 
 (provide 'gimme-utils)

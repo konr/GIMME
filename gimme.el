@@ -193,6 +193,7 @@
 (require 'gimme-filter)
 (require 'gimme-status-mode)
 (require 'gimme-custom)
+(require 'gimme-etc)
 (provide 'gimme)
 
 ;;; gimme.el ends here
