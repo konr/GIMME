@@ -1,16 +1,9 @@
 * Info
-  GIMME is an XMMS2 client for Emacs currently being developed for
+  GIMME is an XMMS2 client for Emacs developed for
   Google's Summer of Code. You can read more about it at
-  http://scorciapino.com/blog/archives/49, which has some mockups, too.
+  http://xmms2.org/wiki/Client:GIMME
 
   It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps.
-
-* Installation
-  1. Install XMMS2
-  2. Install the Sexp gem
-  3. Clone GIMME
-  4. Add (require 'gimme) to your /.emacs/ or /init.el/ file
-  5. M-x gimme
 
 * Quickstart
   Currently, you have to manually add your files to XMMS2 with the
