@@ -175,7 +175,7 @@
              (playlist 'gimme-playlist))))
 
 (defun gimme ()
-  "The XMMS2 player we all love"
+  "The XMMS2 interface we all love"
   (interactive)
   (setq gimme-filter-remainder "")
   (gimme-init)

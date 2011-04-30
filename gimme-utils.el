@@ -23,9 +23,9 @@
   (setq gimme-session (random)))
 
 (defmacro unlocking-buffer (&rest body)
-  `(progn (toggle-read-only nil)
+  `(progn (toggle-read-only -1)
           ,@body
-          (toggle-read-only t)))
+          (toggle-read-only 1)))
 
 (defun plist-to-alist (p)
   (loop for x = p then (cddr x) while x
