@@ -40,37 +40,37 @@
   GIMME got accepted into Google's Summer of Code again, so expect
   these new features to show up in the next few months:
 
-  1. First things first
+  1) First things first
      - [ ] Trees' format
      - [ ] Multiple buffer support
      - [ ] The playlist-updated broadcast
-  2. New important features
+  2) New important features
     - [ ] Kill/yank on regions
     - [ ] Advanced tag writer
     - [ ] New collections' format and parser
     - [ ] Operations directly on tree-view
     - [ ] Prepare it for Ruby 1.9
-  3. Interface polishing
+  3) Interface polishing
     - [ ] Better auto-completion
     - [ ] Emacs' plugins
     - [ ] Colors
     - [ ] Playlist presets
     - [ ] Spectrum
     - [ ] Standalone
-  4. Less important new features
+  4) Less important new features
     - [ ] Updating collection
     - [ ] Plugins and configuration
     - [ ] Equalizer
     - [ ] gimme-lyrics
-  5. Creating a community Screencasts
+  5) Creating a community Screencasts
     - [ ] Wiki and list
     - [ ] Marketing
     - [ ] Packages
     - [ ] ELPA
-  6. GIMME's new modes
+  6) GIMME's new modes
     - [ ] faceted-view
     - [ ] augmented-mode
-  7. Code Polishing
+  7) Code Polishing
     - [ ] Faster
     - [ ] Process
     - [ ] Bug hunting
