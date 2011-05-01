@@ -20,7 +20,7 @@
 
 (defun gimme-new-session ()
   "The session is used to not mix data from two requests"
-  (setq gimme-session (random)))
+  (setq gimme-session "GIMME"))
 
 (defmacro unlocking-buffer (&rest body)
   `(progn (toggle-read-only -1)

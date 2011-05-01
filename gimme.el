@@ -18,9 +18,9 @@
 
 ;;; Commentary
 
-;; GIMME (GIMME Interesting Music on My Emacs) is an XMMS2 client 
+;; GIMME (GIMME Interesting Music on My Emacs) is an XMMS2 client
 ;; originally developed for Google's Summer of Code. Kudos to them
-;; and to DraX for the Support. 
+;; and to DraX for the Support.
 
 ;; GIMME works by using collections as search results, and its multiple
 ;; views allows you to do that in multiple ways. As of GIMME 1.0, you
@@ -47,7 +47,7 @@
 (defvar gimme-filter-remainder ""
   "Variable used to hold incomplete sexps received from the ruby process")
 (defvar gimme-debug 0
-  "To debug. 
+  "To debug.
   0: Do nothing extra
   1: Prints the functions being called by the ruby process
   2: Print the whole sexps
@@ -70,7 +70,7 @@
   '(gimme-insert-song gimme-set-title message gimme-filter-set-current-col gimme-update-playtime)
   "Functions that can be run when the current mode is gimme-filter")
 (defvar gimme-playlist-mode-functions
-  '(gimme-set-playing gimme-update-playlist gimme-insert-song gimme-set-title message gimme-update-tags gimme-update-playtime)
+  '(gimme-set-playing gimme-update-model gimme-insert-song gimme-set-title message gimme-update-tags gimme-update-playtime)
   "Functions that can be run when the current mode is gimme-playlist")
 
 
@@ -106,13 +106,58 @@
                         (when (and ok (> 3 gimme-debug)) (eval (car x))))
                 finally (return (substring s position))))))
 
+(defun gimme-update-model (plist)
+  "Called by the playlist_changed broadcast"
+  ;; FIXME: Not seriouly implemented: Move
+  (case (getf plist 'type)
+    ('add    (progn (run-hook-with-args 'gimme-broadcast-pl-add-hook plist)
+                    (gimme-insert-song gimme-session plist t)
+                    (message "Song added!")))
+    ('insert (progn (run-hook-with-args 'gimme-broadcast-pl-insert-hook plist)
+                    (gimme-insert-song gimme-session plist nil)
+                    (message "Song added!")))
+    ('remove (progn (run-hook-with-args 'gimme-broadcast-pl-remove-hook plist)
+                    (setq gimme-last-del (getf plist 'pos))
+                    (when (get-buffer gimme-buffer-name)
+                      (with-current-buffer gimme-buffer-name
+                        (unlocking-buffer
+                         (let* ((beg (text-property-any (point-min) (point-max) 'pos
+                                                        (getf plist 'pos)))
+                                (end (or (next-property-change (or beg (point-min)))
+                                         (point-max))))
+                           (when (and beg end)
+                             (clipboard-kill-region beg end)
+                             (gimme-update-pos #'1- (point) (point-max)))))))))
+    ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
+                     (gimme-playlist)
+                     (message "Playlist updated! (moving element)")))
+    ('shuffle (progn (run-hook-with-args 'gimme-broadcast-pl-shuffle-hook plist)
+                     (gimme-playlist)
+                     (message "Playlist shuffled!")))
+    ('clear   (progn (run-hook-with-args 'gimme-broadcast-pl-clear-hook plist)
+                     (gimme-playlist)
+                     (message "Playlist cleared!")))
+    ('sort    (progn (run-hook-with-args 'gimme-broadcast-pl-sort-hook plist)
+                     (gimme-playlist)
+                     (message "Playlist updated! (sorting list)")))
+    ('update  (progn (run-hook-with-args 'gimme-broadcast-pl-update-hook plist)
+                     (gimme-playlist)
+                     (message "Playlist updated! (updating list)")))))
+
+
+
+
 (defun gimme-update-playtime (time max)
   "Updates the playtime in the gimme-playtime variable"
   (setq gimme-playtime `((time . ,time) (max . ,max))))
 
+(defmacro gimme-on-buffer (name &rest body)
+  "FIXME: Gimme v2"
+  `(with-current-buffer (get-buffer-create ,name)
+     (unlocking-buffer (save-excursion ,@body))))
+
 (defun gimme-init ()
   "Creates the buffer and manages the processes"
-  (get-buffer-create gimme-buffer-name)
   (dolist (proc (remove-if-not (lambda (el) (string-match "GIMME" el))
                                (mapcar #'process-name (process-list))))
     (kill-process proc))
@@ -143,8 +188,8 @@
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
   (eval `(let ((plist ',plist)
                ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n)))
-                                           (if (and (symbolp (cdr n)) (not (null (cdr n))))
-                                               (list 'quote (cdr n)) (cdr n))))
+                                      (if (and (symbolp (cdr n)) (not (null (cdr n))))
+                                          (list 'quote (cdr n)) (cdr n))))
                          (plist-to-alist plist)))
            (eval (car gimme-playlist-formats)))))
 
@@ -164,15 +209,37 @@
   (setq gimme-playlist-formats
         (append (cdr gimme-playlist-formats)
                 (list (car gimme-playlist-formats))))
-  (gimme-current-mode))
+  (gimme-on-buffer
+   (current-buffer)
+   
+   (comment loop for bounds in (get-bounds-where (lambda (n) t)) and offset = 0
+            summing (- (let ((string (gimme-string (plist-put (text-properties-at (car bounds))
+                                                              'font-lock-face nil))))
+                         (kill-region (+ offset (car bounds)) (+ offset (cadr bounds)))
+                         (goto-char (+ offset (car bounds)))
+                         (insert string) (length string))
+                       (- (cadr bounds) (car bounds)) 1)
+            into offset)))
 
-(defun gimme-current-mode ()
-  "Funcalls the current mode"
+(defun gimme-toggle-view ()
+  "Cycle through the views defined in gimme-config"
   (interactive)
-  (funcall (case gimme-current-mode
-             (tree 'gimme-tree)
-             (filter 'gimme-filter)
-             (playlist 'gimme-playlist))))
+  (setq gimme-playlist-formats
+        (append (cdr gimme-playlist-formats)
+                (list (car gimme-playlist-formats))))
+  (gimme-on-buffer
+   (current-buffer)
+   (let* ((pos (point)) (line (line-number-at-pos)) 
+	  (data (range-to-plists (point-min) (point-max)))
+	  (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
+	  (len (length data)))
+     (progn ;; Silly but required so that the cursor won't change its
+	    ;; position after killing text
+       (goto-char (point-min))
+       (loop for n from 0 upto (- line 2) doing (insert (nth n data)))
+       (move-beginning-of-line 1) (kill-line (- line 2))
+       (kill-region (point) (point-max))
+       (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))))))
 
 (defun gimme ()
   "The XMMS2 interface we all love"
@@ -180,7 +247,7 @@
   (setq gimme-filter-remainder "")
   (gimme-init)
   (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
-  (gimme-current-mode))
+  (gimme-playlist))
 
 ;;;;;;;;;;
 ;; Init ;;

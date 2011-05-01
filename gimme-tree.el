@@ -21,25 +21,23 @@
 (defun gimme-tree ()
   "Tree-view"
   (interactive)
-  (gimme-new-session)
-  (get-buffer-create gimme-buffer-name)
-  (with-current-buffer gimme-buffer-name
-    (unlocking-buffer
-     (clipboard-kill-region 1 (point-max))
-     (gimme-tree-read-from-disk)
-     (when (not (equal gimme-current-mode 'tree)) (gimme-tree-mode))
-     (setq gimme-current-mode 'tree)
-     (gimme-set-title gimme-tree-header)
-     (gimme-send-message "(colls %s)\n" gimme-session)
-     (run-hooks 'gimme-goto-buffer-hook)
-     (switch-to-buffer (get-buffer gimme-buffer-name)))))
+  (let ((buffer-name "GIMME - Bookmarks"))
+    (gimme-on-buffer buffer-name
+                     (clipboard-kill-region 1 (point-max))
+                     (gimme-tree-read-from-disk)
+                     ;; (gimme-tree-mode) FIXME bug
+                     (gimme-tree-mode)
+                     (gimme-set-title gimme-tree-header))
+    (gimme-send-message "(colls %s)\n" (prin1-to-string buffer-name))
+    (run-hooks 'gimme-goto-buffer-hook)
+    (switch-to-buffer (get-buffer buffer-name))))
 
 (defvar gimme-tree-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "!") 'gimme-filter)
     (define-key map (kbd "@") 'gimme-tree)
     (define-key map (kbd "#") 'gimme-playlist)
-    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
+    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     (define-key map (kbd "SPC") 'gimme-toggle-collection)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
@@ -80,12 +78,10 @@
   "Prints the available collections as a tree"
   (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
          (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
-    (with-current-buffer gimme-buffer-name
-      (unlocking-buffer
-       (save-excursion
-         (dolist (el (gimme-tree-get-trees)) (insert el))
-         (insert (format "\n* Saved collections\n"))
-         (dolist (el list) (insert (propertize (format "** %s\n" el) 'ref el))))))))
+    (gimme-on-buffer session
+	  (dolist (el (gimme-tree-get-trees)) (insert el))
+	  (insert (format "\n* Saved collections\n"))
+	  (dolist (el list) (insert (propertize (format "** %s\n" el) 'ref el))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive function ;;

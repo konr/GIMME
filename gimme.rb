@@ -92,11 +92,11 @@ class GIMME
           $atribs.map{|x| x.to_sym}.each do |e|
             dict[e] = res2[e] ? res2[e].first.at(1) : NOTHING
           end if res2
-          to_emacs [:"gimme-update-playlist", [:quote, dict.to_a.flatten]]
+          to_emacs [:"gimme-update-model", [:quote, dict.to_a.flatten]]
           true
         end
       else
-        to_emacs [:"gimme-update-playlist", [:quote, dict.to_a.flatten]]
+        to_emacs [:"gimme-update-model", [:quote, dict.to_a.flatten]]
       end
       true
     end
@@ -175,7 +175,7 @@ class GIMME
               bdict[el][:pos] = i; bdict[el].delete(:face)
               bdict[el][:face] = :highlight if (i == pos[:position])
               data = [:quote, bdict[el].to_a.flatten]
-              to_emacs [:"gimme-insert-song",session.to_i,data,:t]
+              to_emacs [:"gimme-insert-song",session,data,:t]
             end
             true; end
           true;end;end;end;end
@@ -210,7 +210,7 @@ class GIMME
         to_emacs [:"gimme-filter-set-current-col", [:quote, list]]
       end;end;end
 
-  def pcol (data, session)
+  def pcol (session, data)
     with_col(data) do |coll|
       @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
         wrapperdict.each do |dict|

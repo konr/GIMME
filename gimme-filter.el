@@ -21,28 +21,24 @@
 (defun gimme-filter ()
   "Sets up the buffer"
   (interactive)
-  (gimme-new-session)
-  (get-buffer-create gimme-buffer-name)
-  (setq gimme-current-mode 'filter)
-  (with-current-buffer gimme-buffer-name
-    (unlocking-buffer
-     (gimme-filter-mode)
-     (gimme-tree-read-from-disk)
-     (clipboard-kill-region 1 (point-max))
-     (gimme-set-title (format "%s - %s"
-                              gimme-filter-header
-                              (gimme-filter-get-breadcrumbs)))
-     (save-excursion
-       (gimme-send-message "(pcol %s %s)\n" (gimme-tree-current-ref) gimme-session)))
+  (let ((buffer-name "GIMME - Filter View"))
+    (gimme-on-buffer buffer-name
+                     (gimme-filter-mode)
+                     (gimme-tree-read-from-disk)
+                     (clipboard-kill-region 1 (point-max))
+                     (gimme-set-title (format "%s - %s" gimme-filter-header
+                                              (gimme-filter-get-breadcrumbs))))
+    (gimme-send-message "(pcol %s %s)\n" (prin1-to-string buffer-name) 
+			(prin1-to-string "*"))
     (run-hooks 'gimme-goto-buffer-hook)
-    (switch-to-buffer (get-buffer gimme-buffer-name))))
+    (switch-to-buffer (get-buffer buffer-name))))
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "!") 'gimme-filter)
     (define-key map (kbd "@") 'gimme-tree)
     (define-key map (kbd "#") 'gimme-playlist)
-    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer gimme-buffer-name)))
+    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)

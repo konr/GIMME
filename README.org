@@ -41,8 +41,8 @@
   these new features to show up in the next few months:
 
   1) First things first
-     - [ ] Trees' format
      - [ ] Multiple buffer support
+     - [ ] Trees' format
      - [ ] The playlist-updated broadcast
   2) New important features
     - [ ] Kill/yank on regions
