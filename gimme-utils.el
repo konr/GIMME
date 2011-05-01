@@ -18,6 +18,10 @@
 
 ;;; Code
 
+(defun major-mode (buffer)
+  "Find out what the buffer's major-mode is"
+  (with-current-buffer buffer major-mode))
+
 (defun gimme-new-session ()
   "The session is used to not mix data from two requests"
   (setq gimme-session "GIMME"))

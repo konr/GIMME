@@ -18,10 +18,10 @@
 
 ;;; Code
 
-(defun gimme-filter ()
+(defun gimme-filter (query)
   "Sets up the buffer"
   (interactive)
-  (let ((buffer-name "GIMME - Filter View"))
+  (let ((buffer-name (format "GIMME - Filter View (%s)" query)))
     (gimme-on-buffer buffer-name
                      (gimme-filter-mode)
                      (gimme-tree-read-from-disk)
@@ -29,7 +29,7 @@
                      (gimme-set-title (format "%s - %s" gimme-filter-header
                                               (gimme-filter-get-breadcrumbs))))
     (gimme-send-message "(pcol %s %s)\n" (prin1-to-string buffer-name) 
-			(prin1-to-string "*"))
+			(prin1-to-string query))
     (run-hooks 'gimme-goto-buffer-hook)
     (switch-to-buffer (get-buffer buffer-name))))
 

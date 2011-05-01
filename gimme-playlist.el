@@ -33,7 +33,8 @@
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "!") 'gimme-filter)
+    (define-key map (kbd "!") (lambda () (interactive) 
+				(gimme-filter (read-from-minibuffer "S: "))))
     (define-key map (kbd "@") 'gimme-tree)
     (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)

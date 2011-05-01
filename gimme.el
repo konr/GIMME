@@ -78,6 +78,13 @@
 ;; Functions ;;
 ;;;;;;;;;;;;;;;
 
+(defun gimme-buffers (&optional mode)
+  "Get all buffers used by GIMME. FIXME: mode"
+  (let* ((modes '(gimme-playlist-mode gimme-filter-mode gimme-tree-mode))
+         (buffers (remove-if-not (lambda (buf) (member (major-mode buf) modes))
+                                 (buffer-list))))
+    buffers))
+
 (defun gimme-extract-needed-tags ()
   "Informs the ruby client of all %variables required by the config file"
   (let* ((l (flatten gimme-playlist-formats))
@@ -202,7 +209,6 @@
                            (min (length gimme-playlist-header)
                                 (window-hscroll))))))
 
-
 (defun gimme-toggle-view ()
   "Cycle through the views defined in gimme-config"
   (interactive)
@@ -211,30 +217,12 @@
                 (list (car gimme-playlist-formats))))
   (gimme-on-buffer
    (current-buffer)
-   
-   (comment loop for bounds in (get-bounds-where (lambda (n) t)) and offset = 0
-            summing (- (let ((string (gimme-string (plist-put (text-properties-at (car bounds))
-                                                              'font-lock-face nil))))
-                         (kill-region (+ offset (car bounds)) (+ offset (cadr bounds)))
-                         (goto-char (+ offset (car bounds)))
-                         (insert string) (length string))
-                       (- (cadr bounds) (car bounds)) 1)
-            into offset)))
-
-(defun gimme-toggle-view ()
-  "Cycle through the views defined in gimme-config"
-  (interactive)
-  (setq gimme-playlist-formats
-        (append (cdr gimme-playlist-formats)
-                (list (car gimme-playlist-formats))))
-  (gimme-on-buffer
-   (current-buffer)
-   (let* ((pos (point)) (line (line-number-at-pos)) 
-	  (data (range-to-plists (point-min) (point-max)))
-	  (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
-	  (len (length data)))
+   (let* ((pos (point)) (line (line-number-at-pos))
+          (data (range-to-plists (point-min) (point-max)))
+          (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
+          (len (length data)))
      (progn ;; Silly but required so that the cursor won't change its
-	    ;; position after killing text
+       ;; position after killing text
        (goto-char (point-min))
        (loop for n from 0 upto (- line 2) doing (insert (nth n data)))
        (move-beginning-of-line 1) (kill-line (- line 2))
