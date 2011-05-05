@@ -25,7 +25,6 @@
     (gimme-on-buffer buffer-name
                      (clipboard-kill-region 1 (point-max))
                      (gimme-tree-read-from-disk)
-                     ;; (gimme-tree-mode) FIXME bug
                      (gimme-tree-mode)
                      (gimme-set-title gimme-tree-header))
     (gimme-send-message "(colls %s)\n" (prin1-to-string buffer-name))
@@ -76,12 +75,13 @@
 
 (defun gimme-tree-colls (session list)
   "Prints the available collections as a tree"
+  (message "xoxota")
   (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
          (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
     (gimme-on-buffer session
-	  (dolist (el (gimme-tree-get-trees)) (insert el))
-	  (insert (format "\n* Saved collections\n"))
-	  (dolist (el list) (insert (propertize (format "** %s\n" el) 'ref el))))))
+                     (dolist (el (gimme-tree-get-trees)) (insert el))
+                     (insert (format "\n* Saved collections\n"))
+                     (dolist (el list) (insert (propertize (format "** %s\n" el) 'ref el))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive function ;;

@@ -107,7 +107,8 @@
                              (ok (member f (case gimme-current-mode
                                              (tree  gimme-tree-mode-functions)
                                              (playlist gimme-playlist-mode-functions)
-                                             (filter   gimme-filter-mode-functions)))))
+                                             (filter   gimme-filter-mode-functions))))
+			     (ok t))
                         (when (> gimme-debug 0)
                           (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") (if (>= gimme-debug 2) f s))))
                         (when (and ok (> 3 gimme-debug)) (eval (car x))))
@@ -208,6 +209,8 @@
         '(:eval (substring (decode-coding-string gimme-playlist-header 'utf-8)
                            (min (length gimme-playlist-header)
                                 (window-hscroll))))))
+
+
 
 (defun gimme-toggle-view ()
   "Cycle through the views defined in gimme-config"

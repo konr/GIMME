@@ -192,7 +192,7 @@ class GIMME
       new = [0,[100,(vol[:left] + inc)].min].max
       @async.playback_volume_set(:left, new).notifier {}
       @async.playback_volume_set(:right, new).notifier {}
-      to_emacs [:message, "Volume set to " + new.to_s]; end; end
+      to_emacs [:"hooker-set", [:quote, :"gimme-volume"], new]; end; end
 
 
   ###################
