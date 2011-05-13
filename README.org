@@ -1,7 +1,7 @@
 * Info
   GIMME is an XMMS2 client for Emacs developed for
   Google's Summer of Code. You can read more about it
-  [[http://gimmeplayer.org][here]].
+  [[http://gimmeplayer.org/][here]].
 
   It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps.
 
