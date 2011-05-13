@@ -160,18 +160,18 @@ class GIMME
         when Xmms::Client::PAUSE then play; tickle
         end; end; end; end
 
-  def list (session)
-    @async.playlist("_active").current_pos.notifier do |pos|
+  def list (playlist, session)
+    @async.playlist(playlist).current_pos.notifier do |pos|
       bdict={}; pos = pos || {:name => NOTHING, :position => -1}
       to_emacs [:"gimme-set-title", "GIMME - Playlist View (#{pos[:name]})"]
-      @async.coll_get("_active").notifier do |coll|
+      @async.coll_get(playlist).notifier do |coll|
         @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
           wrapperdict.each do |dict|
             adict = {}
             dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
             bdict[adict[:id]]=adict
           end
-          @async.playlist("_active").entries.notifier do |list|
+          @async.playlist(playlist).entries.notifier do |list|
             list.each_with_index do |el,i|
               bdict[el][:pos] = i; bdict[el].delete(:face)
               bdict[el][:face] = :highlight if (i == pos[:position])

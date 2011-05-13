@@ -22,16 +22,21 @@
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)
-  (let ((buffer-name "GIMME - Playlist (Default)"))
+  (gimme-playlist-update "Default"))
+
+(defun gimme-playlist-update (playlist)
+  (let ((buffer-name (format "GIMME - Playlist (%s)" playlist)))
     (gimme-on-buffer buffer-name
                      (gimme-playlist-mode)
                      (gimme-set-title gimme-playlist-header)
                      (kill-region 1 (point-max))
-                     (gimme-send-message "(list %s)\n" (prin1-to-string buffer-name))
+                     (gimme-send-message "(list %s %s)\n" 
+					 (prin1-to-string playlist) ;; FIXME
+					 (prin1-to-string buffer-name))
                      (make-local-variable 'gimme-buffer-type)
                      (setq gimme-buffer-type 'playlist)
                      (make-local-variable 'gimme-playlist-name)
-                     (setq gimme-playlist-name "Default"))
+                     (setq gimme-playlist-name playlist))
     (run-hooks 'gimme-goto-buffer-hook)
     (switch-to-buffer (get-buffer buffer-name))))
 
@@ -78,6 +83,44 @@
 ;; Called by the ruby process ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun gimme-broadcast-playlist (plist)
+  "Called by the playlist_changed broadcast"
+  ;; FIXME: Not seriouly implemented: Move
+  (let* ((name (getf plist 'name))
+	 (buffer (gimme-first-buffer-with-vars 'gimme-buffer-type 'playlist
+					      'gimme-playlist-name name)))
+    (case (getf plist 'type)
+      ('add    (progn (run-hook-with-args 'gimme-broadcast-pl-add-hook plist)
+                      (gimme-insert-song buffer plist t)
+                      (message "Song added!")))
+      ('insert (progn (run-hook-with-args 'gimme-broadcast-pl-insert-hook plist)
+                      (gimme-insert-song buffer plist nil)
+                      (message "Song added!")))
+      ('remove (progn (run-hook-with-args 'gimme-broadcast-pl-remove-hook plist)
+                      (with-current-buffer (get-buffer buffer)
+                        (unlocking-buffer
+                         (let* ((beg (text-property-any (point-min) (point-max) 'pos
+                                                        (getf plist 'pos)))
+                                (end (or (next-property-change (or beg (point-min)))
+                                         (point-max))))
+                           (when (and beg end)
+                             (clipboard-kill-region beg end)
+                             (gimme-update-pos buffer #'1- (point) (point-max))))))))
+      ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
+                       (gimme-playlist-update name)
+                       (message "Playlist updated! (moving element)")))
+      ('shuffle (progn (run-hook-with-args 'gimme-broadcast-pl-shuffle-hook plist)
+                       (gimme-playlist-update name)
+                       (message "Playlist shuffled!")))
+      ('clear   (progn (run-hook-with-args 'gimme-broadcast-pl-clear-hook plist)
+                       (gimme-playlist-update name)
+                       (message "Playlist cleared!")))
+      ('sort    (progn (run-hook-with-args 'gimme-broadcast-pl-sort-hook plist)
+                       (gimme-playlist-update name)
+                       (message "Playlist updated! (sorting list)")))
+      ('update  (progn (run-hook-with-args 'gimme-broadcast-pl-update-hook plist)
+                       (gimme-playlist-update name)
+                       (message "Playlist updated! (updating list)"))))))
 (defun gimme-update-pos (buffer fun min max)
   "Updates the position of all elements betweeen beg and pos with function fun"
   (with-current-buffer buffer
@@ -226,7 +269,7 @@
 (defun gimme-center ()
   "Centers buffer on currently playing song"
   (interactive)
-  (with-current-buffer gimme-buffer-name
+  (with-current-buffer (current-buffer)
     (let ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight)))
       (if h-beg (goto-char h-beg) (message "Not on the playlist.")))))
 

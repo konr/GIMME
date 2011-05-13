@@ -77,13 +77,12 @@
     filtered))
 
 (defun gimme-first-buffer-with-vars (&rest plist)
-  (let* ((all (gimme-buffers))
-         (consed (mapcar (lambda (el) (cons el (buffer-local-variables el))) all))
-         (alist (plist-to-alist plist)))
+  (let* ((all (gimme-buffers)) (alist (plist-to-alist plist))
+         (consed (mapcar (lambda (el) (cons el (buffer-local-variables el))) all)))
     (caar (reduce (lambda (coll pair)
 	       (remove-if-not (lambda (el) (equal (cdr pair) 
 					     (cdr (assoc (car pair) (cdr el)))))
-			      coll)) alist :initial-value consed)))))
+			      coll)) alist :initial-value consed))))
 
 (defun gimme-extract-needed-tags ()
   "Informs the ruby client of all %variables required by the config file"
@@ -108,46 +107,6 @@
                           (message (format "GIMME: %s" (if (>= gimme-debug 2) f s))))
                         (when (> 3 gimme-debug) (eval (car x))))
                 finally (return (substring s position))))))
-
-(defun gimme-broadcast-playlist (plist)
-  "Called by the playlist_changed broadcast"
-  ;; FIXME: Not seriouly implemented: Move
-  (let ((buffer (gimme-first-buffer-with-vars 'gimme-buffer-type 'playlist
-					      'gimme-playlist-name (getf plist 'name))))
-    (case (getf plist 'type)
-      ('add    (progn (run-hook-with-args 'gimme-broadcast-pl-add-hook plist)
-                      (gimme-insert-song buffer plist t)
-                      (message "Song added!")))
-      ('insert (progn (run-hook-with-args 'gimme-broadcast-pl-insert-hook plist)
-                      (gimme-insert-song buffer plist nil)
-                      (message "Song added!")))
-      ('remove (progn (run-hook-with-args 'gimme-broadcast-pl-remove-hook plist)
-                      (with-current-buffer (get-buffer buffer)
-                        (unlocking-buffer
-                         (let* ((beg (text-property-any (point-min) (point-max) 'pos
-                                                        (getf plist 'pos)))
-                                (end (or (next-property-change (or beg (point-min)))
-                                         (point-max))))
-                           (when (and beg end)
-                             (clipboard-kill-region beg end)
-                             (gimme-update-pos buffer #'1- (point) (point-max))))))))
-      ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
-                       (gimme-playlist)
-                       (message "Playlist updated! (moving element)")))
-      ('shuffle (progn (run-hook-with-args 'gimme-broadcast-pl-shuffle-hook plist)
-                       (gimme-playlist)
-                       (message "Playlist shuffled!")))
-      ('clear   (progn (run-hook-with-args 'gimme-broadcast-pl-clear-hook plist)
-                       (gimme-playlist)
-                       (message "Playlist cleared!")))
-      ('sort    (progn (run-hook-with-args 'gimme-broadcast-pl-sort-hook plist)
-                       (gimme-playlist)
-                       (message "Playlist updated! (sorting list)")))
-      ('update  (progn (run-hook-with-args 'gimme-broadcast-pl-update-hook plist)
-                       (gimme-playlist)
-                       (message "Playlist updated! (updating list)"))))))
-
-
 
 
 (defun gimme-update-playtime (time max)
@@ -204,8 +163,6 @@
         '(:eval (substring (decode-coding-string gimme-playlist-header 'utf-8)
                            (min (length gimme-playlist-header)
                                 (window-hscroll))))))
-
-
 
 (defun gimme-toggle-view ()
   "Cycle through the views defined in gimme-config"
