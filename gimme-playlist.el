@@ -27,14 +27,18 @@
                      (gimme-playlist-mode)
                      (gimme-set-title gimme-playlist-header)
                      (kill-region 1 (point-max))
-                     (gimme-send-message "(list %s)\n" (prin1-to-string buffer-name)))
+                     (gimme-send-message "(list %s)\n" (prin1-to-string buffer-name))
+                     (make-local-variable 'gimme-buffer-type)
+                     (setq gimme-buffer-type 'playlist)
+                     (make-local-variable 'gimme-playlist-name)
+                     (setq gimme-playlist-name "Default"))
     (run-hooks 'gimme-goto-buffer-hook)
     (switch-to-buffer (get-buffer buffer-name))))
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "!") (lambda () (interactive) 
-				(gimme-filter (read-from-minibuffer "S: "))))
+    (define-key map (kbd "!") (lambda () (interactive)
+                                (gimme-filter (read-from-minibuffer "S: "))))
     (define-key map (kbd "@") 'gimme-tree)
     (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)
@@ -74,9 +78,9 @@
 ;; Called by the ruby process ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun gimme-update-pos (fun min max)
+(defun gimme-update-pos (buffer fun min max)
   "Updates the position of all elements betweeen beg and pos with function fun"
-  (with-current-buffer gimme-buffer-name
+  (with-current-buffer buffer
     (loop for beg = min then end
           and end = (or (next-property-change min) max)
           then (or (next-property-change end) max)
@@ -85,19 +89,22 @@
                  beg end 'pos
                  (funcall fun (get-text-property beg 'pos))))))
 
-(defun gimme-set-playing (pos)
+(defun gimme-set-playing (playlist pos)
   "Highlights the currently played song"
-  (when (get-buffer gimme-buffer-name)
-    (with-current-buffer gimme-buffer-name
-      (unlocking-buffer
-       (let* ((h-beg t) (h-end t))
-         (while h-beg
-           (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
-           (setq h-end (or (next-property-change (or h-beg (point-min))) (point-max)))
-           (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
-       (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
-              (end (next-property-change (or beg (point-min)))))
-         (when beg (put-text-property beg (or end (point-max)) 'face 'highlight)))))))
+  (let ((buffer (gimme-first-buffer-with-vars 'gimme-buffer-type 'playlist
+                                              'gimme-playlist-name playlist)))
+    (when (get-buffer buffer)
+      (with-current-buffer buffer
+        (unlocking-buffer
+         (let* ((h-beg t) (h-end t))
+           (while h-beg
+             (setq h-beg (text-property-any (point-min) (point-max) 'face 'highlight))
+             (setq h-end (or (next-property-change (or h-beg (point-min))) (point-max)))
+             (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
+         (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
+                (end (next-property-change (or beg (point-min)))))
+           (when beg 
+	     (put-text-property beg (or end (point-max)) 'face 'highlight))))))))
 
 (defun gimme-update-tags (plist-b)
   "Updates the tags of song, whose id must be at the plist"
@@ -141,15 +148,15 @@
 ;; Auxiliary Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun gimme-insert-song (session plist append)
+(defun gimme-insert-song (buffer plist append)
   "Inserts (or appends) an element matching the plist"
   (gimme-on-buffer
-   session
+   buffer
    (goto-char (if append (point-max)
                 (or (text-property-any (point-min) (point-max)
                                        'pos (getf plist 'pos)) (point-max))))
    (insert (gimme-string plist))
-   (unless append (gimme-update-pos #'1+ (point-marker) (point-max)))))
+   (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;

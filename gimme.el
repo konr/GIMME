@@ -63,27 +63,27 @@
 (defvar gimme-playlist-header "GIMME - Playlist view" "Initial header")
 (defvar gimme-filter-header "GIMME" "Initial header")
 
-(defvar gimme-tree-mode-functions
-  '(message gimme-update-playtime gimme-tree-colls gimme-coll-changed)
-  "Functions that can be run when the current mode is gimme-tree")
-(defvar gimme-filter-mode-functions
-  '(gimme-insert-song gimme-set-title message gimme-filter-set-current-col gimme-update-playtime)
-  "Functions that can be run when the current mode is gimme-filter")
-(defvar gimme-playlist-mode-functions
-  '(gimme-set-playing gimme-update-model gimme-insert-song gimme-set-title message gimme-update-tags gimme-update-playtime)
-  "Functions that can be run when the current mode is gimme-playlist")
-
 
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
 ;;;;;;;;;;;;;;;
 
-(defun gimme-buffers (&optional mode)
+(defun gimme-buffers (&optional function)
   "Get all buffers used by GIMME. FIXME: mode"
   (let* ((modes '(gimme-playlist-mode gimme-filter-mode gimme-tree-mode))
          (buffers (remove-if-not (lambda (buf) (member (major-mode buf) modes))
-                                 (buffer-list))))
-    buffers))
+                                 (buffer-list)))
+         (filtered (remove-if-not function buffers)))
+    filtered))
+
+(defun gimme-first-buffer-with-vars (&rest plist)
+  (let* ((all (gimme-buffers))
+         (consed (mapcar (lambda (el) (cons el (buffer-local-variables el))) all))
+         (alist (plist-to-alist plist)))
+    (caar (reduce (lambda (coll pair)
+	       (remove-if-not (lambda (el) (equal (cdr pair) 
+					     (cdr (assoc (car pair) (cdr el)))))
+			      coll)) alist :initial-value consed)))))
 
 (defun gimme-extract-needed-tags ()
   "Informs the ruby client of all %variables required by the config file"
@@ -103,31 +103,26 @@
                 while x
                 summing (or (cdr x) 0) into position
                 doing (let* ((s (car x))
-                             (f (caar x))
-                             (ok (member f (case gimme-current-mode
-                                             (tree  gimme-tree-mode-functions)
-                                             (playlist gimme-playlist-mode-functions)
-                                             (filter   gimme-filter-mode-functions))))
-			     (ok t))
+                             (f (caar x)))
                         (when (> gimme-debug 0)
-                          (message (format "GIMME (%s): %s" (if ok "ACK" "NAK") (if (>= gimme-debug 2) f s))))
-                        (when (and ok (> 3 gimme-debug)) (eval (car x))))
+                          (message (format "GIMME: %s" (if (>= gimme-debug 2) f s))))
+                        (when (> 3 gimme-debug) (eval (car x))))
                 finally (return (substring s position))))))
 
-(defun gimme-update-model (plist)
+(defun gimme-broadcast-playlist (plist)
   "Called by the playlist_changed broadcast"
   ;; FIXME: Not seriouly implemented: Move
-  (case (getf plist 'type)
-    ('add    (progn (run-hook-with-args 'gimme-broadcast-pl-add-hook plist)
-                    (gimme-insert-song gimme-session plist t)
-                    (message "Song added!")))
-    ('insert (progn (run-hook-with-args 'gimme-broadcast-pl-insert-hook plist)
-                    (gimme-insert-song gimme-session plist nil)
-                    (message "Song added!")))
-    ('remove (progn (run-hook-with-args 'gimme-broadcast-pl-remove-hook plist)
-                    (setq gimme-last-del (getf plist 'pos))
-                    (when (get-buffer gimme-buffer-name)
-                      (with-current-buffer gimme-buffer-name
+  (let ((buffer (gimme-first-buffer-with-vars 'gimme-buffer-type 'playlist
+					      'gimme-playlist-name (getf plist 'name))))
+    (case (getf plist 'type)
+      ('add    (progn (run-hook-with-args 'gimme-broadcast-pl-add-hook plist)
+                      (gimme-insert-song buffer plist t)
+                      (message "Song added!")))
+      ('insert (progn (run-hook-with-args 'gimme-broadcast-pl-insert-hook plist)
+                      (gimme-insert-song buffer plist nil)
+                      (message "Song added!")))
+      ('remove (progn (run-hook-with-args 'gimme-broadcast-pl-remove-hook plist)
+                      (with-current-buffer (get-buffer buffer)
                         (unlocking-buffer
                          (let* ((beg (text-property-any (point-min) (point-max) 'pos
                                                         (getf plist 'pos)))
@@ -135,22 +130,22 @@
                                          (point-max))))
                            (when (and beg end)
                              (clipboard-kill-region beg end)
-                             (gimme-update-pos #'1- (point) (point-max)))))))))
-    ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
-                     (gimme-playlist)
-                     (message "Playlist updated! (moving element)")))
-    ('shuffle (progn (run-hook-with-args 'gimme-broadcast-pl-shuffle-hook plist)
-                     (gimme-playlist)
-                     (message "Playlist shuffled!")))
-    ('clear   (progn (run-hook-with-args 'gimme-broadcast-pl-clear-hook plist)
-                     (gimme-playlist)
-                     (message "Playlist cleared!")))
-    ('sort    (progn (run-hook-with-args 'gimme-broadcast-pl-sort-hook plist)
-                     (gimme-playlist)
-                     (message "Playlist updated! (sorting list)")))
-    ('update  (progn (run-hook-with-args 'gimme-broadcast-pl-update-hook plist)
-                     (gimme-playlist)
-                     (message "Playlist updated! (updating list)")))))
+                             (gimme-update-pos buffer #'1- (point) (point-max))))))))
+      ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
+                       (gimme-playlist)
+                       (message "Playlist updated! (moving element)")))
+      ('shuffle (progn (run-hook-with-args 'gimme-broadcast-pl-shuffle-hook plist)
+                       (gimme-playlist)
+                       (message "Playlist shuffled!")))
+      ('clear   (progn (run-hook-with-args 'gimme-broadcast-pl-clear-hook plist)
+                       (gimme-playlist)
+                       (message "Playlist cleared!")))
+      ('sort    (progn (run-hook-with-args 'gimme-broadcast-pl-sort-hook plist)
+                       (gimme-playlist)
+                       (message "Playlist updated! (sorting list)")))
+      ('update  (progn (run-hook-with-args 'gimme-broadcast-pl-update-hook plist)
+                       (gimme-playlist)
+                       (message "Playlist updated! (updating list)"))))))
 
 
 

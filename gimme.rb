@@ -59,7 +59,7 @@ class GIMME
 
     @async.broadcast_playback_current_id.notifier do |res|
       @async.playlist("_active").current_pos.notifier do |pos|
-        to_emacs [:"gimme-set-playing", pos[:position]]
+        to_emacs [:"gimme-set-playing", pos[:name], pos[:position]]
       end
       true;end
 
@@ -76,7 +76,8 @@ class GIMME
     @async.broadcast_playlist_changed.notifier do |res|
       dict = {}; res.each {|key,val| dict[key] = val }
       dict[:pos] = dict[:position]
-      dict.delete(:position); dict.delete(:name)
+      dict.delete(:position);
+      #dict.delete(:name) Can't use 'name': reserved word or lousy code? you decide
       dict[:type] = case dict[:type]
                     when Xmms::Playlist::ADD then :add
                     when Xmms::Playlist::INSERT then :insert
@@ -92,11 +93,11 @@ class GIMME
           $atribs.map{|x| x.to_sym}.each do |e|
             dict[e] = res2[e] ? res2[e].first.at(1) : NOTHING
           end if res2
-          to_emacs [:"gimme-update-model", [:quote, dict.to_a.flatten]]
+          to_emacs [:"gimme-broadcast-playlist", [:quote, dict.to_a.flatten]]
           true
         end
       else
-        to_emacs [:"gimme-update-model", [:quote, dict.to_a.flatten]]
+        to_emacs [:"gimme-broadcast-playlist", [:quote, dict.to_a.flatten]]
       end
       true
     end

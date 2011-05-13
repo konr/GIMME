@@ -25,7 +25,7 @@
     (gimme-on-buffer buffer-name
                      (gimme-filter-mode)
                      (gimme-tree-read-from-disk)
-                     (clipboard-kill-region 1 (point-max))
+                     (kill-region 1 (point-max))
                      (gimme-set-title (format "%s - %s" gimme-filter-header
                                               (gimme-filter-get-breadcrumbs))))
     (gimme-send-message "(pcol %s %s)\n" (prin1-to-string buffer-name) 

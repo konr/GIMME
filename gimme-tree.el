@@ -23,7 +23,7 @@
   (interactive)
   (let ((buffer-name "GIMME - Bookmarks"))
     (gimme-on-buffer buffer-name
-                     (clipboard-kill-region 1 (point-max))
+                     (kill-region 1 (point-max))
                      (gimme-tree-read-from-disk)
                      (gimme-tree-mode)
                      (gimme-set-title gimme-tree-header))
@@ -238,7 +238,7 @@
 
 (defun gimme-coll-changed (plist)
   "Called by the braodcast functions"
-  (with-current-buffer gimme-buffer-name
+  (comment with-current-buffer gimme-buffer-name
     (unlocking-buffer
      (let ((type      (getf plist 'type))
            (name      (decode-coding-string (getf plist 'name) 'utf-8))
