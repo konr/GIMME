@@ -42,8 +42,6 @@
   "In which mode GIMME current is")
 (defvar gimme-buffer-name "GIMME"
   "GIMME's buffer name")
-(defvar gimme-session 0
-  "Number used to identify the session")
 (defvar gimme-filter-remainder ""
   "Variable used to hold incomplete sexps received from the ruby process")
 (defvar gimme-debug 0
@@ -80,9 +78,28 @@
   (let* ((all (gimme-buffers)) (alist (plist-to-alist plist))
          (consed (mapcar (lambda (el) (cons el (buffer-local-variables el))) all)))
     (caar (reduce (lambda (coll pair)
-	       (remove-if-not (lambda (el) (equal (cdr pair) 
-					     (cdr (assoc (car pair) (cdr el)))))
-			      coll)) alist :initial-value consed))))
+                    (remove-if-not (lambda (el) (equal (cdr pair)
+                                                  (cdr (assoc (car pair) (cdr el)))))
+                                   coll)) alist :initial-value consed))))
+
+(defun gimme-gen-buffer (plist)
+  "FIXME: Filter Collection; hook"
+  (let* ((type (getf plist 'gimme-buffer-type))
+         (type-s (case type ('collection "Collection") ('playlist "Playlist")))
+         (name-s (case type ('collection (getf plist 'gimme-collection-name))
+                       ('playlist plist 'gimme-playlist-name)))
+         (buffer-name (format "GIMME - %s (%s)" type-s name-s)))
+    (gimme-on-buffer buffer-name
+                     (case type
+                       ('playlist (gimme-playlist-mode))
+                       ('collection (gimme-filter-mode)))
+                     (kill-region 1 (point-max))
+                     (loop for x = plist then (cddr x)
+                           while x doing (progn (make-local-variable (car x))
+                                                (set (car x) (cadr x)))))
+    (switch-to-buffer (get-buffer buffer-name))
+    buffer-name))
+
 
 (defun gimme-extract-needed-tags ()
   "Informs the ruby client of all %variables required by the config file"
@@ -104,7 +121,7 @@
                 doing (let* ((s (car x))
                              (f (caar x)))
                         (when (> gimme-debug 0)
-                          (message (format "GIMME: %s" (if (>= gimme-debug 2) f s))))
+                          (message (format "GIMME: %s" (if (>= gimme-debug 2) s f))))
                         (when (> 3 gimme-debug) (eval (car x))))
                 finally (return (substring s position))))))
 

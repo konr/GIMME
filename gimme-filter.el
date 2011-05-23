@@ -18,10 +18,11 @@
 
 ;;; Code
 
-(defun gimme-filter (query)
+(defun gimme-filter ()
   "Sets up the buffer"
   (interactive)
-  (let ((buffer-name (format "GIMME - Filter View (%s)" query)))
+  (gimme-send-message "(getall)\n")
+  (comment let ((buffer-name (format "GIMME - Filter View (%s)" query)))
     (gimme-on-buffer buffer-name
                      (gimme-filter-mode)
                      (gimme-tree-read-from-disk)

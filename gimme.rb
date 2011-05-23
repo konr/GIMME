@@ -193,12 +193,50 @@ class GIMME
       new = [0,[100,(vol[:left] + inc)].min].max
       @async.playback_volume_set(:left, new).notifier {}
       @async.playback_volume_set(:right, new).notifier {}
-      to_emacs [:"hooker-set", [:quote, :"gimme-volume"], new]; end; end
+      # to_emacs [:"hooker-set", [:quote, :"gimme-volume"], new]
+      to_emacs [:message, "Volume changed to #{new}"]
+    end; end
 
 
   ###################
   ### Collections ###
   ###################
+
+  def getcoll (name)
+    name = name.to_s
+    plist = [:quote, [:"gimme-buffer-type", :collection,
+                      :"gimme-collection-name", name]]
+    @async.coll_get(name).notifier do |coll|
+      to_emacs [:"gimme-gen-buffer",plist]
+      @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
+        wrapperdict.each do |dict|
+          adict = {}
+          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+          to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
+        end
+        true
+      end
+    end
+  end
+
+  def printcol (name)
+  end
+
+  def getall
+    coll = Xmms::Collection.universe
+    plist = [:quote, [:"gimme-buffer-type", :collection,
+                      :"gimme-collection-name", "nil",
+                     :"gimme-collection-title", "Universe"]]
+    to_emacs [:"gimme-gen-buffer",plist]
+    @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
+      wrapperdict.each do |dict|
+        adict = {}
+        dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+        to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
+      end
+      true
+    end
+  end
 
   def subcol (data,pattern)
     with_col(data) do |parent|
@@ -237,9 +275,56 @@ class GIMME
     end
   end
 
+  def colltosexp (coll)
+    # The structure is (type plist-of-attributes operand-1 operand-2 ...)
+    struct = "(#{colltype(coll)} ("
+    coll.attributes.each do |key,val|
+      key = key.gsub("\"","\""); val = val.gsub("\"","\"")
+      struct += '"'+key+'" "'+val+'" '
+    end
+    struct += ") "
+    coll.operands.each do |op|
+      struct += collstruct(op)
+    end
+    struct += ")"
+    struct
+  end
+
+  def sexptocoll (string)
+    coll = string.parse_sexp.first
+    type = colltype(coll[0]); att = coll[1]
+    children = (coll[2] or []).map{ |x| gencoll(x)}
+
+    new = Xmms::Collection.new(Xmms::Collection::TYPE_REFERENCE)
+
+    att.each_slice(2).each { |key,val| new.attributes[key] = val }
+    children.each { |child| new.operands.push(child)}
+
+    new
+  end
+
   ########################
   ### Misc and Private ###
   ########################
+
+  def xoxota
+    data="tudo"
+    @async.coll_get(data.to_s).notifier do |coll|
+      foo = colltosexp coll
+      bar = sexptocoll foo
+
+      @async.coll_query_info(bar,$atribs).notifier do |wrapperdict|
+        wrapperdict.each do |dict|
+          adict = {}
+          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+          to_emacs [:"gimme-insert-song","Xoxotinha",[:quote, adict.to_a.flatten],:t]
+        end
+        true
+      end
+
+      true
+    end
+  end
 
   def set_atribs (l); $atribs |= l.map{|n| n.to_s}; end
 
@@ -260,6 +345,28 @@ class GIMME
       end
       yield coll
     end;end
+
+  def colltype (coll)
+    dict =
+      {Xmms::Collection::TYPE_REFERENCE => :reference,
+      Xmms::Collection::TYPE_UNION => :union,
+      Xmms::Collection::TYPE_INTERSECTION => :intersection,
+      Xmms::Collection::TYPE_COMPLEMENT => :complement,
+      Xmms::Collection::TYPE_HAS => :has,
+      Xmms::Collection::TYPE_EQUALS => :equals,
+      Xmms::Collection::TYPE_MATCH => :match,
+      Xmms::Collection::TYPE_SMALLER => :smaller,
+      Xmms::Collection::TYPE_GREATER => :greater,
+      Xmms::Collection::TYPE_IDLIST => :idlist,
+      Xmms::Collection::TYPE_QUEUE => :queue,
+      Xmms::Collection::TYPE_PARTYSHUFFLE => :partyshuffle}
+    if coll.class == Symbol
+      dict.invert[coll]
+    else
+      dict[coll.type]
+    end
+  end
+
 end
 
 

@@ -30,9 +30,9 @@
                      (gimme-playlist-mode)
                      (gimme-set-title gimme-playlist-header)
                      (kill-region 1 (point-max))
-                     (gimme-send-message "(list %s %s)\n" 
-					 (prin1-to-string playlist) ;; FIXME
-					 (prin1-to-string buffer-name))
+                     (gimme-send-message "(list %s %s)\n"
+                                         (prin1-to-string playlist) ;; FIXME
+                                         (prin1-to-string buffer-name))
                      (make-local-variable 'gimme-buffer-type)
                      (setq gimme-buffer-type 'playlist)
                      (make-local-variable 'gimme-playlist-name)
@@ -87,8 +87,8 @@
   "Called by the playlist_changed broadcast"
   ;; FIXME: Not seriouly implemented: Move
   (let* ((name (getf plist 'name))
-	 (buffer (gimme-first-buffer-with-vars 'gimme-buffer-type 'playlist
-					      'gimme-playlist-name name)))
+         (buffer (gimme-first-buffer-with-vars 'gimme-buffer-type 'playlist
+                                               'gimme-playlist-name name)))
     (case (getf plist 'type)
       ('add    (progn (run-hook-with-args 'gimme-broadcast-pl-add-hook plist)
                       (gimme-insert-song buffer plist t)
@@ -146,8 +146,8 @@
              (when h-beg (remove-text-properties h-beg h-end '(face nil)))))
          (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
                 (end (next-property-change (or beg (point-min)))))
-           (when beg 
-	     (put-text-property beg (or end (point-max)) 'face 'highlight))))))))
+           (when beg
+             (put-text-property beg (or end (point-max)) 'face 'highlight))))))))
 
 (defun gimme-update-tags (plist-b)
   "Updates the tags of song, whose id must be at the plist"
@@ -192,14 +192,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-insert-song (buffer plist append)
-  "Inserts (or appends) an element matching the plist"
-  (gimme-on-buffer
-   buffer
-   (goto-char (if append (point-max)
-                (or (text-property-any (point-min) (point-max)
-                                       'pos (getf plist 'pos)) (point-max))))
-   (insert (gimme-string plist))
-   (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max)))))
+  "Inserts (or appends) an element matching the plist
+#FIXME: For now still accepting strings"
+  (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
+                  (gimme-first-buffer-with-vars buffer))))
+    (gimme-on-buffer
+     buffer
+     (goto-char (if append (point-max)
+                  (or (text-property-any (point-min) (point-max)
+                                         'pos (getf plist 'pos)) (point-max))))
+     (insert (gimme-string plist))
+     (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;

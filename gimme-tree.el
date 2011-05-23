@@ -6,6 +6,8 @@
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
+
+
 ;; any later version.
 ;;
 ;; This program is distributed in the hope that it will be useful,
@@ -95,8 +97,8 @@
          (gimme-filter))
         ((get-text-property (point) 'ref)
          (setq gimme-current (get-text-property (point) 'ref))
-         (gimme-filter))
-        (gimme-current)))
+         (gimme-send-message "(getcoll %s)\n"
+                             (prin1-to-string (get-text-property (point) 'ref))))))
 
 (defun gimme-tree-delete-coll ()
   "Deletes focused collection"
@@ -239,34 +241,34 @@
 (defun gimme-coll-changed (plist)
   "Called by the braodcast functions"
   (comment with-current-buffer gimme-buffer-name
-    (unlocking-buffer
-     (let ((type      (getf plist 'type))
-           (name      (decode-coding-string (getf plist 'name) 'utf-8))
-           (namespace (getf plist 'namespace))
-           (newname   (decode-coding-string (or (getf plist 'newname) "") 'utf-8)))
-       (case type
-         ('add (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
-               (save-excursion
-                 (goto-char (point-max))
-                 (insert (propertize (format "** %s\n" name) 'ref name))
-                 (message (format "Collection %s added!" name))))
-         ('update (progn (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
-                         (message (format "Collection %s updated!" name))))
-         ('rename
-          (let ((bounds (car (get-bounds-where
-                              (lambda (n) (equal (get-text-property n 'ref) name))))))
-            (run-hook-with-args 'gimme-broadcast-coll-rename-hook plist)
-            (when bounds
-              (apply 'kill-region bounds)
-              (save-excursion (goto-char (car bounds))
-                              (insert (propertize (format "** %s\n" newname) 'ref newname)))
-              (message (format "Collection %s renamed to %s!" name newname)))))
-         ('remove
-          (progn (run-hook-with-args 'gimme-broadcast-coll-remove-hook plist)
-                 (apply 'kill-region
-                        (car (get-bounds-where
-                              (lambda (n) (equal (get-text-property n 'ref) name)))))
-                 (message (format "Collection %s removed!" name)))))))))
+           (unlocking-buffer
+            (let ((type      (getf plist 'type))
+                  (name      (decode-coding-string (getf plist 'name) 'utf-8))
+                  (namespace (getf plist 'namespace))
+                  (newname   (decode-coding-string (or (getf plist 'newname) "") 'utf-8)))
+              (case type
+                ('add (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
+                      (save-excursion
+                        (goto-char (point-max))
+                        (insert (propertize (format "** %s\n" name) 'ref name))
+                        (message (format "Collection %s added!" name))))
+                ('update (progn (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
+                                (message (format "Collection %s updated!" name))))
+                ('rename
+                 (let ((bounds (car (get-bounds-where
+                                     (lambda (n) (equal (get-text-property n 'ref) name))))))
+                   (run-hook-with-args 'gimme-broadcast-coll-rename-hook plist)
+                   (when bounds
+                     (apply 'kill-region bounds)
+                     (save-excursion (goto-char (car bounds))
+                                     (insert (propertize (format "** %s\n" newname) 'ref newname)))
+                     (message (format "Collection %s renamed to %s!" name newname)))))
+                ('remove
+                 (progn (run-hook-with-args 'gimme-broadcast-coll-remove-hook plist)
+                        (apply 'kill-region
+                               (car (get-bounds-where
+                                     (lambda (n) (equal (get-text-property n 'ref) name)))))
+                        (message (format "Collection %s removed!" name)))))))))
 
 (require 'gimme-tree-faces)
 (provide 'gimme-tree)
