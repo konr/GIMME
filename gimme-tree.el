@@ -97,7 +97,7 @@
          (gimme-filter))
         ((get-text-property (point) 'ref)
          (setq gimme-current (get-text-property (point) 'ref))
-         (gimme-send-message "(getcoll %s)\n"
+         (gimme-send-message "(pcol %s)\n"
                              (prin1-to-string (get-text-property (point) 'ref))))))
 
 (defun gimme-tree-delete-coll ()

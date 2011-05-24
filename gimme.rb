@@ -202,42 +202,6 @@ class GIMME
   ### Collections ###
   ###################
 
-  def getcoll (name)
-    name = name.to_s
-    plist = [:quote, [:"gimme-buffer-type", :collection,
-                      :"gimme-collection-name", name]]
-    @async.coll_get(name).notifier do |coll|
-      to_emacs [:"gimme-gen-buffer",plist]
-      @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
-        wrapperdict.each do |dict|
-          adict = {}
-          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
-          to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
-        end
-        true
-      end
-    end
-  end
-
-  def printcol (name)
-  end
-
-  def getall
-    coll = Xmms::Collection.universe
-    plist = [:quote, [:"gimme-buffer-type", :collection,
-                      :"gimme-collection-name", "nil",
-                     :"gimme-collection-title", "Universe"]]
-    to_emacs [:"gimme-gen-buffer",plist]
-    @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
-      wrapperdict.each do |dict|
-        adict = {}
-        dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
-        to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
-      end
-      true
-    end
-  end
-
   def subcol (data,pattern)
     with_col(data) do |parent|
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
@@ -249,13 +213,17 @@ class GIMME
         to_emacs [:"gimme-filter-set-current-col", [:quote, list]]
       end;end;end
 
-  def pcol (session, data)
+  def pcol (data=nil)
     with_col(data) do |coll|
+      plist = [:quote, [:"gimme-buffer-type", :collection,
+                        :"gimme-collection-name", data.to_s,
+                        :"gimme-collection-title", data.to_s]]
+      to_emacs [:"gimme-gen-buffer",plist]
       @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
         wrapperdict.each do |dict|
           adict = {}
           dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
-          to_emacs [:"gimme-insert-song",session,[:quote, adict.to_a.flatten],:t]
+          to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
         end
         true;end;end;end
 
@@ -307,41 +275,16 @@ class GIMME
   ### Misc and Private ###
   ########################
 
-  def xoxota
-    data="tudo"
-    @async.coll_get(data.to_s).notifier do |coll|
-      foo = colltosexp coll
-      bar = sexptocoll foo
-
-      @async.coll_query_info(bar,$atribs).notifier do |wrapperdict|
-        wrapperdict.each do |dict|
-          adict = {}
-          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
-          to_emacs [:"gimme-insert-song","Xoxotinha",[:quote, adict.to_a.flatten],:t]
-        end
-        true
-      end
-
-      true
-    end
-  end
-
   def set_atribs (l); $atribs |= l.map{|n| n.to_s}; end
 
   private
 
-  def to_emacs (array); puts array.to_sexp; end
+  def to_emacs (array); puts array.to_sexp.encode("UTF-8"); end
 
   def with_col (data)
     @async.coll_get(data.to_s).notifier do |coll|
-      if data.class == String and data == "*"
+      if data == nil
         coll = Xmms::Collection.universe
-      elsif data.class == Symbol and data == :nil
-        coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-        coll.idlist=[]
-      elsif data.class == Array
-        coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-        coll.idlist=data
       end
       yield coll
     end;end

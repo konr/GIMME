@@ -122,7 +122,7 @@
                              (f (caar x)))
                         (when (> gimme-debug 0)
                           (message (format "GIMME: %s" (if (>= gimme-debug 2) s f))))
-                        (when (> 3 gimme-debug) (eval (car x))))
+                        (when (> 3 gimme-debug) (ignore-errors (eval (car x)))))
                 finally (return (substring s position))))))
 
 

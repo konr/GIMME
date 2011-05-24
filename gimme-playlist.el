@@ -194,6 +194,7 @@
 (defun gimme-insert-song (buffer plist append)
   "Inserts (or appends) an element matching the plist
 #FIXME: For now still accepting strings"
+  (message "Eita!")
   (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
                   (gimme-first-buffer-with-vars buffer))))
     (gimme-on-buffer
