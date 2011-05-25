@@ -168,7 +168,9 @@ class GIMME
         @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
           wrapperdict.each do |dict|
             adict = {}
-            dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+            dict.each do |key,val| 
+              adict[key] = val.class == NilClass ? NOTHING : val
+            end
             bdict[adict[:id]]=adict
           end
           @async.playlist(playlist).entries.notifier do |list|
@@ -279,7 +281,11 @@ class GIMME
 
   private
 
-  def to_emacs (array); puts array.to_sexp.encode("UTF-8"); end
+  def to_emacs (array)
+    # Because this is a feature, not a bug!
+    # http://www.gnu.org/s/emacs/manual/html_node/elisp/Non_002dASCII-in-Strings.html
+    puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1'+'\\\\ '+'\2')
+  end
 
   def with_col (data)
     @async.coll_get(data.to_s).notifier do |coll|
