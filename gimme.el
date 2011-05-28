@@ -25,7 +25,7 @@
 ;; GIMME works by using collections as search results, and its multiple
 ;; views allows you to do that in multiple ways. As of GIMME 1.0, you
 ;; can search and narrow searching using filter-view and better visualize
-;; it using tree-view.
+;; it using bookmark-view.
 
 ;;; Code
 
@@ -54,10 +54,10 @@
   "Variable used to hold the current track's duration and playtime")
 (defvar gimme-current nil
   "The current collection. Can be a string or an idlist")
-(defvar gimme-trees nil
+(defvar gimme-bookmarks nil
   "Collections not saved on the core")
 
-(defvar gimme-tree-header "GIMME - Tree View" "Initial header")
+(defvar gimme-bookmark-header "GIMME - bookmark View" "Initial header")
 (defvar gimme-playlist-header "GIMME - Playlist view" "Initial header")
 (defvar gimme-filter-header "GIMME" "Initial header")
 
@@ -68,7 +68,7 @@
 
 (defun gimme-buffers (&optional function)
   "Get all buffers used by GIMME. FIXME: mode"
-  (let* ((modes '(gimme-playlist-mode gimme-filter-mode gimme-tree-mode))
+  (let* ((modes '(gimme-playlist-mode gimme-filter-mode gimme-bookmark-mode))
          (buffers (remove-if-not (lambda (buf) (member (major-mode buf) modes))
                                  (buffer-list)))
          (filtered (remove-if-not function buffers)))
@@ -86,7 +86,7 @@
   "FIXME: Filter Collection; hook"
   (let* ((type (getf plist 'gimme-buffer-type))
          (type-s (case type ('collection "Collection") ('playlist "Playlist")))
-         (name-s (case type ('collection (getf plist 'gimme-collection-name))
+         (name-s (case type ('collection (getf plist 'gimme-collection-title))
                        ('playlist plist 'gimme-playlist-name)))
          (buffer-name (format "GIMME - %s (%s)" type-s name-s)))
     (gimme-on-buffer buffer-name
@@ -216,7 +216,7 @@
 (gimme-generate-commands clear shuffle play pause next prev stop toggle current)
 (require 'gimme-utils)
 (require 'gimme-playlist)
-(require 'gimme-tree)
+(require 'gimme-bookmark)
 (require 'gimme-filter)
 (require 'gimme-status-mode)
 (require 'gimme-custom)

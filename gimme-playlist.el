@@ -26,6 +26,11 @@
 
 (defun gimme-playlist-update (playlist)
   (let ((buffer-name (format "GIMME - Playlist (%s)" playlist)))
+    (gimme-gen-buffer
+     '(gimme-buffer-type 
+       collection
+       
+			 ))
     (gimme-on-buffer buffer-name
                      (gimme-playlist-mode)
                      (gimme-set-title gimme-playlist-header)
@@ -42,10 +47,6 @@
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "!") (lambda () (interactive)
-                                (gimme-filter (read-from-minibuffer "S: "))))
-    (define-key map (kbd "@") 'gimme-tree)
-    (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "T") 'gimme-update-tags-prompt)

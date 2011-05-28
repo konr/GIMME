@@ -25,9 +25,6 @@
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "!") 'gimme-filter)
-    (define-key map (kbd "@") 'gimme-tree)
-    (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
@@ -66,10 +63,10 @@
 (defun gimme-child-col ()
   "Creates and displays a new collection intersecting the search criteria and the current collection"
   (interactive)
-  (let* ((parent (gimme-tree-current-ref))
-         (name (if (stringp parent) parent (getf (gimme-tree-current-data) 'name)))
+  (let* ((parent gimme-collection-name)
+         (name (if (stringp parent) parent (getf (gimme-bookmark-current-data) 'name)))
          (name (read-from-minibuffer (format "%s > " name)))
-         (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
+         (message (format "(subcol %s %s)\n" (prin1-to-string parent) (prin1-to-string name))))
     (setq gimme-new-collection-name (format "%s" name))
     (gimme-send-message message)))
 
@@ -100,7 +97,7 @@
 (defun gimme-filter-same ()
   "Creates a subcollection matching some this song's criteria"
   (interactive)
-  (let* ((parent (gimme-tree-current-ref))
+  (let* ((parent (gimme-bookmark-current-ref))
          (name (completing-read
                 "Filter? "
                 (mapcar (lambda (n) (format "%s:%s"
@@ -117,7 +114,7 @@
   "Returns the current position as, eg, foo > bar > baz"
   (if (listp gimme-current)
       (loop for x = gimme-current then (butlast x)
-            collecting (getf (car (gimme-tree-get-node x)) 'name) into names
+            collecting (getf (car (gimme-bookmark-get-node x)) 'name) into names
             while x
             finally return (format "%s%s"
                                    (apply #'concat (mapcar (lambda (n) (format "%s > " n))
@@ -135,7 +132,7 @@
   "Sets the current collection. Can be either a string or a list"
   (setq gimme-current
         (append (if (listp gimme-current) gimme-current nil)
-                `(,(gimme-tree-add-child
+                `(,(gimme-bookmark-add-child
                     `(name ,gimme-new-collection-name ref ,ref)
                     (when (listp gimme-current) gimme-current)))))
   (gimme-filter))

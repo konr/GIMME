@@ -19,6 +19,47 @@ $stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on W
 
 $atribs=["title","id","artist","album","duration","starred"]
 
+
+module Xmms
+  class Collection
+    def longtype
+      dict =
+        {Xmms::Collection::TYPE_REFERENCE => :reference,
+        Xmms::Collection::TYPE_UNION => :union,
+        Xmms::Collection::TYPE_INTERSECTION => :intersection,
+        Xmms::Collection::TYPE_COMPLEMENT => :complement,
+        Xmms::Collection::TYPE_HAS => :has,
+        Xmms::Collection::TYPE_EQUALS => :equals,
+        Xmms::Collection::TYPE_MATCH => :match,
+        Xmms::Collection::TYPE_SMALLER => :smaller,
+        Xmms::Collection::TYPE_GREATER => :greater,
+        Xmms::Collection::TYPE_IDLIST => :idlist,
+        Xmms::Collection::TYPE_QUEUE => :queue,
+        Xmms::Collection::TYPE_PARTYSHUFFLE => :partyshuffle}
+      dict[self.type]
+    end
+
+    def to_a
+      [self.type,
+       self.attributes.map {|k,v| [k,v]}.flatten,
+       self.operands.map {|op| op.to_a}]
+    end
+
+    def to_sexp; self.to_a.to_sexp; end
+
+    def Collection.from_a (array)
+      array.map! { |el| el == :nil ? [] : el}
+
+      new = Xmms::Collection.new(array[0])
+      array[1].each_slice(2).each { |key,val| new.attributes[key.to_s] = val.to_s }
+      array[2].each { |child| new.operands.push(Xmms::Collection.from_a(child))}
+
+      new
+    end
+  end
+end
+
+
 class GIMME
 
   def initialize
@@ -168,7 +209,7 @@ class GIMME
         @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
           wrapperdict.each do |dict|
             adict = {}
-            dict.each do |key,val| 
+            dict.each do |key,val|
               adict[key] = val.class == NilClass ? NOTHING : val
             end
             bdict[adict[:id]]=adict
@@ -211,14 +252,23 @@ class GIMME
       intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
       intersection.operands.push(parent)
       intersection.operands.push(match)
-      @async.coll_query_ids(intersection).notifier do |list|
-        to_emacs [:"gimme-filter-set-current-col", [:quote, list]]
-      end;end;end
+      plist = [:quote, [:"gimme-buffer-type", :collection,
+                        :"gimme-collection-name", match.to_a,
+                        :"gimme-collection-title", pattern.to_s]]
+      to_emacs [:"gimme-gen-buffer",plist]
+      @async.coll_query_info(intersection,$atribs).notifier do |wrapperdict|
+        wrapperdict.each do |dict|
+          adict = {}
+          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+          to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
+        end
+        true; end
+    end;end
 
   def pcol (data=nil)
     with_col(data) do |coll|
       plist = [:quote, [:"gimme-buffer-type", :collection,
-                        :"gimme-collection-name", data.to_s,
+                        :"gimme-collection-name", data,
                         :"gimme-collection-title", data.to_s]]
       to_emacs [:"gimme-gen-buffer",plist]
       @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
@@ -241,36 +291,8 @@ class GIMME
 
   def colls (session)
     @async.coll_list.notifier do |res|
-      to_emacs [:"gimme-tree-colls",session,[:quote, res.to_a]]
+      to_emacs [:"gimme-bookmark-colls",session,[:quote, res.to_a]]
     end
-  end
-
-  def colltosexp (coll)
-    # The structure is (type plist-of-attributes operand-1 operand-2 ...)
-    struct = "(#{colltype(coll)} ("
-    coll.attributes.each do |key,val|
-      key = key.gsub("\"","\""); val = val.gsub("\"","\"")
-      struct += '"'+key+'" "'+val+'" '
-    end
-    struct += ") "
-    coll.operands.each do |op|
-      struct += collstruct(op)
-    end
-    struct += ")"
-    struct
-  end
-
-  def sexptocoll (string)
-    coll = string.parse_sexp.first
-    type = colltype(coll[0]); att = coll[1]
-    children = (coll[2] or []).map{ |x| gencoll(x)}
-
-    new = Xmms::Collection.new(Xmms::Collection::TYPE_REFERENCE)
-
-    att.each_slice(2).each { |key,val| new.attributes[key] = val }
-    children.each { |child| new.operands.push(child)}
-
-    new
   end
 
   ########################
@@ -284,37 +306,19 @@ class GIMME
   def to_emacs (array)
     # Because this is a feature, not a bug!
     # http://www.gnu.org/s/emacs/manual/html_node/elisp/Non_002dASCII-in-Strings.html
-    puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1'+'\\\\ '+'\2')
+    puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1\\\\ \2')
   end
 
   def with_col (data)
     @async.coll_get(data.to_s).notifier do |coll|
-      if data == nil
+      if data == nil or data == :nil
         coll = Xmms::Collection.universe
+      elsif data.class == Array
+        coll = Xmms::Collection.from_a(data)
       end
       yield coll
     end;end
 
-  def colltype (coll)
-    dict =
-      {Xmms::Collection::TYPE_REFERENCE => :reference,
-      Xmms::Collection::TYPE_UNION => :union,
-      Xmms::Collection::TYPE_INTERSECTION => :intersection,
-      Xmms::Collection::TYPE_COMPLEMENT => :complement,
-      Xmms::Collection::TYPE_HAS => :has,
-      Xmms::Collection::TYPE_EQUALS => :equals,
-      Xmms::Collection::TYPE_MATCH => :match,
-      Xmms::Collection::TYPE_SMALLER => :smaller,
-      Xmms::Collection::TYPE_GREATER => :greater,
-      Xmms::Collection::TYPE_IDLIST => :idlist,
-      Xmms::Collection::TYPE_QUEUE => :queue,
-      Xmms::Collection::TYPE_PARTYSHUFFLE => :partyshuffle}
-    if coll.class == Symbol
-      dict.invert[coll]
-    else
-      dict[coll.type]
-    end
-  end
 
 end
 

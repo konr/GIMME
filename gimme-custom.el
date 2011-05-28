@@ -52,7 +52,7 @@
   :group 'gimme
   :type '(repeat sexp))
 
-(defcustom gimme-tree-file "~/.gimmetree"
+(defcustom gimme-bookmark-file "~/.gimmebookmark"
   "Where the Tree (storing temp collections and their relationships) will be stored"
   :group 'gimme
   :type 'file)
