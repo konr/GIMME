@@ -83,13 +83,16 @@
                                    coll)) alist :initial-value consed))))
 
 (defun gimme-gen-buffer (plist)
-  "FIXME: Filter Collection; hook"
+  "FIXME: Filter Collection; hook; header not working"
   (let* ((type (getf plist 'gimme-buffer-type))
          (type-s (case type ('collection "Collection") ('playlist "Playlist")))
          (name-s (case type ('collection (getf plist 'gimme-collection-title))
-                       ('playlist plist 'gimme-playlist-name)))
-         (buffer-name (format "GIMME - %s (%s)" type-s name-s)))
+                       ('playlist (getf plist 'gimme-playlist-name))))
+         (buffer-name (decode-coding-string 
+		       (format "GIMME - %s (%s)" type-s name-s) 'utf-8)))
     (gimme-on-buffer buffer-name
+                     (comment setq header-line-format
+                           `(:eval (decode-coding-string ,buffer-name 'utf-8)))
                      (case type
                        ('playlist (gimme-playlist-mode))
                        ('collection (gimme-filter-mode)))
@@ -112,17 +115,18 @@
 
 (defun eval-all-sexps (s)
   "Evaluates all sexps from the string. As it will probably encounter a broken sexp, a variable is used to store the remainder to be used in future calls"
-  (let ((s (concat gimme-filter-remainder s)))
+  (let ((s (decode-coding-string (concat gimme-filter-remainder s) 'utf-8)))
     (setq gimme-filter-remainder
           (loop for x = (ignore-errors (read-from-string s))
                 then (ignore-errors (read-from-string (substring s position)))
                 while x
                 summing (or (cdr x) 0) into position
-                doing (let* ((s (car x))
+                doing (let* ((s (decode-strings-in-tree (car x) 'utf-8))
                              (f (caar x)))
                         (when (> gimme-debug 0)
                           (message (format "GIMME: %s" (if (>= gimme-debug 2) s f))))
-                        (when (> 3 gimme-debug) (ignore-errors (eval (car x)))))
+                        (when (> 3 gimme-debug) 
+			  (ignore-errors (eval s))))
                 finally (return (substring s position))))))
 
 
@@ -133,7 +137,7 @@
 (defmacro gimme-on-buffer (name &rest body)
   "FIXME: Gimme v2"
   `(with-current-buffer (get-buffer-create ,name)
-     (unlocking-buffer (save-excursion ,@body))))
+     (unlocking-buffer (save-excursion (goto-char (point-max)) ,@body))))
 
 (defun gimme-init ()
   "Creates the buffer and manages the processes"
@@ -175,10 +179,9 @@
 
 (defun gimme-set-title (title)
   "Changes the header of a buffer"
-  (setq gimme-playlist-header title)
   (setq header-line-format
-        '(:eval (substring (decode-coding-string gimme-playlist-header 'utf-8)
-                           (min (length gimme-playlist-header)
+        `(:eval (substring (decode-coding-string ,title 'utf-8)
+                           (min (length ,title)
                                 (window-hscroll))))))
 
 (defun gimme-toggle-view ()
@@ -201,12 +204,15 @@
        (kill-region (point) (point-max))
        (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))))))
 
+(defun gimme-restart ()
+  (setq gimme-filter-remainder "")
+  (gimme-init)
+  (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags))))
+
 (defun gimme ()
   "The XMMS2 interface we all love"
   (interactive)
-  (setq gimme-filter-remainder "")
-  (gimme-init)
-  (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
+  (gimme-restart)
   (gimme-playlist))
 
 ;;;;;;;;;;

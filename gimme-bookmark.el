@@ -20,32 +20,23 @@
 
 ;;; Code
 
+(defvar gimme-anonymous-collections
+  '(((0 ("reference" "All Media" "title" "All Media") nil))))
+(defvar gimme-bookmark-name "GIMME - Bookmarks")
+
 (defun gimme-bookmark ()
   "bookmark-view"
   (interactive)
-  (let ((buffer-name "GIMME - Bookmarks"))
-    (gimme-on-buffer buffer-name
-                     (kill-region 1 (point-max))
-                     (gimme-bookmark-read-from-disk)
-                     (gimme-bookmark-mode)
-                     (gimme-set-title gimme-bookmark-header))
-    (gimme-send-message "(colls %s)\n" (prin1-to-string buffer-name))
-    (run-hooks 'gimme-goto-buffer-hook)
-    (switch-to-buffer (get-buffer buffer-name))))
+  (gimme-send-message "(colls %s)\n" (prin1-to-string gimme-bookmark-name))
+  )
 
 (defvar gimme-bookmark-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "!") 'gimme-filter)
-    (define-key map (kbd "@") 'gimme-bookmark)
-    (define-key map (kbd "#") 'gimme-playlist)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
-    (define-key map (kbd "SPC") 'gimme-toggle-collection)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "C-f") 'scroll-up)
     (define-key map (kbd "C-b") 'scroll-down)
-    (define-key map (kbd "J") 'gimme-next)
-    (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
     (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
@@ -53,36 +44,15 @@
     (define-key map (kbd "RET") 'gimme-bookmark-view-collection)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
     (define-key map (kbd "r") 'gimme-bookmark-rename-coll)
-    (define-key map (kbd "s") 'gimme-bookmark-save-collection)
-    (define-key map (kbd "S") '(lambda () (interactive) (gimme-bookmark-save-collection t)))
+    (define-key map (kbd "S") 'gimme-bookmark-save-collection)
     map)
   "bookmark-map's keymap")
 
-(defun gimme-bookmark-mode ()
-  (font-lock-mode 1)
+(define-derived-mode gimme-bookmark-mode outline-mode
+  "Used on GIMME" ""
   (use-local-map gimme-bookmark-map)
-  (setq major-mode 'gimme-bookmark-mode)
-  (font-lock-add-keywords nil
-                          '(("^\\* .*\n"                         . 'gimme-bookmark-level-1)
-                            ("^\\*\\* .*\n"                      . 'gimme-bookmark-level-2)
-                            ("^\\*\\*\\* .*\n"                   . 'gimme-bookmark-level-3)
-                            ("^\\*\\*\\*\\* .*\n"                . 'gimme-bookmark-level-4)
-                            ("^\\*\\*\\*\\*\\* .*\n"             . 'gimme-bookmark-level-5)
-                            ("^\\*\\*\\*\\*\\*\\* .*\n"          . 'gimme-bookmark-level-6)
-                            ("^\\*\\*\\*\\*\\*\\*\\* .*\n"       . 'gimme-bookmark-level-7)
-                            ("^\\*\\*\\*\\*\\*\\*\\*\\** .*\n"   . 'gimme-bookmark-level-8)))
   (setq mode-name "gimme-bookmark"))
 
-
-
-(defun gimme-bookmark-colls (session list)
-  "Prints the available collections as a bookmark"
-  (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
-         (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
-    (gimme-on-buffer session
-                     (dolist (el (gimme-bookmark-get-bookmarks)) (insert el))
-                     (insert (format "\n* Saved collections\n"))
-                     (dolist (el list) (insert (propertize (format "** %s\n" el) 'ref el))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive function ;;
@@ -91,9 +61,9 @@
 (defun gimme-bookmark-view-collection ()
   "Jumps to filter-view with the focused collection as the current"
   (interactive)
-  (cond ((get-text-property (point) 'pos)
-         (setq gimme-current (get-text-property (point) 'pos))
-         (gimme-filter))
+  (cond ((get-text-property (point) 'coll)
+         (gimme-send-message "(pcol %s)\n"
+                             (prin1-to-string (get-text-property (point) 'coll))))
         ((get-text-property (point) 'ref)
          (setq gimme-current (get-text-property (point) 'ref))
          (gimme-send-message "(pcol %s)\n"
@@ -102,20 +72,21 @@
 (defun gimme-bookmark-delete-coll ()
   "Deletes focused collection"
   (interactive)
-  (if (get-text-property (point) 'pos)
-      (let* ((initial (point))
-             (pos (get-text-property (point) 'pos))
-             (parent (gimme-bookmark-get-node (butlast pos)))
-             (el (gimme-bookmark-get-node pos))
-             (bounds (get-bounds-where
-                      (lambda (n) (sublistp pos (get-text-property n 'pos))))))
-        (gimme-bookmark-delete-from-bookmark pos)
-        (unlocking-buffer (save-excursion (dolist (b (reverse bounds))
-                                            (apply #'kill-region b)))))
-    (when (get-text-property (point) 'ref)
-      (gimme-send-message "(dcol %s)\n"
-                          (prin1-to-string (get-text-property (point) 'ref))))))
-
+  (let* ((coll (get-text-property (point) 'coll))
+         (ref (get-text-property (point) 'ref))
+         (buffer (get-buffer gimme-bookmark-name)))
+    (if coll
+        (let* ((elements (gimme-bookmark-get-children coll t))
+               (bounds
+                (mapcar (lambda (x) (car (get-bounds-where
+                                     (lambda (y) (equal x (get-text-property y 'coll))))))
+                        elements))
+               (bounds (reverse bounds)))
+          (setq gimme-anonymous-collections (gimme-delete-collection coll))
+          (when buffer
+            (gimme-on-buffer buffer
+                             (dolist (x bounds) (kill-region (car x) (1+ (cadr x)))))))
+      (when ref (gimme-send-message "(dcol %s)\n" (prin1-to-string ref))))))
 
 (defun gimme-bookmark-rename-coll ()
   "Renames the focused coll"
@@ -127,85 +98,106 @@
              (node (gimme-bookmark-get-node pos))
              (data (plist-put (car node) 'name new))
              (bounds (list (line-beginning-position) (line-end-position))))
-        (setcar node data)
-        (unlocking-buffer
-         (save-excursion
-           (apply #'kill-region bounds)
-           (goto-char (car bounds))
-           (insert (apply #'propertize
-                          (format "%s %s" (make-string (length pos) ?*) new)
-                          (plist-put data 'pos pos)))))
-        (gimme-bookmark-write-to-disk))
+        (setcar node data))
     (when (get-text-property (point) 'ref)
       (gimme-send-message "(rcol %s %s)\n"
                           (prin1-to-string (get-text-property (point) 'ref))
                           (prin1-to-string (read-from-minibuffer "New name: "))))))
 
 
-(defun gimme-bookmark-save-collection (&optional ask)
+(defun gimme-bookmark-save-collection ()
   "Saves the focused collection on the core"
   (interactive)
-  (let* ((ref  (get-text-property (point) 'ref))
-         (name (get-text-property (point) 'name))
-         (name (if ask (read-from-minibuffer "Save as: ") name)))
-    (when ref (gimme-send-message (format "(scol %s %s)\n"
-                                          (prin1-to-string ref)
-                                          (prin1-to-string name))))))
+  (let* ((coll  (get-text-property (point) 'coll))
+         (name (read-from-minibuffer "Save as: ")))
+    (when coll (gimme-send-message (format "(savecol %s %s)\n"
+                                           (prin1-to-string coll)
+                                           (prin1-to-string name))))))
 ;;;;;;;;;
 ;; Aux ;;
 ;;;;;;;;;
 ;;
 ;; bookmark is like (plist child1 child2 ...)
 
-(defun gimme-bookmark-get-node (position)
-  "Gets the node - (plist child1 child2 ...) - referenced by the arg"
-  (when (listp position)
-    (loop for pos = position then (cdr pos)
-          and bookmark = gimme-bookmarks then (nth (car pos) bookmark)
-          while pos
-          finally return bookmark)))
+(defun gimme-dfs-on-colls (function &optional colls)
+  "Function must have 2 arguments: The collection on a list with its children and
+   the children of the parent collection"
+  (loop for coll in (or colls gimme-anonymous-collections)
+        collecting `(,(funcall function coll colls)
+                     ,@(when (cdr coll) (gimme-dfs-on-colls function (cdr coll))))))
 
-(defun gimme-bookmark-delete-from-bookmark (pos)
-  "Deletes the node referenced by the argument"
-  (delete (gimme-bookmark-get-node pos)
-          (gimme-bookmark-get-node (butlast pos)))
-  (gimme-bookmark-write-to-disk))
+(defun gimme-delete-collection (target &optional colls)
+  "<thunk> konr: Well, *sometimes* [delete] deletes by side effect.  In this
+           case it's probably just returning the cdr of seq."
+  (loop for coll in (or colls gimme-anonymous-collections)
+        if (not (equal (car coll) target)) collect
+        `(,(car coll) ,@(when (cdr coll)
+                          (gimme-delete-collection target (cdr coll)))) end))
 
-(defun gimme-bookmark-add-child (data position)
-  "A new child at the given position"
-  (let* ((bookmark (gimme-bookmark-get-node position))
-         (len (length bookmark))
-         (position (if (stringp position) nil position)))
-    (nconc bookmark `((,data)))
-    (gimme-bookmark-write-to-disk)
-    len))
 
-(defun gimme-bookmark-current-ref ()
-  "Returns either a string or an idlist"
-  (if (listp gimme-current)
-      (getf (car (gimme-bookmark-get-node gimme-current)) 'ref)
-    (prin1-to-string gimme-current)))
+(defun gimme-bookmark-dfsmap (fun &optional colls flat)
+  (loop for coll in (or colls gimme-anonymous-collections)
+        collecting `(,(funcall fun coll)
+                     ,@(when (cdr coll) (gimme-bookmark-dfsmap fun (cdr coll) flat)))
+        into elements and finally return
+        (if flat (apply #'append elements) elements)))
 
-(defun gimme-bookmark-current-data ()
-  "Gets the plist of the current collection"
-  (car (gimme-bookmark-get-node gimme-current)))
+(defun gimme-bookmark-get-parents (target &optional colls stack)
+  (loop for coll in (or colls gimme-anonymous-collections)
+        if (equal (car coll) target) return stack
+        else when (cdr coll) collect
+        (gimme-bookmark-get-parents target (cdr coll) (cons (car coll) stack)) into ch
+        finally return (car (remove-if #'null ch))))
 
-(defun gimme-bookmark-walk (function bookmark &optional depth mapcarp)
-  "Walks on the bookmark collecting the funcall. Note that you can use the depth variable."
-  (let ((depth (if depth depth 0)))
-    (if (null bookmark) nil
-      (cons (funcall function bookmark)
-            (funcall (if mapcarp #'mapcar #'mapcan)
-                     (lambda (n) (gimme-bookmark-walk function n (1+ depth) mapcarp))
-                     (cdr bookmark))))))
+(defun gimme-bookmark-get-children (target)
+  (loop for child in (cdr (gimme-bookmark-get-node target gimme-anonymous-collections))
+        collecting `(,(car child) ,@(mapcar #'gimme-bookmark-get-children (cdr child)))
+        into elements and finally return
+        (remove-if #'null (apply #'append elements))))
 
-(defun gimme-bookmark-get-bookmarks ()
-  "Prints gimme-bookmarks with the right number of asterisks."
-  (cdr (gimme-bookmark-walk (lambda (n)
-                          (apply 'propertize (format "%s %s\n"
-                                                     (make-string depth ?*)
-                                                     (getf (car n) 'name)) (car n)))
-                        (gimme-bookmark-add-pos gimme-bookmarks))))
+(defun gimme-bookmark-get-children (target &optional including-self)
+  (let* ((element (list (gimme-bookmark-get-node target gimme-anonymous-collections)))
+         (colls (gimme-bookmark-dfsmap (lambda (x) (car x)) element t)))
+    (if including-self colls (cdr colls))))
+
+(defun ajusta (lista)
+  (if (cdr lista)
+      `(,(car (ajusta lista)) ,@(cdr (ajusta lista)))
+    lista))
+
+
+(defun gimme-bookmark-dfs (colls &optional depth)
+  (let ((depth (or depth 2)))
+    (when colls
+      (loop for coll in colls collecting
+            (concat
+             (propertize
+              (format "%s %s\n" (make-string depth ?*)
+                      ;; getf doesn't work with strings :(
+                      (loop for x = (cadar coll)
+                            then (cddr x) while x
+                            if (equal (car x) "title") return (cadr x)
+                            finally return "Anonymous collection"))
+              'coll (car coll))
+             (or (gimme-bookmark-dfs (cdr coll) (1+ depth)) ""))
+            into strings and finally return (apply #'concat strings)))))
+
+(defun gimme-bookmark-get-node (node &optional nodes)
+  (if (null node) nodes
+    (when nodes
+      (or (car (remove-if-not (lambda (x) (equal (car x) node)) nodes))
+          (gimme-bookmark-get-node node (apply #'append (mapcar #'rest nodes)))))))
+
+(defun gimme-bookmark-add-child (data parent)
+  (let* ((parent (or (gimme-bookmark-get-node parent gimme-anonymous-collections)
+                     (progn (gimme-bookmark-add-child parent nil)
+                            (gimme-bookmark-get-node parent
+                                                     gimme-anonymous-collections))))
+         (children (or (cdr parent) parent)) (on-coll `((,data))))
+    (if gimme-anonymous-collections
+        (unless (remove-if-not (lambda (c) (and (listp c) (equal (car c) data))) children)
+          (nconc children on-coll))
+      (setq gimme-anonymous-collections on-coll))))
 
 (defun gimme-bookmark-add-pos (bookmark &optional pos)
   "Returns a bookmark with a 'pos' attribute on the plist"
@@ -214,61 +206,60 @@
         into children
         finally return (cons (append (car bookmark) `(pos ,pos)) children)))
 
-(defun gimme-bookmark-read-from-disk ()
-  "Reads from disk :P"
-  (if (file-readable-p gimme-bookmark-file)
-      (setq gimme-bookmarks
-            (with-temp-buffer (insert-file-contents gimme-bookmark-file)
-                              (read (buffer-string))))
-    (let ((new '((name "All" ref "\"*\""))))
-      (gimme-bookmark-write-to-disk new)
-      (gimme-bookmark-read-from-disk))))
-
-
-(defun gimme-bookmark-write-to-disk (&optional bookmark)
-  "Writes to disk :P"
-  (write-region (prin1-to-string (or bookmark gimme-bookmarks)) nil
-                gimme-bookmark-file))
-
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Called by the ruby process ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun gimme-register-coll (coll parent)
+  (unless (gimme-bookmark-get-node parent)
+    (gimme-bookmark-add-child parent gimme-anonymous-collections))
+  (gimme-bookmark-add-child coll parent))
+
+(defun gimme-bookmark-colls (buffer list)
+  "Prints the available collections as a bookmark"
+  (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
+         (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
+    (gimme-on-buffer buffer
+                     (kill-region 1 (point-max))
+                     (insert "* History\n")
+                     (insert (gimme-bookmark-dfs gimme-anonymous-collections))
+                     (insert "\n")
+                     (insert (format "* Saved collections\n"))
+                     (dolist (el list) (insert (propertize (format "** %s\n" el)
+                                                           'ref el)))
+                     (insert "\n")
+                     (gimme-bookmark-mode)
+                     (run-hooks 'gimme-goto-buffer-hook)
+                     (switch-to-buffer (get-buffer gimme-bookmark-name)))))
+
 (defun gimme-coll-changed (plist)
   "Called by the braodcast functions"
-  (comment with-current-buffer gimme-buffer-name
-           (unlocking-buffer
-            (let ((type      (getf plist 'type))
-                  (name      (decode-coding-string (getf plist 'name) 'utf-8))
-                  (namespace (getf plist 'namespace))
-                  (newname   (decode-coding-string (or (getf plist 'newname) "") 'utf-8)))
-              (case type
-                ('add (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
-                      (save-excursion
-                        (goto-char (point-max))
+  (let ((buffer (get-buffer gimme-bookmark-name))
+        (type      (getf plist 'type))
+        (name      (decode-coding-string (getf plist 'name) 'utf-8))
+        (namespace (getf plist 'namespace))
+        (newname   (decode-coding-string (or (getf plist 'newname) "") 'utf-8)))
+    (when buffer
+      (gimme-on-buffer
+       buffer
+       (case type
+         ('add
+          (let ((max (cadar (last (get-bounds-where
+                                   (lambda (x) (get-text-property x 'ref)))))))
+            (progn (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
+                   (and (goto-char max)
                         (insert (propertize (format "** %s\n" name) 'ref name))
-                        (message (format "Collection %s added!" name))))
-                ('update (progn (run-hook-with-args 'gimme-broadcast-coll-add-hook plist)
-                                (message (format "Collection %s updated!" name))))
-                ('rename
-                 (let ((bounds (car (get-bounds-where
-                                     (lambda (n) (equal (get-text-property n 'ref) name))))))
-                   (run-hook-with-args 'gimme-broadcast-coll-rename-hook plist)
-                   (when bounds
-                     (apply 'kill-region bounds)
-                     (save-excursion (goto-char (car bounds))
-                                     (insert (propertize (format "** %s\n" newname) 'ref newname)))
-                     (message (format "Collection %s renamed to %s!" name newname)))))
-                ('remove
-                 (progn (run-hook-with-args 'gimme-broadcast-coll-remove-hook plist)
-                        (apply 'kill-region
-                               (car (get-bounds-where
-                                     (lambda (n) (equal (get-text-property n 'ref) name)))))
-                        (message (format "Collection %s removed!" name)))))))))
+                        (message (format "Collection %s added!" name))))))
+         ('rename
+          (let ((bounds (car (get-bounds-where
+                              (lambda (x) (string= name (get-text-property x 'ref)))))))
+            (kill-region (car bounds) (cadr bounds))
+            (goto-char (car bounds))
+            (insert (propertize (format "** %s" newname) 'ref newname))))
+         ('remove
+          (let ((bounds (car (get-bounds-where
+                              (lambda (x) (string= name (get-text-property x 'ref)))))))
+            (kill-region (car bounds) (1+ (cadr bounds))))))))))
 
-(require 'gimme-bookmark-faces)
 (provide 'gimme-bookmark)
 ;;; gimme-bookmark.el ends here

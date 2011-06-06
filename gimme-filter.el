@@ -19,9 +19,12 @@
 ;;; Code
 
 (defun gimme-filter ()
-  "Sets up the buffer"
+  "Sets up the buffer. FIXME: Should be implemented in a more robust way."
   (interactive)
-  (gimme-send-message "(pcol)\n"))
+  (let* ((buffer-name "GIMME - Collection (All media)") 
+	(buffer (car (remove-if-not (lambda (x) (string= (buffer-name x) buffer-name))
+				    (buffer-list)))))
+    (if buffer (switch-to-buffer buffer) (gimme-send-message "(pcol)\n"))))
 
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
@@ -37,7 +40,6 @@
     (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
-
     (define-key map (kbd "<") 'gimme-parent-col)
     (define-key map (kbd ">") 'gimme-child-col)
     (define-key map (kbd "a") 'gimme-filter-append-focused)
@@ -64,8 +66,7 @@
   "Creates and displays a new collection intersecting the search criteria and the current collection"
   (interactive)
   (let* ((parent gimme-collection-name)
-         (name (if (stringp parent) parent (getf (gimme-bookmark-current-data) 'name)))
-         (name (read-from-minibuffer (format "%s > " name)))
+         (name (read-from-minibuffer (format "%s > " gimme-collection-title)))
          (message (format "(subcol %s %s)\n" (prin1-to-string parent) (prin1-to-string name))))
     (setq gimme-new-collection-name (format "%s" name))
     (gimme-send-message message)))
@@ -73,9 +74,8 @@
 (defun gimme-parent-col ()
   "Jumps to the current collection's parent collection."
   (interactive)
-  (if (listp gimme-current)
-      (setq gimme-current (butlast gimme-current)))
-  (gimme-filter))
+  (let* ((message (format "(supcol %s)\n" (prin1-to-string gimme-collection-name))))
+    (gimme-send-message message)))
 
 (defun gimme-filter-append-focused ()
   "Appends to the current playlist the focused song"
@@ -121,22 +121,6 @@
                                                            (reverse (cdr names))))
                                    (car names)))
     (format "%s" gimme-current)))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Called by the ruby part ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun gimme-filter-set-current-col (ref)
-  "Sets the current collection. Can be either a string or a list"
-  (setq gimme-current
-        (append (if (listp gimme-current) gimme-current nil)
-                `(,(gimme-bookmark-add-child
-                    `(name ,gimme-new-collection-name ref ,ref)
-                    (when (listp gimme-current) gimme-current)))))
-  (gimme-filter))
-
 
 (provide 'gimme-filter)
 ;;; gimme-filter.el ends here

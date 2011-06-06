@@ -22,28 +22,13 @@
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)
-  (gimme-playlist-update "Default"))
+  (gimme-send-message "(list %s)\n" (prin1-to-string "Default")))
 
-(defun gimme-playlist-update (playlist)
-  (let ((buffer-name (format "GIMME - Playlist (%s)" playlist)))
-    (gimme-gen-buffer
-     '(gimme-buffer-type 
-       collection
-       
-			 ))
-    (gimme-on-buffer buffer-name
-                     (gimme-playlist-mode)
-                     (gimme-set-title gimme-playlist-header)
-                     (kill-region 1 (point-max))
-                     (gimme-send-message "(list %s %s)\n"
-                                         (prin1-to-string playlist) ;; FIXME
-                                         (prin1-to-string buffer-name))
-                     (make-local-variable 'gimme-buffer-type)
-                     (setq gimme-buffer-type 'playlist)
-                     (make-local-variable 'gimme-playlist-name)
-                     (setq gimme-playlist-name playlist))
-    (run-hooks 'gimme-goto-buffer-hook)
-    (switch-to-buffer (get-buffer buffer-name))))
+(defun gimme-playlist-update (buffer)
+  (gimme-on-buffer
+   buffer
+   (kill-region 1 (point-max))
+   (gimme-send-message "(list %s 1)\n" (prin1-to-string gimme-playlist-name))))
 
 (defvar gimme-playlist-map
   (let ((map (make-sparse-keymap)))
@@ -108,20 +93,21 @@
                              (clipboard-kill-region beg end)
                              (gimme-update-pos buffer #'1- (point) (point-max))))))))
       ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
-                       (gimme-playlist-update name)
+                       (gimme-playlist-update buffer)
                        (message "Playlist updated! (moving element)")))
       ('shuffle (progn (run-hook-with-args 'gimme-broadcast-pl-shuffle-hook plist)
-                       (gimme-playlist-update name)
+                       (gimme-playlist-update buffer)
                        (message "Playlist shuffled!")))
       ('clear   (progn (run-hook-with-args 'gimme-broadcast-pl-clear-hook plist)
-                       (gimme-playlist-update name)
+                       (gimme-playlist-update buffer)
                        (message "Playlist cleared!")))
       ('sort    (progn (run-hook-with-args 'gimme-broadcast-pl-sort-hook plist)
-                       (gimme-playlist-update name)
+                       (gimme-playlist-update buffer)
                        (message "Playlist updated! (sorting list)")))
       ('update  (progn (run-hook-with-args 'gimme-broadcast-pl-update-hook plist)
-                       (gimme-playlist-update name)
+                       (gimme-playlist-update buffer)
                        (message "Playlist updated! (updating list)"))))))
+
 (defun gimme-update-pos (buffer fun min max)
   "Updates the position of all elements betweeen beg and pos with function fun"
   (with-current-buffer buffer
@@ -152,19 +138,46 @@
 
 (defun gimme-update-tags (plist-b)
   "Updates the tags of song, whose id must be at the plist"
-  (when (get-buffer gimme-buffer-name)
-    (with-current-buffer gimme-buffer-name
-      (let* ((id (getf plist-b 'id))
-             (pos-list (range-to-plists (point-min) (point-max)))
-             (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id))) pos-list))
+  (with-current-buffer gimme-buffer-name
+    (let* ((id (getf plist-b 'id))
+           (pos-list (range-to-plists (point-min) (point-max)))
+           (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id))) pos-list))
+           (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
+      (dolist (pos pos-list)
+        (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
+               (end (or (next-property-change beg) (point-max))))
+          (unless (plist-subset plist-b (text-properties-at beg))
+            (unlocking-buffer
+             (plist-put plist-b 'pos pos)
+             (plist-put plist-b 'font-lock-face nil)
+                                        ; FIXME: For some reason,  when a duplicated
+                                        ; song is starred or changed, the plist will
+                                        ; contain font-lock-face, which can't be
+                                        ; evaluated. The previous line """Fixes""" it,
+                                        ; but I guess that this bug will eventually
+                                        ; show up in other parts of the code.
+                                        ;
+                                        ; FIXME: Double check the macros and rewrite
+                                        ; the code in a more functional style
+             (kill-region beg end)
+             (save-excursion
+               (goto-char beg)
+               (insert (gimme-string plist-b))))))))))
+
+(defun gimme-update-tags (plist)
+  (dolist (buffer (gimme-buffers))
+    (with-current-buffer buffer
+      (let* ((id (getf plist 'id))
+             (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id)))
+                                      (range-to-plists (point-min) (point-max))))
              (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
         (dolist (pos pos-list)
           (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
                  (end (or (next-property-change beg) (point-max))))
-            (unless (plist-subset plist-b (text-properties-at beg))
+            (unless (plist-subset plist (text-properties-at beg))
               (unlocking-buffer
-               (plist-put plist-b 'pos pos)
-               (plist-put plist-b 'font-lock-face nil)
+               (plist-put plist 'pos pos)
+               (plist-put plist 'font-lock-face nil)
                                         ; FIXME: For some reason,  when a duplicated
                                         ; song is starred or changed, the plist will
                                         ; contain font-lock-face, which can't be
@@ -177,7 +190,7 @@
                (kill-region beg end)
                (save-excursion
                  (goto-char beg)
-                 (insert (gimme-string plist-b)))))))))))
+                 (insert (gimme-string plist)))))))))))
 
 (defun gimme-playlist-mode ()
   "Displays a playlist"
@@ -196,7 +209,7 @@
   "Inserts (or appends) an element matching the plist
 #FIXME: For now still accepting strings"
   (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
-                  (gimme-first-buffer-with-vars buffer))))
+                  (apply #'gimme-first-buffer-with-vars buffer))))
     (gimme-on-buffer
      buffer
      (goto-char (if append (point-max)

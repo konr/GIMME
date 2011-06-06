@@ -24,7 +24,7 @@
   *#* gets you to playlist-view, which is like most media
   players. There are many features on GIMME to explore. In any view,
   press /C-h m/, to get the available keybindings.
-
+  
 * Known bugs
   - When you delete the currently playing song, the playlist state
     gets inconsistent on the server
@@ -41,9 +41,9 @@
   these new features to show up in the next few months:
 
   1) First things first
-     - [ ] Multiple buffer support
-     - [ ] Trees' format
-     - [ ] The playlist-updated broadcast
+     - [X] Multiple buffer support
+     - [X] Trees' format
+     - [X] The playlist-updated broadcast
   2) New important features
     - [ ] Kill/yank on regions
     - [ ] Advanced tag writer

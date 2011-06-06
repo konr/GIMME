@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 $: << File.join(File.dirname(__FILE__))
 
-
 ['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'sexp'].each do |lib|
   begin
     require lib
@@ -15,16 +14,19 @@ end
 
 DEBUG = false
 NOTHING = "nil"
-$stderr.reopen('/dev/null') # To prevent the library from FIXME: Won't work on Windows
+$stderr.reopen('/dev/null') # FIXME: Won't work on Windows
 
 $atribs=["title","id","artist","album","duration","starred"]
 
 
+##################################
+### Extending existing objects ###
+##################################
+
 module Xmms
   class Collection
     def longtype
-      dict =
-        {Xmms::Collection::TYPE_REFERENCE => :reference,
+      {Xmms::Collection::TYPE_REFERENCE => :reference,
         Xmms::Collection::TYPE_UNION => :union,
         Xmms::Collection::TYPE_INTERSECTION => :intersection,
         Xmms::Collection::TYPE_COMPLEMENT => :complement,
@@ -35,8 +37,7 @@ module Xmms
         Xmms::Collection::TYPE_GREATER => :greater,
         Xmms::Collection::TYPE_IDLIST => :idlist,
         Xmms::Collection::TYPE_QUEUE => :queue,
-        Xmms::Collection::TYPE_PARTYSHUFFLE => :partyshuffle}
-      dict[self.type]
+        Xmms::Collection::TYPE_PARTYSHUFFLE => :partyshuffle} [self.type]
     end
 
     def to_a
@@ -44,8 +45,6 @@ module Xmms
        self.attributes.map {|k,v| [k,v]}.flatten,
        self.operands.map {|op| op.to_a}]
     end
-
-    def to_sexp; self.to_a.to_sexp; end
 
     def Collection.from_a (array)
       array.map! { |el| el == :nil ? [] : el}
@@ -56,6 +55,18 @@ module Xmms
 
       new
     end
+
+    def to_sexp; self.to_a.to_sexp; end
+    def Collection.from_sexp (sexp); Collection.from_a(sexp.parse_sexp.first); end
+  end
+end
+
+class Array
+  def rmap
+    self.map {|x| x.respond_to?(:rmap) ? x.rmap(&block) : yield(x) }
+  end
+  def rmap2 (fun)
+    self.map {|x| x.respond_to?(:rmap2) ? x.rmap2(fun) : fun.call(x)}
   end
 end
 
@@ -201,10 +212,12 @@ class GIMME
         when Xmms::Client::PAUSE then play; tickle
         end; end; end; end
 
-  def list (playlist, session)
+  def list (playlist,gen=nil)
+    plist = [:quote, [:"gimme-buffer-type", :playlist,
+                      :"gimme-playlist-name", playlist]]
+    to_emacs [:"gimme-gen-buffer",plist] unless gen
     @async.playlist(playlist).current_pos.notifier do |pos|
       bdict={}; pos = pos || {:name => NOTHING, :position => -1}
-      to_emacs [:"gimme-set-title", "GIMME - Playlist View (#{pos[:name]})"]
       @async.coll_get(playlist).notifier do |coll|
         @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
           wrapperdict.each do |dict|
@@ -219,7 +232,7 @@ class GIMME
               bdict[el][:pos] = i; bdict[el].delete(:face)
               bdict[el][:face] = :highlight if (i == pos[:position])
               data = [:quote, bdict[el].to_a.flatten]
-              to_emacs [:"gimme-insert-song",session,data,:t]
+              to_emacs [:"gimme-insert-song",plist,data,:t]
             end
             true; end
           true;end;end;end;end
@@ -245,6 +258,16 @@ class GIMME
   ### Collections ###
   ###################
 
+  def supcol (child)
+    child =   Xmms::Collection.from_a(child).to_a
+    if (child[0] == Xmms::Collection::TYPE_INTERSECTION)
+      parent =  Xmms::Collection.from_a(child[2][0])
+      pcol(parent)
+    else
+      to_emacs [:message, "Couldn't find a parent collection!"]
+    end
+  end
+
   def subcol (data,pattern)
     with_col(data) do |parent|
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
@@ -252,24 +275,18 @@ class GIMME
       intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
       intersection.operands.push(parent)
       intersection.operands.push(match)
-      plist = [:quote, [:"gimme-buffer-type", :collection,
-                        :"gimme-collection-name", match.to_a,
-                        :"gimme-collection-title", pattern.to_s]]
-      to_emacs [:"gimme-gen-buffer",plist]
-      @async.coll_query_info(intersection,$atribs).notifier do |wrapperdict|
-        wrapperdict.each do |dict|
-          adict = {}
-          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
-          to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
-        end
-        true; end
+      intersection.attributes["title"] = pattern
+      to_emacs [:"gimme-bookmark-add-child", [:quote, intersection.to_a],
+                [:quote, parent.to_a]]
+      pcol(intersection)
     end;end
 
   def pcol (data=nil)
     with_col(data) do |coll|
+      title = coll.attributes["title"] || data.to_s
       plist = [:quote, [:"gimme-buffer-type", :collection,
                         :"gimme-collection-name", data,
-                        :"gimme-collection-title", data.to_s]]
+                        :"gimme-collection-title", title]]
       to_emacs [:"gimme-gen-buffer",plist]
       @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
         wrapperdict.each do |dict|
@@ -283,10 +300,11 @@ class GIMME
     @async.coll_rename(old,new,Xmms::Collection::NS_COLLECTIONS).notifier {|res|}
   end
 
-  def scol (data,name)
-    coll = Xmms::Collection.new(Xmms::Collection::TYPE_IDLIST)
-    coll.idlist=data
-    @async.coll_save(coll,name,Xmms::Collection::NS_COLLECTIONS)
+  def savecol (data,name)
+    with_col(data) do |coll|
+      @async.coll_save(coll,name,Xmms::Collection::NS_COLLECTIONS)
+      true
+    end
   end
 
   def colls (session)
@@ -313,12 +331,14 @@ class GIMME
     @async.coll_get(data.to_s).notifier do |coll|
       if data == nil or data == :nil
         coll = Xmms::Collection.universe
+        coll.attributes["title"] = "All media"
       elsif data.class == Array
         coll = Xmms::Collection.from_a(data)
+      elsif data.class == Xmms::Collection
+        coll = data
       end
       yield coll
     end;end
-
 
 end
 
@@ -328,10 +348,15 @@ $ml = GLib::MainLoop.new(nil, false)
 $channel = GLib::IOChannel.new(STDIN)
 client = GIMME.new
 
-Thread.new do
-  while true
-    p = gets.strip.parse_sexp.first
-    client.send(*p) if (p.class == Array && client.respond_to?(p.first))
-  end;end
+Thread.new do; while true
+                 # FIXME FIXME FIXME
+                 # The lib doesn't play well with accented chars :(
+                 # Tired of wasting hours on this, so I'm saving their unicode position
+                 # Will fix it when preparing GIMME for Ruby 1.9
+                 p = gets.strip.scan(/./).map {|x| x.ord > 127 ? "fix#{x.ord}me" : x}.join
+                 p = p.parse_sexp.first
+                 p = p.rmap2(lambda {|x| x.class == String ? x.gsub(/fix[0-9][0-9][0-9]me/) {|m| m.gsub(/[a-z]/,"").to_i.chr(Encoding::UTF_8)} : x})
+                 client.send(*p) if (p.class == Array && client.respond_to?(p.first))
+               end;end
 
 $ml.run

@@ -22,6 +22,13 @@
   "Find out what the buffer's major-mode is"
   (with-current-buffer buffer major-mode))
 
+(defun dfs-map (fun tree)
+  (loop for node in tree collecting 
+	(if (listp node) (dfs-map fun node) (funcall fun node))))
+
+(defun decode-strings-in-tree (tree encoding)
+  (dfs-map (lambda (x) (if (stringp x) (decode-coding-string x encoding) x)) tree))
+
 (defmacro unlocking-buffer (&rest body)
   `(progn (toggle-read-only -1)
           ,@body
@@ -64,6 +71,12 @@
     (loop for point = min then (next-property-change point)
           while (and point (> max point))
           collecting (text-properties-at point))))
+
+(defun insidep (sexp1 sexp2)
+  "Checks out if sexp1 is inside sexp2 "
+  (or (equal sexp1 sexp2)
+      (when (sequencep sexp2) 
+	(remove-if #'nil (mapcar (lambda (n) (insidep sexp1 n)) sexp2)))))
 
 
 (defun sublistp (l1 l2)
