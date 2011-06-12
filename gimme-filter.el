@@ -21,9 +21,9 @@
 (defun gimme-filter ()
   "Sets up the buffer. FIXME: Should be implemented in a more robust way."
   (interactive)
-  (let* ((buffer-name "GIMME - Collection (All media)") 
-	(buffer (car (remove-if-not (lambda (x) (string= (buffer-name x) buffer-name))
-				    (buffer-list)))))
+  (let* ((buffer-name "GIMME - Collection (All media)")
+         (buffer (car (remove-if-not (lambda (x) (string= (buffer-name x) buffer-name))
+                                     (buffer-list)))))
     (if buffer (switch-to-buffer buffer) (gimme-send-message "(pcol)\n"))))
 
 (defvar gimme-filter-map
@@ -92,7 +92,7 @@
   (interactive)
   (message "Appending songs to the playlist...")
   (dolist (el (range-to-plists (point-min) (point-max)))
-    (gimme-send-message (format "(add %d)\n" (getf el 'id)))))
+           (gimme-send-message (format "(add %d)\n" (getf el 'id)))))
 
 (defun gimme-filter-same ()
   "Creates a subcollection matching some this song's criteria"

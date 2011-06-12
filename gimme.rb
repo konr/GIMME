@@ -199,6 +199,17 @@ class GIMME
     @async.playlist("_active").add_entry(id).notifier do
       @async.playlist("_active").entries.notifier { |l| playn l.length-1 }; end; end
 
+  def remove_many (first, times)
+    @async.playlist("_active").remove_entry(first).notifier do
+      Thread.new do
+        # With the sleep(), items disappear from the playlist in a cool manner!
+        sleep 0.0042
+        remove_many(first, times-1)
+      end
+      true
+    end if times > 0
+  end
+
   def toggle
     @async.playback_status.notifier {|s| s == Xmms::Client::PAUSE ? play : pause}; end
 
@@ -258,6 +269,20 @@ class GIMME
   ### Collections ###
   ###################
 
+  def append_coll (data)
+    with_coll(data) do |coll|
+      #puts coll.idlist.to_s
+      #@async.playlist("_active").add_collection(coll).notifier
+      @async.coll_query_info(coll,["id"]).notifier do |adict|
+        adict.each do |dict|
+          add dict.to_a[0][1]
+        end
+        true
+      end
+    end
+  end
+
+
   def supcol (child)
     child =   Xmms::Collection.from_a(child).to_a
     if (child[0] == Xmms::Collection::TYPE_INTERSECTION)
@@ -269,7 +294,7 @@ class GIMME
   end
 
   def subcol (data,pattern)
-    with_col(data) do |parent|
+    with_coll(data) do |parent|
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
       match = Xmms::Collection.parse(pattern)
       intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
@@ -282,7 +307,7 @@ class GIMME
     end;end
 
   def pcol (data=nil)
-    with_col(data) do |coll|
+    with_coll(data) do |coll|
       title = coll.attributes["title"] || data.to_s
       plist = [:quote, [:"gimme-buffer-type", :collection,
                         :"gimme-collection-name", data,
@@ -301,7 +326,7 @@ class GIMME
   end
 
   def savecol (data,name)
-    with_col(data) do |coll|
+    with_coll(data) do |coll|
       @async.coll_save(coll,name,Xmms::Collection::NS_COLLECTIONS)
       true
     end
@@ -327,7 +352,7 @@ class GIMME
     puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1\\\\ \2')
   end
 
-  def with_col (data)
+  def with_coll (data)
     @async.coll_get(data.to_s).notifier do |coll|
       if data == nil or data == :nil
         coll = Xmms::Collection.universe

@@ -42,9 +42,11 @@
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
     (define-key map (kbd "RET") 'gimme-bookmark-view-collection)
+    (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
     (define-key map (kbd "r") 'gimme-bookmark-rename-coll)
     (define-key map (kbd "S") 'gimme-bookmark-save-collection)
+    (define-key map (kbd "A") 'gimme-bookmark-append-to-playlist)
     map)
   "bookmark-map's keymap")
 
@@ -57,6 +59,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive function ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-bookmark-append-to-playlist ()
+  (interactive)
+  (let ((coll (or (get-text-property (point) 'coll)
+                  (get-text-property (point) 'ref))))
+    (when coll (gimme-send-message  "(append_coll %s)\n" (prin1-to-string coll)))))
+
+(defun gimme-bookmark-toggle-highlighting ()
+  (interactive)
+  (unlocking-buffer
+   (save-excursion
+     (let ((beg (progn (beginning-of-line) (point)))
+	   (end (progn (end-of-line) (point))))
+       (put-text-property beg end 'face 'highlight)))))
 
 (defun gimme-bookmark-view-collection ()
   "Jumps to filter-view with the focused collection as the current"
