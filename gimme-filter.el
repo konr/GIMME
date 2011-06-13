@@ -68,7 +68,6 @@
   (let* ((parent gimme-collection-name)
          (name (read-from-minibuffer (format "%s > " gimme-collection-title)))
          (message (format "(subcol %s %s)\n" (prin1-to-string parent) (prin1-to-string name))))
-    (setq gimme-new-collection-name (format "%s" name))
     (gimme-send-message message)))
 
 (defun gimme-parent-col ()
@@ -107,7 +106,6 @@
                                                   '(id duration font-lock-face)))
                                    (plist-to-alist (text-properties-at (point)))))))
          (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
-    (setq gimme-new-collection-name (format "%s" name))
     (gimme-send-message message)))
 
 (defun gimme-filter-get-breadcrumbs ()

@@ -40,7 +40,7 @@
   GIMME got accepted into Google's Summer of Code again, so expect
   these new features to show up in the next few months:
 
-  1) First things first
+  1) First things first 
      - [X] Multiple buffer support
      - [X] Trees' format
      - [X] The playlist-updated broadcast
@@ -48,7 +48,7 @@
     - [X] Kill/yank on regions
     - [ ] Advanced tag writer
     - [ ] New collections' format and parser
-    - [ ] Operations directly on tree-view
+    - [X] Operations directly on tree-view
     - [ ] Prepare it for Ruby 1.9
   3) Interface polishing
     - [ ] Better auto-completion

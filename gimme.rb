@@ -272,14 +272,31 @@ class GIMME
   def append_coll (data)
     with_coll(data) do |coll|
       #puts coll.idlist.to_s
-      #@async.playlist("_active").add_collection(coll).notifier
       @async.coll_query_info(coll,["id"]).notifier do |adict|
         adict.each do |dict|
           add dict.to_a[0][1]
         end
-        true
+        true; end; end; end
+
+  def combine (op, colls, raw)
+    if raw.empty?
+      type = {"or" => Xmms::Collection::TYPE_UNION,
+        "and" => Xmms::Collection::TYPE_INTERSECTION,
+        "not" => Xmms::Collection::TYPE_COMPLEMENT}[op]
+      combined = Xmms::Collection.new(type)
+      colls.each { |coll| combined.operands.push(coll) }
+      title = (colls.each.map { |c| Hash[c.attributes.to_a]["title"] }).join(" #{op} ")
+      title = "not #{title}" if type == Xmms::Collection::TYPE_COMPLEMENT
+      combined.attributes["title"] = title
+      to_emacs [:"gimme-bookmark-add-child", [:quote, combined.to_a],
+                [:quote, colls.first.to_a]]
+      pcol combined
+    else
+      with_coll(raw[0]) do |coll|
+        combine(op, colls.to_a + [coll], raw[1..-1])
       end
     end
+
   end
 
 
