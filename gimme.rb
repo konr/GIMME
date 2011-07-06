@@ -16,7 +16,7 @@ DEBUG = false
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # FIXME: Won't work on Windows
 
-$atribs=["title","id","artist","album","duration","starred"]
+$atribs=["title","id","artist","album","duration","starred","url"]
 
 
 ##################################
@@ -290,7 +290,7 @@ class GIMME
       combined.attributes["title"] = title
       to_emacs [:"gimme-bookmark-add-child", [:quote, combined.to_a],
                 [:quote, colls.first.to_a]]
-      pcol combined
+      #pcol combined
     else
       with_coll(raw[0]) do |coll|
         combine(op, colls.to_a + [coll], raw[1..-1])

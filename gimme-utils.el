@@ -23,8 +23,8 @@
   (with-current-buffer buffer major-mode))
 
 (defun dfs-map (fun tree)
-  (loop for node in tree collecting 
-	(if (listp node) (dfs-map fun node) (funcall fun node))))
+  (loop for node in tree collecting
+        (if (listp node) (dfs-map fun node) (funcall fun node))))
 
 (defun decode-strings-in-tree (tree encoding)
   (dfs-map (lambda (x) (if (stringp x) (decode-coding-string x encoding) x)) tree))
@@ -65,6 +65,15 @@
 (defmacro comment (&rest rest)
   "For debugging purposes")
 
+(defun range-of-region ()
+  (if (use-region-p)
+      (let* ((min (min (point) (mark)))
+             (max (max (point) (mark)))
+             (min (progn (goto-char min) (line-beginning-position)))
+             (max (+ 1 (progn (goto-char max) (line-end-position)))))
+        (list min max))
+    (list (line-beginning-position) (1+ (line-end-position)))))
+
 (defun range-to-plists (p1 p2)
   "Returns all plists between points p1 and p2"
   (let ((min (min p1 p2)) (max (max p1 p2)))
@@ -75,8 +84,8 @@
 (defun insidep (sexp1 sexp2)
   "Checks out if sexp1 is inside sexp2 "
   (or (equal sexp1 sexp2)
-      (when (sequencep sexp2) 
-	(remove-if #'nil (mapcar (lambda (n) (insidep sexp1 n)) sexp2)))))
+      (when (sequencep sexp2)
+        (remove-if #'nil (mapcar (lambda (n) (insidep sexp1 n)) sexp2)))))
 
 
 (defun sublistp (l1 l2)

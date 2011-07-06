@@ -21,7 +21,7 @@
 ;;; Code
 
 (defvar gimme-bookmark-minimal-collection-list
-  '(((0 ("reference" "All Media" "title" "All Media") nil))))
+  '(((0 ("reference" "All Media" "title" "All media") nil))))
 (defvar gimme-anonymous-collections gimme-bookmark-minimal-collection-list)
 (defvar gimme-bookmark-name "GIMME - Bookmarks")
 
@@ -322,11 +322,12 @@
                               (lambda (x) (string= name (get-text-property x 'ref)))))))
             (kill-region (car bounds) (cadr bounds))
             (goto-char (car bounds))
-            (insert (propertize (format "** %s" newname) 'ref newname))))
+            (insert (gimme-bookmark-colorize
+		     (propertize (format "** %s\n" newname) 'ref newname)))))
          ('remove
           (let ((bounds (car (get-bounds-where
                               (lambda (x) (string= name (get-text-property x 'ref)))))))
-            (kill-region (car bounds) (1+ (cadr bounds))))))))))
+            (kill-region (car bounds) (cadr bounds)))))))))
 
 (provide 'gimme-bookmark)
 ;;; gimme-bookmark.el ends here

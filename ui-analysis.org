@@ -1,0 +1,176 @@
+* Nielsen's criteria
+** System state
+
+   It's clearly visible which mode you are in when you take a look at
+   the buffer's title. People start looking at the top position,
+   however, so it takes more than a glance to realize where you
+   are. Ok, but not optimal.
+
+   When it's playing, the status-bar changes, which is pretty nice.
+
+   4/5
+
+** State consistency
+
+   There is no gap between the playlist object and what is presented to
+   the user. When a collection is changed or deleted, however, its
+   buffer won't reflect the changes.
+
+   4/5
+
+** Autonomy
+
+   The system is 100% guided by the user at any time.
+
+   5/5
+
+** Internal consistency
+
+   There are operations that you can only do browsing collections, like
+   adding everything, others only in bookmark-view, like selecting with
+   SPC. The whole thing is a mess and keystrokes are not consistent.
+
+   2/5
+
+** Error prevention
+
+   Didn't even explore this. A cool hack that some apps do is binding
+   destructive operations to capitalized keys.
+
+   If searching for the wrong thing is an error, perhaps there could be
+   some sort of search suggestion mechanism, like Google's
+
+   4/5
+
+** Recognition
+
+   The user has to remember the parent and children collections when
+   browsing a collection. It would be nice if the search tree was
+   somehow shown. I doubt it's possible to create a floating object on
+   Emacs, however.
+
+   The clipboard contents are also to be remembered. I think this is no
+   big deal.
+   
+   4/5
+
+** Flexibility
+
+   The only time-consuming operations are those involving getting
+   better collections. Some people might prefer doing so by narrowing,
+   and other might prefer combining them manually, and GIMME supports
+   both kinds of operations. A way of displaying the data facetedly
+   would be nice, but guess what? I'm gonna develop it :D
+   
+   5/5
+
+** Aesthetics
+
+   Yep, minimalistic with plenty of empty space to the eyes. I
+   particularly like the colors GIMME uses, which are called
+   "Traditional Japanese Colors".
+
+   5/5
+
+** Error recovery
+
+   No "undo" functionality. It's also very easy to destroy things D:
+
+   1/5
+
+** Docs
+
+   I suppose Emacs users can check out the bindings, but it would be
+   nice to bind "?" to it, as notmuch does. Linking stuff to the wiki
+   would be extra cool, too!
+
+   2/5
+
+* Hipster criteria meant for web. Not really applicable, but still...
+** Acessibility
+   
+   Nothing to meliorate the UX of blind people. I guess I should check
+   out how well it plays with emacspeak, but that'll not be a priority
+   until I find a blind user :)
+
+   I'm somewhat deaf, so when in a laptop, I miss not being able to
+   increase the volume over 100%. As gimme is merely an interface to
+   XMMS2, there is nothing I can do about it, however.
+   
+   People with mental problems probably shouldn't be using GIMME,
+   although I suspect they might be exactly the target audience :D
+
+   There are no complicated chords on GIMME, so people with motor
+   disabilities are in no trouble.
+
+   5/5
+
+** Awareness
+   
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+
+** Collaboration
+
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+
+** Consent
+
+   Hmm, there are no catastrophic operations, so doesn't apply ATM. If
+   I ever write a plugin to allow searching for torrents and stuff,
+   I'll have to give this some consideration.
+
+   -/5
+
+** Conversation
+
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+
+** Emotion
+
+   A music player is nothing more than a tool. I can't see where I can
+   sneak in emotional consideration with any profit.
+
+   -/5
+
+** Group
+
+   No hipster lastfm etc support ATM.
+
+   -/5
+
+** Identity
+
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+
+** Portability
+
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+
+** Privacy
+
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+
+** Security
+
+   GIMME is not multiuser, so doesn't apply.
+
+   -/5
+   
+   
+   
+   
+    
+   
+   

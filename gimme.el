@@ -113,7 +113,7 @@
                     (remove-duplicates l))))
     l))
 
-(defun eval-all-sexps (s)
+(defun gimme-eval-all-sexps (s)
   "Evaluates all sexps from the string. As it will probably encounter a broken sexp, a variable is used to store the remainder to be used in future calls"
   (let ((s (decode-coding-string (concat gimme-filter-remainder s) 'utf-8)))
     (setq gimme-filter-remainder
@@ -148,7 +148,7 @@
         (start-process-shell-command
          gimme-buffer-name nil
          (format "ruby %s" gimme-fullpath )))
-  (set-process-filter gimme-process (lambda (a b) (eval-all-sexps b))))
+  (set-process-filter gimme-process (lambda (a b) (gimme-eval-all-sexps b))))
 
 (defun gimme-send-message (&rest args)
   "Formats the arguments using (format) then sends the resulting string to the process."

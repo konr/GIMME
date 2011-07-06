@@ -47,8 +47,8 @@
   2) New important features
     - [X] Kill/yank on regions
     - [ ] Advanced tag writer
-    - [ ] New collections' format and parser
     - [X] Operations directly on tree-view
+    - [ ] New collections' format and parser
     - [ ] Prepare it for Ruby 1.9
   3) Interface polishing
     - [ ] Better auto-completion
