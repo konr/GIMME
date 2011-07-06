@@ -1,7 +1,6 @@
 (provide 'gimme-tagwriter)
 (defvar gimme-tagwriter-max-length 20)
 
-
 (defun gimme-tagwriter-mode ()
   "Displays a playlist"
   (interactive)
