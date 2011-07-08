@@ -14,6 +14,7 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "?") 'gimme-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
     (define-key map (kbd "<backtab>") 'gimme-tagwriter-prev-field)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
@@ -81,7 +82,8 @@
          (next (if (>= (cadr next) colls) (list (1+ (car cur)) 0) next))
          (next (if (>= (car next) rows) (list 1 0) next)))
     (message (format "%s" next))
-    (goto-char (car (apply #'gimme-tagwriter-cell-boundaries next)))))
+    (goto-char (1+ (car (apply #'gimme-tagwriter-cell-boundaries next))))
+    (gimme-print-current-field)))
 
 (defun gimme-tagwriter-prev-field ()
   (interactive)
@@ -89,11 +91,18 @@
          (prev (list (car cur) (1- (cadr cur))))
          (prev (if (< (cadr prev) 0) (list (1- (car cur)) (1- colls)) prev))
          (prev (if (< (car prev) 1) (list (1- rows) (1- colls)) prev)))
-    (goto-char (car (apply #'gimme-tagwriter-cell-boundaries prev)))))
+    (goto-char (1+ (car (apply #'gimme-tagwriter-cell-boundaries prev))))
+    (gimme-print-current-field)))
 
 (defun gimme-tagwriter-current-field ()
   (list (max 0 (1- (line-number-at-pos)))
         (max 0 (1+ (- colls (length (split-string (substring (buffer-substring-no-properties (line-beginning-position) (line-end-position)) (current-column)) "|")))))))
+
+(defun gimme-print-current-field ()
+  (interactive)
+  (let ((vals (get-text-property (point) 'vals)))
+    (when vals (message (replace-regexp-in-string "%" "%%" (car vals))))))
+
 
 (defun gimme-tagwriter-fix-data (data)
   (let* ((relevant (loop for j in data collecting
@@ -111,3 +120,28 @@
                             'font-lock-face `(:foreground ,(color-for (symbol-name (car i))))
                             'type (car i) 'vals (list (cadr i)))))))
     (cons keys vals)))
+
+(defun gimme-tagwrite-eval-formula (formula)
+  (let*
+      ((plist (range-to-plists (line-beginning-position) (line-end-position)))
+       (plist (loop for item in plist if item
+                    collect (list (plist-get item 'type) (car (plist-get item 'vals)))
+                    into alist end finally return (mapcan (lambda (x) x) alist)))
+       (text (replace-regexp-in-string
+              "$[^ ]\+"
+              (lambda (x) (format "%s" (plist-get plist (intern (substring x 1)))))
+              formula)))
+    text))
+
+(defun decode-percent-encoding (string)
+  (decode-coding-string (url-unhex-string string) 'utf-8))
+
+(defun regexp-all-matches (string regexp)
+  (with-temp-buffer
+    (insert string) (goto-char (point-min))
+    (loop while (ignore-errors (search-forward-regexp regexp)) collecting
+	  (loop for i = 1 then (1+ i) while (match-string i)
+		collecting (match-string i)))))
+
+(defun build-all-matches (string regexp)
+  (let* ((new-regexp (replace-regexp-in-string "$[a-zA-Z]\+" "\\\\\(\.\*\\\\\)" regexp)))))

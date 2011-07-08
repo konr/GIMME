@@ -227,6 +227,7 @@
 (require 'gimme-status-mode)
 (require 'gimme-custom)
 (require 'gimme-etc)
+(require 'gimme-tagwriter)
 (provide 'gimme)
 
 ;;; gimme.el ends here
