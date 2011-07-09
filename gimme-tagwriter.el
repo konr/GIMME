@@ -1,5 +1,4 @@
-(provide 'gimme-tagwriter)
-(defvar gimme-tagwriter-max-length 20)
+(defvar gimme-tagwriter-max-length 33)
 
 (defun gimme-tagwriter-mode ()
   "Displays a playlist"
@@ -16,8 +15,15 @@
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "?") 'gimme-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
+    (define-key map (kbd "RET") 'gimme-tagwriter-scan-current)
     (define-key map (kbd "<backtab>") 'gimme-tagwriter-prev-field)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
+    map)
+  "Tagwriter's keymap")
+
+(defvar gimme-tagwriter-minibuffer-map
+  (let ((map minibuffer-local-map))
+    (define-key map (kbd "TAB") 'gimme-tagwriter-recalculate-tags)
     map)
   "Tagwriter's keymap")
 
@@ -36,10 +42,10 @@
        (gimme-tagwriter-create-table rows colls)
        (loop for row in data and i = 0 then (1+ i) doing
              (loop for coll in row and j = 0 then (1+ j)
-                   doing (gimme-tagwriter-set-coll i j coll))))))
+                   doing (gimme-tagwriter-set-cell i j coll))))))
   (switch-to-buffer "gimme-tagwriter"))
 
-(defun gimme-tagwriter-set-coll (row coll val)
+(defun gimme-tagwriter-set-cell (row coll val)
   (save-excursion
     (let* ((bounds (gimme-tagwriter-cell-boundaries row coll))
            (beg (car bounds)) (end (cadr bounds)))
@@ -53,6 +59,11 @@
               doing (let ((end (cadr (gimme-tagwriter-cell-boundaries r coll))))
                       (goto-char end)
                       (dotimes (i (- largest (current-column))) (insert " "))))))))
+
+(defun gimme-tagwriter-get-cell (row coll)
+  (save-excursion
+    (goto-char (1+ (car (gimme-tagwriter-cell-boundaries row coll))))
+    (text-properties-at (point))))
 
 (defun gimme-tagwriter-cell-boundaries (row coll)
   "Assuming the entire document is a table"
@@ -71,9 +82,8 @@
 
 (defun gimme-tagwriter-create-table (rows colls)
   (loop for i from 1 upto rows doing
-        (insert
-         (loop for j from 0 upto colls collecting "| " into bars
-               finally return (format "%s\n" (apply #'concat bars))))))
+        (insert (loop for j from 0 upto colls collecting "| " into bars
+                      finally return (format "%s\n" (apply #'concat bars))))))
 
 (defun gimme-tagwriter-next-field ()
   (interactive)
@@ -121,7 +131,7 @@
                             'type (car i) 'vals (list (cadr i)))))))
     (cons keys vals)))
 
-(defun gimme-tagwrite-eval-formula (formula)
+(defun gimme-tagwriter-eval-formula (formula)
   (let*
       ((plist (range-to-plists (line-beginning-position) (line-end-position)))
        (plist (loop for item in plist if item
@@ -140,8 +150,66 @@
   (with-temp-buffer
     (insert string) (goto-char (point-min))
     (loop while (ignore-errors (search-forward-regexp regexp)) collecting
-	  (loop for i = 1 then (1+ i) while (match-string i)
-		collecting (match-string i)))))
+          (loop for i = 1 then (1+ i) while (match-string i)
+                collecting (match-string i)))))
 
-(defun build-all-matches (string regexp)
-  (let* ((new-regexp (replace-regexp-in-string "$[a-zA-Z]\+" "\\\\\(\.\*\\\\\)" regexp)))))
+(defun gimme-tagwriter-scan (string regexp)
+  (let* ((new-regexp (replace-regexp-in-string "$[a-zA-Z]\+" "\\\\\(\.\*\\\\\)" regexp))
+         (symbols (mapcar (lambda (x) (intern (substring (car x) 1)))
+                          (regexp-all-matches regexp "\\($[a-zA-Z]\+\\)")))
+         (matches (car (regexp-all-matches string new-regexp))))
+    (loop for i = 0 then (1+ i) while (nth i matches)
+          collecting (list (nth i symbols) (nth i matches)) into alist
+          and finally return (mapcan (lambda (x) x) alist))))
+
+(defun gimme-tagwriter-get-field (line-number field)
+  (plist-get (gimme-tagwriter-get-vals line-number) field))
+
+(defun gimme-tagwriter-get-vals (line-number)
+  (let* ((range (save-excursion (goto-line line-number)
+                                (list (line-beginning-position) (line-end-position))))
+         (line (apply #'range-to-plists range))
+         (plist (loop for f in line if f
+                      collect (list (plist-get f 'type) (car (plist-get f 'vals)))
+                      into alist and finally return (mapcan (lambda (x) x) alist))))
+    plist))
+
+(defun gimme-tagwriter-scan-current ()
+  (interactive)
+  (unlocking-buffer
+   (let* ((line (line-number-at-pos)) (fields (gimme-tagwriter-get-vals line))
+          (available (loop for head = fields then (cddr head) while head
+                           collecting (format "$%s" (car head))))
+          (url (decode-percent-encoding (plist-get fields 'url)))
+          (max gimme-tagwriter-max-length))
+     (dotimes (coll colls)
+       (let* ((plist (gimme-tagwriter-get-cell (1- line) coll))
+              (vals (plist-get plist 'vals)) (val (car vals))
+              (new-plist (plist-put plist 'vals (cons val vals))))
+         (gimme-tagwriter-set-cell
+          (1- line) coll
+          (apply #'propertize
+                 (if (>= (length val) max)
+                     (format "%s..." (substring val 0 (- max 3))) val) new-plist))))
+     (let* ((regexp (read-from-minibuffer (format "%s> " url) ""
+                                          gimme-tagwriter-minibuffer-map))))
+     (comment dotimes (coll colls)
+              (let* ((plist (gimme-tagwriter-get-cell (1- line) coll))
+                     (vals (plist-get plist 'vals)) (val (cdar vals))
+                     (new-plist (plist-put plist 'vals (cdr vals))))
+                (gimme-tagwriter-set-cell
+                 (1- line) coll
+                 (apply #'propertize
+                        (if (>= (length val) max)
+                            (format "%s..." (substring val 0 (- max 3))) val) new-plist)))))))
+
+(defun gimme-tagwriter-recalculate-tags ()
+  (interactive)
+  (let* ((regexp (minibuffer-contents)) (line (line-number-at-pos))
+         (fields (gimme-tagwriter-get-vals line))
+         (url (decode-percent-encoding (plist-get fields 'url)))
+         )
+    (message (format "xoxotinha %s" url))))
+
+
+(provide 'gimme-tagwriter)
