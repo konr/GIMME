@@ -24,7 +24,7 @@
   *#* gets you to playlist-view, which is like most media
   players. There are many features on GIMME to explore. In any view,
   press /C-h m/, to get the available keybindings.
-  
+
 * Known bugs
   - When you delete the currently playing song, the playlist state
     gets inconsistent on the server
@@ -40,7 +40,7 @@
   GIMME got accepted into Google's Summer of Code again, so expect
   these new features to show up in the next few months:
 
-  1) First things first 
+  1) First things first
      - [X] Multiple buffer support
      - [X] Trees' format
      - [X] The playlist-updated broadcast

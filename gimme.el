@@ -152,7 +152,8 @@
 
 (defun gimme-send-message (&rest args)
   "Formats the arguments using (format) then sends the resulting string to the process."
-  (let ((message (apply #'format args)))
+  (let* ((message (apply #'format args))
+	(message (replace-regexp-in-string "%" "%%" message)))
     (when (> gimme-debug 0) (message message))
     (process-send-string gimme-process message)))
 

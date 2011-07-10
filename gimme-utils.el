@@ -34,6 +34,9 @@
           ,@body
           (toggle-read-only 1)))
 
+(defmacro setq-local (key val)
+  `(progn (make-local-variable ',key) (set ',key ,val)))
+
 (defun plist-to-alist (p)
   (loop for x = p then (cddr x) while x
         collecting (cons (car x) (cadr x))))

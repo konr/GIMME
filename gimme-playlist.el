@@ -308,7 +308,7 @@
                                                           (format "%s" (cadr n)))))
                                  n))
                         alist)))
-    (gimme-send-message "(update_tags %s)\n" (prin1-to-string alist))))
+    (setq a (format "(update_tags %s)\n" (prin1-to-string alist)))))
 
 
 

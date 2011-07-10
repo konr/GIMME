@@ -250,7 +250,7 @@ class GIMME
 
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
-    ($atribs-["id"]).each do |key|
+    ($atribs-["id","url","font-lock-face"]).each do |key|
       key=key.to_sym; dict[key] = dict[key].class == Symbol ? dict[key].to_s : dict[key]
       @async.medialib_entry_property_set(dict[:id], key, dict[key]).notifier;end;end
 
