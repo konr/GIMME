@@ -16,7 +16,7 @@ DEBUG = false
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # FIXME: Won't work on Windows
 
-$atribs=["title","id","artist","album","duration","starred","url"]
+$atribs=["title","id","artist","album","duration","starred","url","tracknr"]
 
 
 ##################################

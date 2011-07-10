@@ -8,12 +8,15 @@
   (setq truncate-lines t)
   (setq major-mode 'gimme-tagwriter-mode
         mode-name "gimme-tagwriter")
+  (setq-local previous-function nil)
   (add-hook 'minibuffer-exit-hook #'gimme-tagwriter-undo-previews nil t))
 
 (defvar gimme-tagwriter-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "f") 'gimme-tagwriter-apply-function)
+    (define-key map (kbd "F") 'gimme-tagwriter-apply-previous-function)
     (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
     (define-key map (kbd "?") 'gimme-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
@@ -23,12 +26,17 @@
     map)
   "Tagwriter's keymap")
 
-(defvar gimme-tagwriter-minibuffer-map
+(defvar gimme-tagwriter-scan-map
   (let ((map minibuffer-local-map))
     (define-key map (kbd "TAB") 'gimme-tagwriter-recalculate-tags)
     map)
-  "Tagwriter's keymap")
+  "Tagwriter's scan keymap")
 
+(defvar gimme-tagwriter-filter-map
+  (let ((map minibuffer-local-map))
+    (define-key map (kbd "TAB") 'gimme-tagwriter-recalculate-tags)
+    map)
+  "Tagwriter's filter keymap")
 
 
 (defun gimme-tagwriter ()
@@ -52,18 +60,19 @@
 
 (defun gimme-tagwriter-set-cell (row coll val)
   (save-excursion
-    (let* ((bounds (gimme-tagwriter-cell-boundaries row coll))
-           (beg (car bounds)) (end (cadr bounds)))
-      (delete-region beg end) (goto-char beg)
-      (insert (format " %s " val))
-      (let ((largest (loop for r from 0 upto (1- rows) collecting
-                           (progn (goto-char (cadr (gimme-tagwriter-cell-boundaries r coll)))
-                                  (current-column))
-                           into n and finally return (apply #'max n))))
-        (loop for r from 0 upto (1- rows)
-              doing (let ((end (cadr (gimme-tagwriter-cell-boundaries r coll))))
-                      (goto-char end)
-                      (dotimes (i (- largest (current-column))) (insert " "))))))))
+    (unlocking-buffer
+     (let* ((bounds (gimme-tagwriter-cell-boundaries row coll))
+            (beg (car bounds)) (end (cadr bounds)))
+       (delete-region beg end) (goto-char beg)
+       (insert (format " %s " val))
+       (let ((largest (loop for r from 0 upto (1- rows) collecting
+                            (progn (goto-char (cadr (gimme-tagwriter-cell-boundaries r coll)))
+                                   (current-column))
+                            into n and finally return (apply #'max n))))
+         (loop for r from 0 upto (1- rows)
+               doing (let ((end (cadr (gimme-tagwriter-cell-boundaries r coll))))
+                       (goto-char end)
+                       (dotimes (i (- largest (current-column))) (insert " ")))))))))
 
 (defun gimme-tagwriter-get-cell (row coll)
   (save-excursion
@@ -123,7 +132,7 @@
   (let* ((relevant (loop for j in data and line = 1 then (1+ line) collecting
                          (loop for i = j then (cddr i) while i
                                if (not (member (car i) '(duration id font-lock-face pos)))
-                               collect (list (car i) (cadr i)) into pairs end
+                               collect (list (car i) (format "%s" (cadr i))) into pairs end
                                finally return (mapcan (lambda (x) x) pairs))))
          (keys (loop for i = (car relevant) then (cddr i) while i collecting
                      (propertize (symbol-name (car i)) 'font-lock-face `(:foreground ,(color-for (symbol-name (car i))) :weight bold))))
@@ -194,7 +203,7 @@
      (setq-local line line)
      (setq-local undos 0)
      (let* ((regexp (read-from-minibuffer (format "%s> " url) ""
-                                          gimme-tagwriter-minibuffer-map))
+                                          gimme-tagwriter-scan-map))
             (plist (gimme-tagwriter-scan url regexp)))
        (gimme-tagwriter-set-vals line plist)))))
 
@@ -227,8 +236,9 @@
          (url (with-current-buffer "gimme-tagwriter" url))
          (plist (gimme-tagwriter-scan url regexp)))
     (with-current-buffer "gimme-tagwriter"
-      (gimme-tagwriter-undo-previews)
-      (gimme-tagwriter-set-vals line plist))))
+      (unlocking-buffer
+       (gimme-tagwriter-undo-previews)
+       (gimme-tagwriter-set-vals line plist)))))
 
 
 (defun gimme-tagwriter-write-to-mlib ()
@@ -241,8 +251,8 @@
                 while head finally return (butlast (butlast new-plist)))
           into plists and finally
           (dolist (plist plists)
-            (gimme-send-message "(update_tags %s)\n" 
-				(prin1-to-string (plist-to-pseudo-alist plist)))))))
+            (gimme-send-message "(update_tags %s)\n"
+                                (prin1-to-string (plist-to-pseudo-alist plist)))))))
 
 (defun plist-merge (old new)
   (loop for head = new then (cddr head)
@@ -250,4 +260,22 @@
         then (plist-put old (car head) (cadr head))
         while head finally return (butlast (butlast new-plist))))
 
+(defun gimme-tagwriter-apply-previous-function ()
+  (interactive)
+  (gimme-tagwriter-apply-function previous-function))
+
+(defun gimme-tagwriter-apply-function (&optional raw)
+  (interactive)
+  (let* ((raw (or raw (read-from-minibuffer (format "Change to/with? " url) ""
+                                            gimme-tagwriter-filter-map)))
+         (function (read raw))
+         (current-field (gimme-tagwriter-current-field))
+         (data (plist-get (apply #'gimme-tagwriter-get-cell current-field) 'val))
+         (current-field (list (1+ (car current-field)) (cadr current-field)))
+         (processed (if (functionp function) (funcall function data) raw)))
+    (apply #'gimme-tagwriter-update-cell `(,@current-field ,processed))
+    (setq previous-function raw)))
+
 (provide 'gimme-tagwriter)
+
+
