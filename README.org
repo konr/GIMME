@@ -50,11 +50,11 @@
      - [X] Operations directly on tree-view
      - [ ] New collections' format and parser
      - [ ] Prepare it for Ruby 1.9
-  3. Interface polishing [1/6]
+  3. Interface polishing [3/6]
      - [ ] Better auto-completion
      - [X] Emacs' plugins
-     - [ ] Colors
-     - [ ] Playlist presets
+     - [X] Colors
+     - [X] Playlist presets
      - [ ] Spectrum
      - [ ] Standalone
   4. Less important new features [0/4]

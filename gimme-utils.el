@@ -18,6 +18,8 @@
 
 ;;; Code
 
+(require 'hexrgb)
+
 (defun major-mode (buffer)
   "Find out what the buffer's major-mode is"
   (with-current-buffer buffer major-mode))
@@ -113,27 +115,23 @@
         and when (funcall f beg)
         collect (list beg (or end (point-max))) end))
 
-(defun appropriate-colors (&optional step)
-  "Returns all colors that, according to w3c, will be readable on your background"
-  (flet ((brightness (n) (/ (apply #'+ (map 'list (lambda (x y) (* x y)) '(299 587 114) n))
-                            1000)))
-    (let* ((step (or step #x30))
-           (bg (color-values (cdr (assoc 'background-color (frame-parameters)))))
-           (background-brightness (brightness bg))
-           (max-diff 125) ;; According to w3c
-           (colors (loop summing step into n and until (>= n #x100) collect (list n)))
-           (all (mapcan (lambda (n) (mapcar (lambda (m) (append n m)) colors)) colors))
-           (all (mapcan (lambda (n) (mapcar (lambda (m) (append n m)) colors)) all))
-           (all (remove-if
-                 (lambda (n) (< (abs (- (brightness n) background-brightness)) max-diff))
-                 all))
-           (all (mapcar (lambda (n) (apply #'format "#%.2x%.2x%.2x" n)) all)))
-      all)))
-
 (defmacro with-focused-file-on-dired-mode-as-%file (&rest body)
   "To be used on dired-mode"
   `(let ((%file ,(dired-filename-at-point)))
      ,@body))
+
+(defun string-expanded (string size &optional right-aligned)
+  (let* ((string (if (<= (length string) size) string
+                   (format "%s..." (substring string 0 (- size 3)))))
+         (spaces (make-string (- size (length string)) ? ))
+         (left (if right-aligned spaces string))
+         (right (if right-aligned string spaces)))
+    (format "%s%s" left right)))
+
+
+
+
+
 
 
 (provide 'gimme-utils)

@@ -15,12 +15,12 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
-    (define-key map (kbd "f") 'gimme-tagwriter-apply-function)
-    (define-key map (kbd "F") 'gimme-tagwriter-apply-previous-function)
+    (define-key map (kbd "RET") 'gimme-tagwriter-apply-function)
+    (define-key map (kbd "S-<return>") 'gimme-tagwriter-apply-previous-function)
     (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
     (define-key map (kbd "?") 'gimme-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
-    (define-key map (kbd "RET") 'gimme-tagwriter-scan-current)
+    (define-key map (kbd "S") 'gimme-tagwriter-scan-current)
     (define-key map (kbd "<backtab>") 'gimme-tagwriter-prev-field)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     map)
@@ -237,7 +237,7 @@
          (plist (gimme-tagwriter-scan url regexp)))
     (with-current-buffer "gimme-tagwriter"
       (unlocking-buffer
-       (gimme-tagwriter-undo-previews)
+       (comment gimme-tagwriter-undo-previews)
        (gimme-tagwriter-set-vals line plist)))))
 
 
