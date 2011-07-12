@@ -128,7 +128,9 @@
          (right (if right-aligned string spaces)))
     (format "%s%s" left right)))
 
-
+(defun transpose (list-of-lists) 
+  "((a b c) (d e f)) -> ((a d) (b e) (c f)). Amazing, huh?"
+  (apply #'map 'list (lambda (&rest args) (apply #'list args)) list-of-lists))
 
 
 

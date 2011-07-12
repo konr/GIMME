@@ -49,13 +49,17 @@
      (gimme-tagwriter-mode)
      (delete-region (point-min) (point-max))
      (let* ((colls (length (car fixed)))
-            (rows (length fixed)))
+            (rows (length fixed))
+	    (max-list (mapcar (lambda (x) (min gimme-tagwriter-max-length (apply #'max x))) 
+			      (transpose (mapcar (lambda (x) (mapcar #'length x)) fixed)))))
        (setq-local data (car old-and-fixed))
        (setq-local colls colls) (setq-local rows rows)
-       (gimme-tagwriter-create-table rows colls)
-       (loop for row in fixed and i = 0 then (1+ i) doing
-             (loop for coll in row and j = 0 then (1+ j)
-                   doing (gimme-tagwriter-set-cell i j coll))))))
+       (loop for row in fixed
+             doing (insert "| ")
+	     doing
+             (loop for coll in row and i = 0 then (1+ i)
+                   doing (insert (format "%s | " (string-expanded coll (nth i max-list)))))
+             doing (insert "\n")))))
   (switch-to-buffer "gimme-tagwriter"))
 
 (defun gimme-tagwriter-set-cell (row coll val)
@@ -94,11 +98,6 @@
     (forward-char)
     (find-char-forward char)))
 
-(defun gimme-tagwriter-create-table (rows colls)
-  (loop for i from 1 upto rows doing
-        (insert (loop for j from 0 upto colls collecting "| " into bars
-                      finally return (format "%s\n" (apply #'concat bars))))))
-
 (defun gimme-tagwriter-next-field ()
   (interactive)
   (let* ((cur (gimme-tagwriter-current-field))
@@ -131,7 +130,7 @@
 (defun gimme-tagwriter-fix-data (data)
   (let* ((relevant (loop for j in data and line = 1 then (1+ line) collecting
                          (loop for i = j then (cddr i) while i
-                               if (not (member (car i) '(duration id font-lock-face pos)))
+                               if (not (member (car i) '(timesplayed face duration id font-lock-face pos)))
                                collect (list (car i) (format "%s" (cadr i))) into pairs end
                                finally return (mapcan (lambda (x) x) pairs))))
          (keys (loop for i = (car relevant) then (cddr i) while i collecting
@@ -266,7 +265,7 @@
 
 (defun gimme-tagwriter-apply-function (&optional raw)
   (interactive)
-  (let* ((raw (or raw (read-from-minibuffer (format "Change to/with? " url) ""
+  (let* ((raw (or raw (read-from-minibuffer "Change to/with? " ""
                                             gimme-tagwriter-filter-map)))
          (function (read raw))
          (current-field (gimme-tagwriter-current-field))

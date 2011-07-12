@@ -88,11 +88,11 @@
          (type-s (case type ('collection "Collection") ('playlist "Playlist")))
          (name-s (case type ('collection (getf plist 'gimme-collection-title))
                        ('playlist (getf plist 'gimme-playlist-name))))
-         (buffer-name (decode-coding-string 
-		       (format "GIMME - %s (%s)" type-s name-s) 'utf-8)))
+         (buffer-name (decode-coding-string
+                       (format "GIMME - %s (%s)" type-s name-s) 'utf-8)))
     (gimme-on-buffer buffer-name
                      (comment setq header-line-format
-                           `(:eval (decode-coding-string ,buffer-name 'utf-8)))
+                              `(:eval (decode-coding-string ,buffer-name 'utf-8)))
                      (case type
                        ('playlist (gimme-playlist-mode))
                        ('collection (gimme-filter-mode)))
@@ -125,8 +125,8 @@
                              (f (caar x)))
                         (when (> gimme-debug 0)
                           (message (format "GIMME: %s" (if (>= gimme-debug 2) s f))))
-                        (when (> 3 gimme-debug) 
-			  (ignore-errors (eval s))))
+                        (when (> 3 gimme-debug)
+                          (ignore-errors (eval s))))
                 finally (return (substring s position))))))
 
 
@@ -153,7 +153,7 @@
 (defun gimme-send-message (&rest args)
   "Formats the arguments using (format) then sends the resulting string to the process."
   (let* ((message (apply #'format args))
-	(message (replace-regexp-in-string "%" "%%" message)))
+         (message (replace-regexp-in-string "%" "%%" message)))
     (when (> gimme-debug 0) (message message))
     (process-send-string gimme-process message)))
 
@@ -191,19 +191,22 @@
   (setq gimme-playlist-formats
         (append (cdr gimme-playlist-formats)
                 (list (car gimme-playlist-formats))))
-  (gimme-on-buffer
-   (current-buffer)
-   (let* ((pos (point)) (line (line-number-at-pos))
-          (data (range-to-plists (point-min) (point-max)))
-          (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
-          (len (length data)))
-     (progn ;; Silly but required so that the cursor won't change its
+  ;; Won't work with the macro because of the (goto (point-max))
+  (unlocking-buffer
+   (save-excursion
+     (let* ((pos (point)) (line (line-number-at-pos))
+            (data (range-to-plists (point-min) (point-max)))
+            (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
+            (len (length data)))
+       ;; Silly but required so that the cursor won't change its
        ;; position after killing text
        (goto-char (point-min))
        (loop for n from 0 upto (- line 2) doing (insert (nth n data)))
        (move-beginning-of-line 1) (kill-line (- line 2))
        (kill-region (point) (point-max))
-       (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))))))
+       (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))
+       (goto-line line)))))
+
 
 (defun gimme-restart ()
   (setq gimme-filter-remainder "")
