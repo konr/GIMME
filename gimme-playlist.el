@@ -148,18 +148,19 @@
 
 (defun gimme-update-tags (plist)
   (dolist (buffer (gimme-buffers))
-    (with-current-buffer buffer
-      (let* ((id (getf plist 'id))
-             (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id)))
-                                      (range-to-plists (point-min) (point-max))))
-             (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
-        (dolist (pos pos-list)
-          (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
-                 (end (or (next-property-change beg) (point-max))))
-            (unless (plist-subset plist (text-properties-at beg))
-              (unlocking-buffer
-               (plist-put plist 'pos pos)
-               (plist-put plist 'font-lock-face nil)
+    (gimme-on-buffer
+     buffer
+     (let* ((id (getf plist 'id))
+            (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id)))
+                                     (range-to-plists (point-min) (point-max))))
+            (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
+       (message "%d: %s" id plist)
+       (dolist (pos pos-list)
+         (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
+                (end (or (next-property-change beg) (point-max))))
+           (unless nil 
+             (plist-put plist 'pos pos)
+             (plist-put plist 'font-lock-face nil)
                                         ; FIXME: For some reason,  when a duplicated
                                         ; song is starred or changed, the plist will
                                         ; contain font-lock-face, which can't be
@@ -169,10 +170,9 @@
                                         ;
                                         ; FIXME: Double check the macros and rewrite
                                         ; the code in a more functional style
-               (kill-region beg end)
-               (save-excursion
-                 (goto-char beg)
-                 (insert (gimme-string plist)))))))))))
+             (kill-region beg end)
+             (goto-char beg)
+             (insert (gimme-string plist)))))))))
 
 (defun gimme-playlist-update (buffer)
   (gimme-on-buffer

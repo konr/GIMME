@@ -75,3 +75,6 @@
      - [ ] Faster
      - [ ] Process
      - [ ] Bug hunting
+
+* Bugs [0/1]
+  - [ ] Saving a lot of songs in the tagwriter 

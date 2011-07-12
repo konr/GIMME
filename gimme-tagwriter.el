@@ -15,10 +15,13 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "y") 'gimme-tagwriter-yank-current-field)
     (define-key map (kbd "RET") 'gimme-tagwriter-apply-function)
     (define-key map (kbd "S-<return>") 'gimme-tagwriter-apply-previous-function)
+    (define-key map (kbd "C-S-<return>")
+      'gimme-tagwriter-apply-previous-function-to-all-songs)
     (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
-    (define-key map (kbd "?") 'gimme-print-current-field)
+    (define-key map (kbd "?") 'gimme-tagwriter-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
     (define-key map (kbd "S") 'gimme-tagwriter-scan-current)
     (define-key map (kbd "<backtab>") 'gimme-tagwriter-prev-field)
@@ -50,13 +53,13 @@
      (delete-region (point-min) (point-max))
      (let* ((colls (length (car fixed)))
             (rows (length fixed))
-	    (max-list (mapcar (lambda (x) (min gimme-tagwriter-max-length (apply #'max x))) 
-			      (transpose (mapcar (lambda (x) (mapcar #'length x)) fixed)))))
+            (max-list (mapcar (lambda (x) (min gimme-tagwriter-max-length (apply #'max x)))
+                              (transpose (mapcar (lambda (x) (mapcar #'length x)) fixed)))))
        (setq-local data (car old-and-fixed))
        (setq-local colls colls) (setq-local rows rows)
        (loop for row in fixed
              doing (insert "| ")
-	     doing
+             doing
              (loop for coll in row and i = 0 then (1+ i)
                    doing (insert (format "%s | " (string-expanded coll (nth i max-list)))))
              doing (insert "\n")))))
@@ -104,7 +107,6 @@
          (next (list (car cur) (1+ (cadr cur))))
          (next (if (>= (cadr next) colls) (list (1+ (car cur)) 0) next))
          (next (if (>= (car next) rows) (list 1 0) next)))
-    (message (format "%s" next))
     (goto-char (1+ (car (apply #'gimme-tagwriter-cell-boundaries next))))
     (gimme-print-current-field)))
 
@@ -121,11 +123,16 @@
   (list (max 0 (1- (line-number-at-pos)))
         (max 0 (1+ (- colls (length (split-string (substring (buffer-substring-no-properties (line-beginning-position) (line-end-position)) (current-column)) "|")))))))
 
-(defun gimme-print-current-field ()
+(defun gimme-tagwriter-print-current-field ()
   (interactive)
-  (let ((vals (get-text-property (point) 'val)))
-    (when vals (message (replace-regexp-in-string "%" "%%" vals)))))
+  (let ((val (get-text-property (point) 'val)))
+    (when val (message (replace-regexp-in-string "%" "%%" val)))))
 
+(defun gimme-tagwriter-yank-current-field ()
+  (interactive)
+  (let ((val (get-text-property (point) 'val)))
+    (with-temp-buffer (insert val) (kill-ring-save (point-min) (point-max)) 
+		      (message "Yanked: %s" val))))
 
 (defun gimme-tagwriter-fix-data (data)
   (let* ((relevant (loop for j in data and line = 1 then (1+ line) collecting
@@ -263,17 +270,24 @@
   (interactive)
   (gimme-tagwriter-apply-function previous-function))
 
-(defun gimme-tagwriter-apply-function (&optional raw)
+(defun gimme-tagwriter-apply-function (&optional raw field)
   (interactive)
   (let* ((raw (or raw (read-from-minibuffer "Change to/with? " ""
                                             gimme-tagwriter-filter-map)))
          (function (read raw))
-         (current-field (gimme-tagwriter-current-field))
+         (current-field (or field (gimme-tagwriter-current-field)))
          (data (plist-get (apply #'gimme-tagwriter-get-cell current-field) 'val))
          (current-field (list (1+ (car current-field)) (cadr current-field)))
          (processed (if (functionp function) (funcall function data) raw)))
     (apply #'gimme-tagwriter-update-cell `(,@current-field ,processed))
     (setq previous-function raw)))
+
+(defun gimme-tagwriter-apply-previous-function-to-all-songs ()
+  (interactive)
+  (let ((coll (cadr (gimme-tagwriter-current-field))))
+    (loop for line from 1 to (1- rows) doing
+          (gimme-tagwriter-apply-function previous-function (list line coll)))))
+
 
 (provide 'gimme-tagwriter)
 
