@@ -16,7 +16,8 @@ DEBUG = false
 NOTHING = "nil"
 $stderr.reopen('/dev/null') # FIXME: Won't work on Windows
 
-$atribs=["title","id","artist","album","duration","starred","url","tracknr"]
+$atribs=["title","id","artist","album", "duration","starred","url","tracknr",
+         "timesplayed"]
 
 
 ##################################
@@ -121,6 +122,7 @@ class GIMME
         $atribs.map{|i| i.to_sym}.each do |e|
           dict[e] = res[e] ? res[e].first.at(1) : NOTHING
         end
+        dict[:timesplayed] = Hash[res[:timesplayed].to_a][:server].to_s
         to_emacs [:"gimme-update-tags", [:quote, dict.to_a.flatten]]
       end
       true;end

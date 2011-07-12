@@ -154,25 +154,16 @@
             (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id)))
                                      (range-to-plists (point-min) (point-max))))
             (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
-       (message "%d: %s" id plist)
        (dolist (pos pos-list)
          (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
-                (end (or (next-property-change beg) (point-max))))
-           (unless nil 
-             (plist-put plist 'pos pos)
-             (plist-put plist 'font-lock-face nil)
-                                        ; FIXME: For some reason,  when a duplicated
-                                        ; song is starred or changed, the plist will
-                                        ; contain font-lock-face, which can't be
-                                        ; evaluated. The previous line """Fixes""" it,
-                                        ; but I guess that this bug will eventually
-                                        ; show up in other parts of the code.
-                                        ;
-                                        ; FIXME: Double check the macros and rewrite
-                                        ; the code in a more functional style
-             (kill-region beg end)
-             (goto-char beg)
-             (insert (gimme-string plist)))))))))
+                (end (or (next-property-change beg) (point-max)))
+                (face (get-text-property beg 'face))
+                (plist (plist-put plist 'font-lock-face nil))
+                (plist (plist-put plist 'pos pos)))
+           (unless (listp face) (plist-put plist 'face face))
+           (kill-region beg end)
+           (goto-char beg)
+           (insert (gimme-string plist))))))))
 
 (defun gimme-playlist-update (buffer)
   (gimme-on-buffer

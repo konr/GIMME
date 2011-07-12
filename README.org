@@ -55,7 +55,7 @@
      - [X] Emacs' plugins
      - [X] Colors
      - [X] Playlist presets
-     - [ ] Spectrum
+     - [ ] Spectrum     
      - [ ] Standalone
   4. Less important new features [0/4]
      - [ ] Updating collection
