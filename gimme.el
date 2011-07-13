@@ -170,12 +170,13 @@
 
 (defun gimme-string (plist)
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
+  (let ((plist (plist-put plist 'font-lock-face nil)))
     (eval `(let ((plist ',plist)
                  ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n)))
                                         (if (and (symbolp (cdr n)) (not (null (cdr n))))
                                             (list 'quote (cdr n)) (cdr n))))
                            (plist-to-alist plist)))
-             (eval (car gimme-playlist-formats)))))
+             (eval (car gimme-playlist-formats))))))
 
 
 (defun gimme-set-title (title)

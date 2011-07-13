@@ -42,6 +42,7 @@
     (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
+    (define-key map (kbd ">")  'gimme-child-coll-of-current)
     (define-key map (kbd "RET") 'gimme-bookmark-view-collection)
     (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
@@ -62,6 +63,15 @@
 ;; Interactive function ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun gimme-child-coll-of-current ()
+  ""
+  (interactive)
+  (let* ((props (text-properties-at (point)))
+         (coll (or (plist-get props 'coll) (plist-get props 'ref)))
+	 (name (read-from-minibuffer "> "))
+         (message (format "(subcol %s %s)\n" (prin1-to-string coll) 
+			  (prin1-to-string name))))
+    (gimme-send-message message)))
 (defun gimme-bookmark-append-to-playlist ()
   (interactive)
   (let ((coll (or (get-text-property (point) 'coll)
@@ -87,7 +97,7 @@
   (let* ((colls (get-bounds-where
                  (lambda (x) (equal (get-text-property x 'face) 'highlight))))
          (data (mapcar (lambda (x) (or (get-text-property (car x) 'coll)
-                                       (get-text-property (car x) 'ref))) colls))
+                                  (get-text-property (car x) 'ref))) colls))
          (as-strings (mapcar (lambda (x) (format " %s" (prin1-to-string x))) data)))
     (if (= (length colls) 0) (message "No collections selected!")
       (let* ((ops (if (= (length as-strings) 1) '("not") '("and" "or")))
@@ -118,7 +128,7 @@
         (let* ((elements (gimme-bookmark-get-children coll t))
                (bounds
                 (mapcar (lambda (x) (car (get-bounds-where
-                                          (lambda (y) (equal x (get-text-property y 'coll))))))
+                                     (lambda (y) (equal x (get-text-property y 'coll))))))
                         elements))
                (bounds (reverse bounds)))
           (setq gimme-anonymous-collections (gimme-delete-collection coll))
@@ -126,7 +136,7 @@
             (gimme-on-buffer buffer
                              (dolist (x bounds) (delete-region (car x) (cadr x))))))
       (when ref (gimme-send-message "(dcol %s)\n" (prin1-to-string ref)))))
-  (unless gimme-anonymous-collections 
+  (unless gimme-anonymous-collections
     (setq gimme-anonymous-collections gimme-bookmark-minimal-collection-list)))
 
 (defun gimme-bookmark-rename-coll ()
@@ -245,8 +255,8 @@
                                                      gimme-anonymous-collections))))
          (children (or (cdr parent) parent)) (on-coll `((,data))))
     (if gimme-anonymous-collections
-        (unless (remove-if-not 
-		 (lambda (c) (and (listp c) (equal (car c) data))) children)
+        (unless (remove-if-not
+                 (lambda (c) (and (listp c) (equal (car c) data))) children)
           (nconc children on-coll))
       (setq gimme-anonymous-collections on-coll))
     (when bookmark-buffer
@@ -254,11 +264,11 @@
        bookmark-buffer
        (let* ((pos (car (get-bounds-where
                          (lambda (x) (equal (car parent)
-                                            (get-text-property x 'coll))))))
+                                       (get-text-property x 'coll))))))
               (ast (when pos (replace-regexp-in-string
                               "^\\(\*+\\).*\n" "\\1*"
                               (buffer-substring (car pos) (cadr pos))))))
-	 (set-text-properties 0 (length ast) nil ast)
+         (set-text-properties 0 (length ast) nil ast)
          (when pos
            (goto-char (cadr pos))
            (insert (gimme-bookmark-colorize
@@ -323,7 +333,7 @@
             (kill-region (car bounds) (cadr bounds))
             (goto-char (car bounds))
             (insert (gimme-bookmark-colorize
-		     (propertize (format "** %s\n" newname) 'ref newname)))))
+                     (propertize (format "** %s\n" newname) 'ref newname)))))
          ('remove
           (let ((bounds (car (get-bounds-where
                               (lambda (x) (string= name (get-text-property x 'ref)))))))

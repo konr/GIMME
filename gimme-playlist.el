@@ -147,23 +147,18 @@
              (put-text-property beg (or end (point-max)) 'face 'highlight))))))))
 
 (defun gimme-update-tags (plist)
+  ""
   (dolist (buffer (gimme-buffers))
     (gimme-on-buffer
      buffer
-     (let* ((id (getf plist 'id))
-            (pos-list (remove-if-not (lambda (n) (equal id (getf n 'id)))
-                                     (range-to-plists (point-min) (point-max))))
-            (pos-list (mapcar (lambda (n) (getf n 'pos)) pos-list)))
-       (dolist (pos pos-list)
-         (let* ((beg (text-property-any (point-min) (point-max) 'pos pos))
-                (end (or (next-property-change beg) (point-max)))
-                (face (get-text-property beg 'face))
-                (plist (plist-put plist 'font-lock-face nil))
-                (plist (plist-put plist 'pos pos)))
-           (unless (listp face) (plist-put plist 'face face))
-           (kill-region beg end)
-           (goto-char beg)
-           (insert (gimme-string plist))))))))
+     (dolist (range (get-bounds-where
+                     (lambda (x) (equal (getf plist 'id) (get-text-property x 'id)))))
+       (let* ((beg (car range)) (end (cadr range))
+              (pos (get-text-property beg 'pos))
+              (plist (plist-put plist 'font-lock-face nil))
+              (plist (plist-put plist 'pos pos)))
+         (kill-region beg end) (goto-char beg) (insert (gimme-string plist)))))))
+
 
 (defun gimme-playlist-update (buffer)
   (gimme-on-buffer
@@ -174,15 +169,16 @@
 (defun gimme-insert-song (buffer plist append)
   "Inserts (or appends) an element matching the plist
 #FIXME: For now still accepting strings"
-  (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
-                  (apply #'gimme-first-buffer-with-vars buffer))))
-    (gimme-on-buffer
-     buffer
-     (goto-char (if append (point-max)
-                  (or (text-property-any (point-min) (point-max)
-                                         'pos (getf plist 'pos)) (point-max))))
-     (insert (gimme-string plist))
-     (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max))))))
+  (when buffer
+    (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
+                    (apply #'gimme-first-buffer-with-vars buffer))))
+      (gimme-on-buffer
+       buffer
+       (goto-char (if append (point-max)
+                    (or (text-property-any (point-min) (point-max)
+                                           'pos (getf plist 'pos)) (point-max))))
+       (insert (gimme-string plist))
+       (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;

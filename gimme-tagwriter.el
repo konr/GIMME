@@ -137,7 +137,7 @@
 (defun gimme-tagwriter-fix-data (data)
   (let* ((relevant (loop for j in data and line = 1 then (1+ line) collecting
                          (loop for i = j then (cddr i) while i
-                               if (not (member (car i) '(timesplayed face duration id font-lock-face pos)))
+                               if (not (member (car i) '(type name timesplayed face duration id font-lock-face pos)))
                                collect (list (car i) (format "%s" (cadr i))) into pairs end
                                finally return (mapcan (lambda (x) x) pairs))))
          (keys (loop for i = (car relevant) then (cddr i) while i collecting
