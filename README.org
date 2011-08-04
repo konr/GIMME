@@ -44,12 +44,12 @@
      - [X] Multiple buffer support
      - [X] Trees' format
      - [X] The playlist-updated broadcast
-  2. New important features [3/5]
+  2. New important features [4/5]
      - [X] Kill/yank on regions
      - [X] Advanced tag writer
      - [X] Operations directly on tree-view
      - [ ] New collections' format and parser
-     - [ ] Prepare it for Ruby 1.9
+     - [X] Prepare it for Ruby 1.9
   3. Interface polishing [3/6]
      - [ ] Better auto-completion
      - [X] Emacs' plugins
@@ -57,11 +57,11 @@
      - [X] Playlist presets
      - [ ] Spectrum     
      - [ ] Standalone
-  4. Less important new features [0/4]
+  4. Less important new features [1/4]
      - [ ] Updating collection
      - [ ] Plugins and configuration
      - [ ] Equalizer
-     - [ ] gimme-lyrics
+     - [X] gimme-lyrics
   5. Creating a community [2/5]
      - [X] Screencasts
      - [X] Wiki and list

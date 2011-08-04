@@ -299,13 +299,15 @@ class GIMME
 
   def vol (inc)
     @async.playback_volume_get.notifier do |vol|
-      inc = inc.to_s.to_i # The sexp library translates -5 into a symbol :P
-      new = [0,[100,(vol[:left] + inc)].min].max
-      @async.playback_volume_set(:left, new).notifier {}
-      @async.playback_volume_set(:right, new).notifier {}
-      # to_emacs [:"hooker-set", [:quote, :"gimme-volume"], new]
-      to_emacs [:message, "Volume changed to #{new}"]
-    end; end
+      if vol; then
+        inc = inc.to_s.to_i # The sexp library translates -5 into a symbol :P
+        new = [0,[100,(vol[:left] + inc)].min].max
+        @async.playback_volume_set(:left, new).notifier {}
+        @async.playback_volume_set(:right, new).notifier {}
+        to_emacs [:message, "Volume changed to #{new}"]
+      else
+        to_emacs [:message, "Error while trying to change the volume"]
+      end; end; end
 
 
   ###################
@@ -403,15 +405,13 @@ class GIMME
   ###########################
 
   def fetch_lyrics (plist)
-    # For copyright issues, lyricwiki's API is no longer usable to
-    # get full lyrics, so I have to do some crawling
     Thread.new do
       dict = Hash[plist.collect_every(2)]
       tags = "\"#{dict[:artist]}\" \"#{dict[:title]}\""
       lyrics = Crawlyr.get_lyrics(tags)
       plist = plist + [:source,lyrics[1]]
       lyrics = lyrics[0]
-      to_emacs [:"gimme-lyrics-display", [:quote, plist], lyrics] if lyrics
+      to_emacs [:"gimme-lyrics-display", [:quote, plist], lyrics.encode('UTF-8')]
     end
   end
 

@@ -13,7 +13,7 @@ end
 
 module Crawlyr
   class Analyzer
-    attr_accessor :freq, :text, :node
+    attr_accessor :freq, :text, :node, :html
 
     def initialize (node)
       freq = Hash[]; i = 1
@@ -70,35 +70,32 @@ module Crawlyr
   end
 
 
-  def Crawlyr.get_lyrics (tags)
+  def Crawlyr.get_lyrics (terms)
     # 0. Initialize
     to_emacs [:message, "Fetching lyrics... [0/11]"]
     agent = Mechanize.new
-    tags = CGI.escape("lyrics #{tags}")
+    terms = CGI.escape("lyrics #{terms}")
 
     # 1. Get links
-    page = agent.get("http://google.com/search?q=#{tags}")
+    page = agent.get("http://google.com/search?q=#{terms}")
     page = Nokogiri::HTML(page.body, 'UTF-8')
     links = page.css('h3.r a').to_a.map {|l| l['href']}
     to_emacs [:message, "Fetching lyrics... [1/11]"]
 
     # 2. Get all nodes and remove non-markup children
-    threads = []
-    i = 2
-    nodes = []
+    threads = []; i = 2; nodes = []
     links.each do |l|
       threads << Thread.new do
-        begin; page = agent.get(l).body; rescue; page = ""; end
-        page = Nokogiri::HTML(page, 'UTF-8').css("*")
+        begin; page = agent.get(l); encoding = page.detected_encoding; page = page.body
+        rescue; page = ""; encoding = "UTF-8"; end
+        page = Nokogiri::HTML(page, encoding).css("*")
         to_emacs [:message, "Fetching lyrics... [#{i}/11]"]
         i += 1
         nodes = nodes + page.to_a
       end
     end
     threads.each {|t| t.join}
-    nodes.each do |node|
-      node.children.each {|x| x.remove if !(["b", "br", "text", "i"].include?(x.name))}
-    end
+    nodes.each { |node| node.children.each {|x| x.remove if !(["b", "br", "text", "i"].include?(x.name))}}
 
     # 3. Do some preselection to make the algorithm faster and 
     nodes.delete_if {|node| node.inner_text.length < 280}
@@ -108,14 +105,12 @@ module Crawlyr
 
     # 5. Clusterize into a graph. FIXME: Better guess than 'fair'?
     adj = Hash[]; fair = 0.001; n = nodes.length - 1
-    (0..n).each do |i|
-      (0..n).each do |j|
+    (0..n).each do |i|; (0..n).each do |j|
         adj[[i,j]] = nodes[i].distance(nodes[j]) <= fair ? 1 : 0
       end; end
 
     # 6. Get the largest connected subgraph
-    (0..n).each do |i|
-      (0..n).each do |j|
+    (0..n).each do |i|; (0..n).each do |j|
         (0..n).each {|k| adj[[i,k]] = 1 if adj[[j,k]] == 1} if (adj [[i,j]] == 1)
       end; end
     size = (0..n).map {|i| m=0; (0..n).each {|j| m += adj[[i,j]]}; [i,m]}.sort{|a,b| a[1] <= b[1] ? 1 : -1}
@@ -124,7 +119,7 @@ module Crawlyr
 
     # 7. Reconstruct the text. Let's trust Google and get the topmost result
     group.sort{|a,b| a[0] > b[0] ? 1 : -1}
-    return [nodes[group[0]].text, links[group[0]]]
+    return [nodes[group[0]].node.to_s, links[group[0]]]
   end
 end
 

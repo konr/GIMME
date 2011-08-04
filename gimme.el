@@ -85,9 +85,12 @@
 (defun gimme-gen-buffer (plist)
   "FIXME: Filter Collection; hook; header not working"
   (let* ((type (getf plist 'gimme-buffer-type))
-         (type-s (case type ('collection "Collection") ('playlist "Playlist")))
-         (name-s (case type ('collection (getf plist 'gimme-collection-title))
-                       ('playlist (getf plist 'gimme-playlist-name))))
+         (type-s (case type ('collection "Collection") ('playlist "Playlist")
+                       ('lyrics "Lyrics")))
+         (name-s (case type
+                   ('collection (getf plist 'gimme-collection-title))
+                   ('playlist (getf plist 'gimme-playlist-name))
+                   ('lyrics (getf plist 'title))))
          (buffer-name (decode-coding-string
                        (format "GIMME - %s (%s)" type-s name-s) 'utf-8)))
     (gimme-on-buffer buffer-name
