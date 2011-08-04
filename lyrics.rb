@@ -122,7 +122,8 @@ module Crawlyr
     max = size[0][1]
     group = size.delete_if{|x| x[1] != max}.map{|x| x[0]}
 
-    # 7. Reconstruct text. FIXME: Use some criterion
+    # 7. Reconstruct the text. Let's trust Google and get the topmost result
+    group.sort{|a,b| a[0] > b[0] ? 1 : -1}
     return [nodes[group[0]].text, links[group[0]]]
   end
 end

@@ -407,7 +407,7 @@ class GIMME
     # get full lyrics, so I have to do some crawling
     Thread.new do
       dict = Hash[plist.collect_every(2)]
-      tags = "#{dict[:artist]} #{dict[:album]} #{dict[:title]}"
+      tags = "\"#{dict[:artist]}\" \"#{dict[:title]}\""
       lyrics = Crawlyr.get_lyrics(tags)
       plist = plist + [:source,lyrics[1]]
       lyrics = lyrics[0]
