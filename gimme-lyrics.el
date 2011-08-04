@@ -2,14 +2,14 @@
   (let* ((plist (append '(gimme-buffer-type lyrics) plist))
          (title (plist-get plist 'title)) (source (plist-get plist 'source))
          (title (format "GIMME - Lyrics for %s" title))
-         (header (format "<font color=%s>(source: %s)</font><p>" (color-for source) source))
+         (header (format "(source: %s)\n\n" source))
          (formatted (replace-regexp-in-string "\n" "\n  " (format "  %s" lyrics))))
     (gimme-on-buffer
      (gimme-gen-buffer plist)
-     (insert header)
      (insert formatted)
-     (goto-char (point-min))
-     (htmlr-render)
+     (goto-char (point-min)) (htmlr-render)
+     ;; FIXME: improve the rendering lib instead of inserting formatted text
+     (goto-char (point-min)) (insert (propertize header 'font-lock-face `(:foreground ,(color-for source))))
      (gimme-lyrics-mode))))
 
 (defun gimme-lyrics-mode ()
