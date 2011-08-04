@@ -54,11 +54,6 @@
   :type '(repeat sexp))
 
 
-(defcustom gimme-colors (traditional-japanese-colors)
-  "A list of colors to be used on the playlist entries"
-  :group 'gimme
-  :type 'sexp)
-
 (defcustom gimme-sort-criteria
   '((genre artist album title)
     (artist album tracknr) (artist title) (album title) (title) (timesplayed))
@@ -181,3 +176,10 @@
     (expand-list-of-colors initial)))
 (provide 'gimme-custom)
 ;;; gimme-custom.el ends here
+
+;;;; FIXME
+(defcustom gimme-colors (traditional-japanese-colors)
+  "A list of colors to be used on the playlist entries"
+  :group 'gimme
+  :type 'sexp)
+

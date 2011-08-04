@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 $: << File.join(File.dirname(__FILE__))
 
+require_relative 'lyrics'
+
 ['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'sexp'].each do |lib|
   begin
     require lib
@@ -68,6 +70,45 @@ class Array
   end
   def rmap2 (fun)
     self.map {|x| x.respond_to?(:rmap2) ? x.rmap2(fun) : fun.call(x)}
+  end
+  def collect_every(n, fill=false, offset = 0)
+
+    if block_given?
+      while  offset < size
+        ret = []
+
+        if fill
+          n.times do |x|
+            if offset + x > size - 1 then ret << nil
+            else  ret << self[offset + x] end
+          end
+        else
+          n.times { |x| ret << self[offset + x] unless offset + x > size - 1}
+        end
+
+        offset += n
+        yield ret
+        ret = nil
+      end
+
+    else
+
+      ret = []
+      while  offset < size
+        ret << []
+        if fill
+          n.times do |x|
+            if offset + x > size - 1 then ret.last << nil
+            else ret.last << self[offset + x]; end
+          end
+        else
+          n.times { |x| ret.last << self[offset + x] unless offset + x > size - 1 }
+        end
+
+        offset += n
+      end
+      return ret
+    end
   end
 end
 
@@ -354,6 +395,23 @@ class GIMME
   def colls (session)
     @async.coll_list.notifier do |res|
       to_emacs [:"gimme-bookmark-colls",session,[:quote, res.to_a]]
+    end
+  end
+
+  ###########################
+  ### Lyrics and Internet ###
+  ###########################
+
+  def fetch_lyrics (plist)
+    # For copyright issues, lyricwiki's API is no longer usable to
+    # get full lyrics, so I have to do some crawling
+    Thread.new do
+      dict = Hash[plist.collect_every(2)]
+      tags = "#{dict[:artist]} #{dict[:album]} #{dict[:title]}"
+      lyrics = Crawlyr.get_lyrics(tags)
+      plist = plist + [:source,lyrics[1]]
+      lyrics = lyrics[0]
+      to_emacs [:"gimme-lyrics-display", [:quote, plist], lyrics] if lyrics
     end
   end
 

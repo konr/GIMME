@@ -39,6 +39,7 @@
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "t") 'gimme-update-tags-prompt)
     (define-key map (kbd "T") 'gimme-tagwriter)
+    (define-key map (kbd "L") 'gimme-fetch-lyrics)
     (define-key map (kbd "H") 'gimme-shuffle)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete nil)))
