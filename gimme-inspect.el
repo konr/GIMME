@@ -94,12 +94,14 @@
     (unlocking-buffer
      (save-excursion
        (let* ((beg (line-beginning-position)) (end (line-end-position))
+	      (old (gimme-inspect-get-current-value))
               (string (split-string (buffer-substring-no-properties beg end) "|"))
               (beg (+ beg 3 (length (nth 1 string)))) (end (- (line-end-position) 2))
               (new-string (propertize (string-expanded new gimme-inspect-max-length)
-                                      'font-lock-face `(:foreground ,(color-for new)) 'data new)))
-         (delete-region beg end) (goto-char beg) (insert new-string)
-         (gimme-inspect-adjust-table))))))
+                                      'font-lock-face `(:foreground ,(color-for new) :weight bold) 'data new)))
+	 (unless (string= old new)
+	  (delete-region beg end) (goto-char beg) (insert new-string)
+	  (gimme-inspect-adjust-table)))))))
 
 (defun gimme-inspect-change-current-line-prompt (&optional reuse)
   (interactive)
