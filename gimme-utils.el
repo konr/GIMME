@@ -132,6 +132,10 @@
   "((a b c) (d e f)) -> ((a d) (b e) (c f)). Amazing, huh?"
   (apply #'map 'list (lambda (&rest args) (apply #'list args)) list-of-lists))
 
+(defun sane-goto-line (number)
+  "Without setting the mark"
+  (goto-char (point-min))
+  (next-line (1- number)))
 
 
 

@@ -37,6 +37,7 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
+    (define-key map (kbd "O") 'gimme-conf)
     (define-key map (kbd "t") 'gimme-update-tags-prompt)
     (define-key map (kbd "T") 'gimme-tagwriter)
     (define-key map (kbd "L") 'gimme-fetch-lyrics)
@@ -156,8 +157,10 @@
                      (lambda (x) (equal (getf plist 'id) (get-text-property x 'id)))))
        (let* ((beg (car range)) (end (cadr range))
               (pos (get-text-property beg 'pos))
+	      (face (get-text-property beg 'face))
               (plist (plist-put plist 'font-lock-face nil))
-              (plist (plist-put plist 'pos pos)))
+              (plist (plist-put plist 'pos pos))
+              (plist (if (equal face 'highlight) (plist-put plist 'face 'highlight) plist)))
          (kill-region beg end) (goto-char beg) (insert (gimme-string plist)))))))
 
 

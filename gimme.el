@@ -211,7 +211,6 @@
        (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))
        (goto-line line)))))
 
-
 (defun gimme-restart ()
   (setq gimme-filter-remainder "")
   (gimme-init)
@@ -236,6 +235,8 @@
 (require 'gimme-custom)
 (require 'gimme-etc)
 (require 'gimme-tagwriter)
+(require 'gimme-lyrics)
+(require 'gimme-inspect)
 (provide 'gimme)
 
 ;;; gimme.el ends here

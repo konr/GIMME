@@ -310,6 +310,12 @@ class GIMME
       end; end; end
 
 
+  def conf
+    @async.config_list_values.notifier do |x|
+      y=x.to_a
+      to_emacs [:"gimme-print-conf",[:quote, y]]
+    end; end
+
   ###################
   ### Collections ###
   ###################
@@ -407,8 +413,7 @@ class GIMME
   def fetch_lyrics (plist)
     Thread.new do
       dict = Hash[plist.collect_every(2)]
-      tags = "\"#{dict[:artist]}\" \"#{dict[:title]}\""
-      lyrics = Crawlyr.get_lyrics(tags)
+      lyrics = Crawlyr.get_lyrics(dict)
       plist = plist + [:source,lyrics[1]]
       lyrics = lyrics[0]
       to_emacs [:"gimme-lyrics-display", [:quote, plist], lyrics.encode('UTF-8')]

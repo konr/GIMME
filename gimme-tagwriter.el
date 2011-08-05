@@ -1,13 +1,14 @@
 (defvar gimme-tagwriter-max-length 33)
+(defvar gimme-tagwriter-buffer-name "GIMME - Tagwriter")
 
 (defun gimme-tagwriter-mode ()
   "Displays a playlist"
   (interactive)
-  (font-lock-mode)
+  (font-lock-mode t)
   (use-local-map gimme-tagwriter-map)
   (setq truncate-lines t)
   (setq major-mode 'gimme-tagwriter-mode
-        mode-name "gimme-tagwriter")
+        mode-name gimme-tagwriter-buffer-name)
   (setq-local previous-function nil)
   (add-hook 'minibuffer-exit-hook #'gimme-tagwriter-undo-previews nil t))
 
@@ -15,6 +16,8 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
+    (define-key map (kbd "C-f") 'scroll-up)
+    (define-key map (kbd "C-b") 'scroll-down)
     (define-key map (kbd "y") 'gimme-tagwriter-yank-current-field)
     (define-key map (kbd "RET") 'gimme-tagwriter-apply-function)
     (define-key map (kbd "S-<return>") 'gimme-tagwriter-apply-previous-function)
@@ -48,7 +51,7 @@
                          (apply #'range-to-plists (range-of-region))))
          (fixed (cadr old-and-fixed)))
     (gimme-on-buffer
-     "gimme-tagwriter"
+     gimme-tagwriter-buffer-name
      (gimme-tagwriter-mode)
      (delete-region (point-min) (point-max))
      (let* ((colls (length (car fixed)))
@@ -63,7 +66,7 @@
              (loop for coll in row and i = 0 then (1+ i)
                    doing (insert (format "%s | " (string-expanded coll (nth i max-list)))))
              doing (insert "\n")))))
-  (switch-to-buffer "gimme-tagwriter"))
+  (switch-to-buffer gimme-tagwriter-buffer-name))
 
 (defun gimme-tagwriter-set-cell (row coll val)
   (save-excursion
@@ -88,7 +91,7 @@
 
 (defun gimme-tagwriter-cell-boundaries (row coll)
   "Assuming the entire document is a table"
-  (goto-line (1+ row))
+  (sane-goto-line (1+ row))
   (beginning-of-line)
   (if (equal coll 0)
       (list (1+ (point)) (1- (car (gimme-tagwriter-cell-boundaries row 1))))
@@ -189,7 +192,7 @@
   (plist-get (gimme-tagwriter-get-vals line-number) field))
 
 (defun gimme-tagwriter-get-vals (line-number)
-  (let* ((range (save-excursion (goto-line line-number)
+  (let* ((range (save-excursion (sane-goto-line line-number)
                                 (list (line-beginning-position) (line-end-position))))
          (line (apply #'range-to-plists range))
          (plist (loop for f in line if f
@@ -214,12 +217,12 @@
        (gimme-tagwriter-set-vals line plist)))))
 
 (defun gimme-tagwriter-undo-previews ()
-  (with-current-buffer "gimme-tagwriter"
+  (with-current-buffer gimme-tagwriter-buffer-name
     (undo undos) (setq-local undos 0)))
 
 
 (defun gimme-tagwriter-set-vals (line-number plist)
-  (let* ((range (save-excursion (goto-line line-number)
+  (let* ((range (save-excursion (sane-goto-line line-number)
                                 (list (line-beginning-position) (line-end-position))))
          (tags (loop for f in (apply #'range-to-plists range)
                      if f collect (plist-get f 'type))))
@@ -239,9 +242,9 @@
 (defun gimme-tagwriter-recalculate-tags ()
   (interactive)
   (let* ((regexp (minibuffer-contents))
-         (url (with-current-buffer "gimme-tagwriter" url))
+         (url (with-current-buffer gimme-tagwriter-buffer-name url))
          (plist (gimme-tagwriter-scan url regexp)))
-    (with-current-buffer "gimme-tagwriter"
+    (with-current-buffer gimme-tagwriter-buffer-name
       (unlocking-buffer
        (comment gimme-tagwriter-undo-previews)
        (gimme-tagwriter-set-vals line plist)))))

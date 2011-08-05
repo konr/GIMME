@@ -70,8 +70,9 @@ module Crawlyr
   end
 
 
-  def Crawlyr.get_lyrics (terms)
+  def Crawlyr.get_lyrics (dict)
     # 0. Initialize
+    terms = "\"#{dict[:artist]}\" \"#{dict[:title]}\""
     to_emacs [:message, "Fetching lyrics... [0/11]"]
     agent = Mechanize.new
     terms = CGI.escape("lyrics #{terms}")
@@ -97,19 +98,25 @@ module Crawlyr
     threads.each {|t| t.join}
     nodes.each { |node| node.children.each {|x| x.remove if !(["b", "br", "text", "i"].include?(x.name))}}
 
-    # 3. Do some preselection to make the algorithm faster and 
-    nodes.delete_if {|node| node.inner_text.length < 280}
+    # 3. Do some preselection to make the algorithm faster 
+    nodes.delete_if do |node| 
+      # Removes 95% of the nodes
+      (node.inner_text.length < 280) or \
+      # SEO stuff, disclaimers etc
+      (node.inner_text =~ /Music Videos Wizard/) or \
+      (node.inner_text =~ /Search and Download/) or \
+      # Short biographies stolen from wikipedia are sometimes popular
+      (node.inner_text =~ /#{dict[:artist]}/)
+    end
 
-    # 4. Cross the data by comparing the character distribution
+    # 4. Cross the data by comparing the character distribution and clusterize into a graph. 
     nodes = nodes.map { |node| Analyzer.new(node)}.delete_if {|node| !node.freq}
-
-    # 5. Clusterize into a graph. FIXME: Better guess than 'fair'?
     adj = Hash[]; fair = 0.001; n = nodes.length - 1
     (0..n).each do |i|; (0..n).each do |j|
         adj[[i,j]] = nodes[i].distance(nodes[j]) <= fair ? 1 : 0
       end; end
 
-    # 6. Get the largest connected subgraph
+    # 5. Get the largest connected subgraph
     (0..n).each do |i|; (0..n).each do |j|
         (0..n).each {|k| adj[[i,k]] = 1 if adj[[j,k]] == 1} if (adj [[i,j]] == 1)
       end; end
@@ -117,7 +124,7 @@ module Crawlyr
     max = size[0][1]
     group = size.delete_if{|x| x[1] != max}.map{|x| x[0]}
 
-    # 7. Reconstruct the text. Let's trust Google and get the topmost result
+    # 6. Reconstruct the text. Let's trust Google and get the topmost result
     group.sort{|a,b| a[0] > b[0] ? 1 : -1}
     return [nodes[group[0]].node.to_s, links[group[0]]]
   end

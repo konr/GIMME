@@ -3,7 +3,7 @@
          (title (plist-get plist 'title)) (source (plist-get plist 'source))
          (title (format "GIMME - Lyrics for %s" title))
          (header (format "(source: %s)\n\n" source))
-         (formatted (replace-regexp-in-string "\n" "\n  " (format "  %s" lyrics))))
+         (formatted (replace-regexp-in-string "" "" lyrics)))
     (gimme-on-buffer
      (gimme-gen-buffer plist)
      (insert formatted)
