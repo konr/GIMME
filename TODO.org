@@ -1,0 +1,4 @@
+* To be done
+  - [ ] Rewrite the sort calls on lyrics.rb using max_by or inject!
+  - [ ] The update broadcast changes the format of the updated tracks
+  - [ ] Group the facets?

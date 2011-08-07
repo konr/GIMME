@@ -29,13 +29,10 @@
 (defvar gimme-filter-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
-    (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "C-f") 'scroll-up)
     (define-key map (kbd "C-b") 'scroll-down)
-    (define-key map (kbd "J") 'gimme-next)
-    (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
     (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
@@ -44,32 +41,30 @@
     (define-key map (kbd ">") 'gimme-child-col)
     (define-key map (kbd "a") 'gimme-filter-append-focused)
     (define-key map (kbd "RET") 'gimme-filter-play-focused)
-    (define-key map (kbd "A") 'gimme-filter-append-collection)
+    (define-key map (kbd "A") 'gimme-filter-append-current-collection)
     (define-key map (kbd "f") 'gimme-filter-same)
+    (define-key map (kbd "!") 'gimme-filter-toggle-faceted)
     map)
   "Filter-view's keymap")
 
 (defvar gimme-faceted-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
-    (define-key map (kbd "SPC") 'gimme-toggle)
     (define-key map (kbd "j") 'next-line)
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "C-f") 'scroll-up)
     (define-key map (kbd "C-b") 'scroll-down)
-    (define-key map (kbd "J") 'gimme-next)
-    (define-key map (kbd "K") 'gimme-prev)
     (define-key map (kbd "TAB") 'gimme-faceted-change-facet)
     (define-key map (kbd "<backtab>") (lambda () (interactive) (gimme-faceted-change-facet t)))
     (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
-    (define-key map (kbd "<") 'gimme-parent-col)
-    (define-key map (kbd ">") 'gimme-child-col)
-    (define-key map (kbd "a") 'gimme-filter-append-focused)
+    (define-key map (kbd "<") (lambda () (interactive) (gimme-parent-col t)))
+    (define-key map (kbd ">") (lambda () (interactive) (gimme-child-col t)))
     (define-key map (kbd "RET") 'gimme-faceted-subcol)
-    (define-key map (kbd "A") 'gimme-filter-append-current-collection)
-    (define-key map (kbd "f") 'gimme-filter-same)
+    (define-key map (kbd "C-M-S-<return>") 'gimme-filter-append-current-collection)
+    (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-faceted-subcol t)))
+    (define-key map (kbd "!") 'gimme-filter-toggle-faceted)
     map)
   "Keymap for browsing collections in a faceted way")
 
@@ -87,18 +82,19 @@
 ;; Interactive Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun gimme-child-col ()
+(defun gimme-child-col (&optional faceted)
   "Creates and displays a new collection intersecting the search criteria and the current collection"
   (interactive)
   (let* ((parent gimme-collection-name)
          (name (read-from-minibuffer (format "%s > " gimme-collection-title)))
-         (message (format "(subcol %s %s)\n" (prin1-to-string parent) (prin1-to-string name))))
+         (message (format "(%s %s %s)\n" (if faceted "faceted_subcol" "subcol")
+			  (prin1-to-string parent) (prin1-to-string name))))
     (gimme-send-message message)))
 
-(defun gimme-parent-col ()
+(defun gimme-parent-col (&optional faceted)
   "Jumps to the current collection's parent collection."
   (interactive)
-  (let* ((message (format "(supcol %s)\n" (prin1-to-string gimme-collection-name))))
+  (let* ((message (format "(supcol %s %s)\n" (prin1-to-string gimme-collection-name) (if faceted "t" ""))))
     (gimme-send-message message)))
 
 (defun gimme-filter-append-focused ()
@@ -151,14 +147,27 @@
          (message (format "(faceted_pcol %s %s)\n" (prin1-to-string coll) (prin1-to-string facet))))
     (when coll (gimme-send-message message))))
 
-(defun gimme-faceted-subcol ()
+(defun gimme-faceted-subcol (&optional append)
   "FIXME: There are limitations on using the quotes"
   (interactive)
   (let* ((parent gimme-collection-name)
          (key gimme-collection-facet)
 	 (val (get-text-property (point) 'data))
-         (message (format "(faceted_subcol %s %s %s)\n" (prin1-to-string parent) (prin1-to-string key) (prin1-to-string val))))
+	 (pattern (format "%s:'%s'" key val))
+         (message (format "(%s %s %s)\n" (if append "append_subcol" "faceted_subcol")
+			  (prin1-to-string parent) (prin1-to-string pattern))))
     (when val (gimme-send-message message))))
+
+(defun gimme-filter-toggle-faceted ()
+  (interactive)
+  (let* ((facet (if (boundp 'gimme-collection-facet) nil (car gimme-bookmark-facets)))
+	 (function (if facet "faceted_pcol" "pcol"))
+	 (coll gimme-collection-name))
+    (gimme-send-message "(%s %s %s)\n" function (prin1-to-string coll) (if facet (prin1-to-string facet ) ""))))
+
+(defun gimme-filter-append-current-collection ()
+  (interactive)
+  (gimme-send-message  "(append_coll %s)\n" (prin1-to-string gimme-collection-name)))
 
 
 (provide 'gimme-filter)

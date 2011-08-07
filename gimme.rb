@@ -394,11 +394,11 @@ class GIMME
   end
 
 
-  def supcol (child)
+  def supcol (child, faceted = nil)
     child =   Xmms::Collection.from_a(child).to_a
     if (child[0] == Xmms::Collection::TYPE_INTERSECTION)
       parent =  Xmms::Collection.from_a(child[2][0])
-      pcol(parent)
+      faceted ? faceted_pcol(parent) : pcol(parent)
     else
       to_emacs [:message, "Couldn't find a parent collection!"]
     end
@@ -453,31 +453,41 @@ class GIMME
   ### Faceted Viewing ###
   #######################
 
-  def faceted_pcol (data=nil, facet)
+  def faceted_pcol (data=nil, facet=nil)
     with_coll(data) do |coll|
       title = coll.attributes["title"] || data.to_s
-      plist = [:quote, [:"gimme-buffer-type", :collection,
-                        :"gimme-collection-name", data,
-                        :"gimme-collection-facet", facet,
-                        :"gimme-collection-title", title]]
-      to_emacs [:"gimme-gen-buffer",plist]
+      candidates = facet ? [facet] : ["album","artist","genre"]
       count = Hash[]
-      @async.coll_query_info(coll,[facet,"id"]).notifier do |wrapperdict|
+      candidates.each {|f| count[f] = Hash[]}
+      @async.coll_query_info(coll,$atribs).notifier do |wrapperdict|
         wrapperdict.each do |dict|
           adict = {}
           dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
-          key = adict[facet.to_sym]
-          count[key] = 0 if !count[key]
-          count[key] = count[key]+1
+          candidates.each do |f|
+            key = adict[f.to_sym]
+            count[f][key] = 0 if !count[f][key]
+            count[f][key] = count[f][key]+1
+          end
         end
+
+        # Either receives a facet or tries to guess a good one
+        chosen = count.min_by{|_,v| v.length == 1 ? 100000000 : (30-v.length).abs}
+        count = chosen[1]; chosen = chosen[0]
+        plist = [:quote, [:"gimme-buffer-type", :collection,
+                          :"gimme-collection-name", data,
+                          :"gimme-collection-facet", chosen,
+                          :"gimme-collection-title", title]]
+        to_emacs [:"gimme-gen-buffer",plist]
+
+        # Regroup
+        count = count.to_a.sort
         count.each do |k,v|
           to_emacs [:"gimme-faceted-insert-group", plist, k,v]
         end
         true;end;end;end
 
-  def faceted_subcol (data,key,val)
+  def faceted_subcol (data,pattern)
     with_coll(data) do |parent|
-      pattern = "#{key}:'#{val}'"
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
       match = Xmms::Collection.parse(pattern)
       intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
@@ -486,9 +496,23 @@ class GIMME
       intersection.attributes["title"] = pattern
       to_emacs [:"gimme-bookmark-add-child", [:quote, intersection.to_a],
                 [:quote, parent.to_a]]
-      faceted_pcol(intersection,key)
+      faceted_pcol(intersection,nil)
     end;end
-  
+
+  def append_subcol (data,pattern)
+    with_coll(data) do |parent|
+      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+      match = Xmms::Collection.parse(pattern)
+      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
+      intersection.operands.push(parent)
+      intersection.operands.push(match)
+      intersection.attributes["title"] = pattern
+      to_emacs [:"gimme-bookmark-add-child", [:quote, intersection.to_a],
+                [:quote, parent.to_a]]
+      append_coll(intersection)
+
+  end;end
+
   ###########################
   ### Lyrics and Internet ###
   ###########################
