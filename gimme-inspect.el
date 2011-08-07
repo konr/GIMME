@@ -11,7 +11,7 @@
     (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-inspect-change-current-line-prompt t)))
     (define-key map (kbd "C-S-<return>")
       'gimme-tagwriter-apply-previous-function-to-all-songs)
-    (define-key map (kbd "W") 'gimme-inspect-write-to-xmms2)
+    (define-key map (kbd "W") 'gimme-inspect-write)
     (define-key map (kbd "?") 'gimme-inspect-print-current-value)
     (define-key map (kbd "y") 'gimme-inspect-yank-current-value)
     (define-key map (kbd "S") 'gimme-tagwriter-scan-current)
@@ -31,7 +31,7 @@
         mode-name gimme-inspect-buffer-name)
   (setq-local previous-function nil))
 
-(defun gimme-inspect (plist top-message change-function)
+(defun gimme-inspect (plist top-message write-function)
   ""
   (interactive)
   (let* ((strs (mapcar (lambda (x) (format "%s" x)) plist))
@@ -43,6 +43,7 @@
          (total (+ 7 (apply #'+ max))))
     (gimme-on-buffer
      gimme-inspect-buffer-name
+     (setq-local write-function write-function)
      (delete-region (point-min) (point-max))
      (insert (format "%s\n\n   ---\n\n" top-message))
      (setq-local table-first-line (line-at-pos))
@@ -127,25 +128,51 @@
         (next-line)))))
 
 
-(defun gimme-conf ()
+(defun gimme-get-conf ()
   (interactive)
   (gimme-send-message "(conf)\n"))
+
+(defun gimme-get-track-conf ()
+  (interactive)
+  (let ((id (get-text-property (point) 'id))) 
+    (when id (gimme-send-message "(track_conf %d)\n" id))))
 
 (defun gimme-print-conf (alist)
   (let ((plist (flatten alist))
         (msg "These are the configuration options of XMMS2")
-        (function (lambda (x))))
+        (function #'gimme-inspect-write-options-to-xmms2))
     (gimme-inspect plist msg function)))
 
-(defun gimme-inspect-write-to-xmms2 ()
+(defun gimme-track-conf (alist)
+  (let ((plist (flatten alist))
+        (msg (format "There are the configuration options of the following track"))
+        (function #'gimme-inspect-write-track-options-to-xmms2))
+    (gimme-inspect plist msg function)))
+
+(defun gimme-inspect-write ()
   (interactive)
+  (funcall write-function))
+
+(defun gimme-inspect-collect-alist ()
   (save-excursion
     (let* ((beg (progn (sane-goto-line table-first-line) (beginning-of-line) (point)))
            (end (progn (sane-goto-line table-last-line) (end-of-line) (point)))
            (plist (loop for key in (range-to-plists beg end)
-                        when key collect (plist-get it 'data)))
-           (alist (plist-to-pseudo-alist plist)))
-      (gimme-send-message "(conf_save %s)\n"  (prin1-to-string alist)))))
+                        when key collect (plist-get it 'data))))
+      (plist-to-pseudo-alist plist))))
+
+(defun gimme-inspect-write-options-to-xmms2 ()
+  (interactive)
+  (gimme-send-message "(conf_save %s)\n"  (prin1-to-string (gimme-inspect-collect-alist)))) 
+
+(defun gimme-inspect-write-track-options-to-xmms2 ()
+  (interactive)
+  (let* ((alist (gimme-inspect-collect-alist))
+	(fancy-format (loop for pair in alist collecting
+			    (list (intern (car pair)) 
+				  (if (number-in-string-p (cadr pair)) (string-to-number (cadr pair)) (cadr pair)))))) 
+    (message "Sending changes to XMMS2")
+    (gimme-send-message "(update_tags %s)\n"  (prin1-to-string fancy-format)))) 
 
 
 (provide 'gimme-inspect)

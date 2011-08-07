@@ -137,6 +137,8 @@
   (goto-char (point-min))
   (next-line (1- number)))
 
+(defun number-in-string-p (string)
+  (string-match "^\\(\\([0-9]\+\.[0-9]\*\\)\\|\\([0-9]\+\\)\\|\\([0-9]*\.[0-9]\+\\)\\)$" string))
 
 
 

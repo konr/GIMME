@@ -290,6 +290,7 @@ class GIMME
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
     ($atribs-["id","url","font-lock-face"]).each do |key|
+      puts "#{key}"
       key=key.to_sym; dict[key] = dict[key].class == Symbol ? dict[key].to_s : dict[key]
       @async.medialib_entry_property_set(dict[:id], key, dict[key]).notifier;end;end
 
@@ -309,6 +310,13 @@ class GIMME
   ### Configuration ###
   #####################
 
+  def track_conf (id)
+    @async.medialib_get_info(id).notifier do |res|
+      alist = res.to_a
+      alist = alist.map {|k,v| [k,v.to_a.last[1]]}
+      to_emacs [:"gimme-track-conf",[:quote, alist]]
+    end
+  end
 
   def conf
     @async.config_list_values.notifier do |x|
