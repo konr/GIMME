@@ -102,9 +102,10 @@ module Crawlyr
     nodes.delete_if do |node| 
       # Removes 95% of the nodes
       (node.inner_text.length < 280) or \
-      # SEO stuff, disclaimers etc
+      # SEO stuff, disclaimers, copyright laws etc
       (node.inner_text =~ /Music Videos Wizard/) or \
       (node.inner_text =~ /Search and Download/) or \
+      (node.inner_text =~ /9610\/98/) or \
       # Short biographies stolen from wikipedia are sometimes popular
       (node.inner_text =~ /#{dict[:artist]}/)
     end

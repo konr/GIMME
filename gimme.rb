@@ -244,11 +244,7 @@ class GIMME
 
   def remove_many (first, times)
     @async.playlist("_active").remove_entry(first).notifier do
-      Thread.new do
-        # With the sleep(), items disappear from the playlist in a cool manner!
-        sleep 0.0042
-        remove_many(first, times-1)
-      end
+      remove_many(first, times-1)
       true
     end if times > 0
   end
@@ -309,12 +305,50 @@ class GIMME
         to_emacs [:message, "Error while trying to change the volume"]
       end; end; end
 
+  #####################
+  ### Configuration ###
+  #####################
+
 
   def conf
     @async.config_list_values.notifier do |x|
       y=x.to_a
       to_emacs [:"gimme-print-conf",[:quote, y]]
     end; end
+
+  def conf_save (alist, silent = nil)
+    dict = {}; alist.each {|key,val| dict[key] = val }
+    alist.each do |k,v|
+      @async.config_set_value(k, v).notifier
+    end;
+    to_emacs [:message, "Options successfully changed!"] if !silent
+  end
+
+  def eqgain
+    @async.config_list_values.notifier do |x|
+      y=x.to_a.keep_if {|k,v| k =~ /equalizer.gain/}
+      to_emacs [:"gimme-eq-print",[:quote, y.map{|k,v| v.to_f}]]
+    end
+  end
+
+  def eqchange (min, max, change)
+    change = change.to_s.to_f # The sexp library translates -5 into a symbol :P
+    @async.config_list_values.notifier do |x|
+      y = Hash[x.to_a]
+      (max+1-min).times do |t|
+        key = ("equalizer.gain%02d" % (min+t))
+        val = (y[key.to_sym].to_f + change)
+        val = [[20.0,val].min,-20.0].max.to_s
+        @async.config_set_value(key,val).notifier
+      end
+    end
+    Thread.new do
+      # There is a delay in the server, for some reason
+      sleep 0.1
+      eqgain
+    end
+  end
+
 
   ###################
   ### Collections ###

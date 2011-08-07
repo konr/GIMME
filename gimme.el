@@ -237,6 +237,7 @@
 (require 'gimme-tagwriter)
 (require 'gimme-lyrics)
 (require 'gimme-inspect)
+(require 'gimme-eq)
 (provide 'gimme)
 
 ;;; gimme.el ends here

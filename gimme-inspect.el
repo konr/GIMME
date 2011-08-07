@@ -11,7 +11,7 @@
     (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-inspect-change-current-line-prompt t)))
     (define-key map (kbd "C-S-<return>")
       'gimme-tagwriter-apply-previous-function-to-all-songs)
-    (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
+    (define-key map (kbd "W") 'gimme-inspect-write-to-xmms2)
     (define-key map (kbd "?") 'gimme-inspect-print-current-value)
     (define-key map (kbd "y") 'gimme-inspect-yank-current-value)
     (define-key map (kbd "S") 'gimme-tagwriter-scan-current)
@@ -48,6 +48,7 @@
      (setq-local table-first-line (line-at-pos))
      (loop for x = strs then (cddr x) while x doing
            (gimme-inspect-insert-row (car x) (cadr x) (car max) (cadr max)))
+     (setq-local initial-data plist)
      (setq-local table-last-line (1- (line-at-pos)))
      (gimme-inspect-mode)
      (switch-to-buffer gimme-inspect-buffer-name))))
@@ -94,14 +95,14 @@
     (unlocking-buffer
      (save-excursion
        (let* ((beg (line-beginning-position)) (end (line-end-position))
-	      (old (gimme-inspect-get-current-value))
+              (old (gimme-inspect-get-current-value))
               (string (split-string (buffer-substring-no-properties beg end) "|"))
               (beg (+ beg 3 (length (nth 1 string)))) (end (- (line-end-position) 2))
               (new-string (propertize (string-expanded new gimme-inspect-max-length)
                                       'font-lock-face `(:foreground ,(color-for new) :weight bold) 'data new)))
-	 (unless (string= old new)
-	  (delete-region beg end) (goto-char beg) (insert new-string)
-	  (gimme-inspect-adjust-table)))))))
+         (unless (string= old new)
+           (delete-region beg end) (goto-char beg) (insert new-string)
+           (gimme-inspect-adjust-table)))))))
 
 (defun gimme-inspect-change-current-line-prompt (&optional reuse)
   (interactive)
@@ -112,16 +113,17 @@
   (interactive)
   (let* ((beg (progn (sane-goto-line table-first-line) (beginning-of-line) (point)))
          (end (progn (sane-goto-line table-last-line) (end-of-line) (point)))
-         (maxes (butlast (split-string (buffer-substring-no-properties beg end) "\n")))
+         (maxes (butlast (split-string (buffer-substring beg end) "\n")))
+         (props (mapcar (lambda (x) (get-text-property (- (length x) 3) 'data x)) maxes))
          (maxes (mapcar (lambda (x) (length (replace-regexp-in-string " *|$" "" x))) maxes))
          (max (apply #'max maxes)))
     (sane-goto-line table-first-line)
     (dotimes (i (length maxes))
       (let* ((beg (+ (line-beginning-position) (nth i maxes)))
-             (props (text-properties-at beg)))
+             (data (nth i props)))
         (delete-region beg (line-end-position))
         (goto-char (line-end-position))
-        (insert (apply #'propertize (format " %s|" (make-string (- max (nth i maxes) ) ? )) props))
+        (insert (propertize (format " %s|" (make-string (- max (nth i maxes) ) ? )) 'data data))
         (next-line)))))
 
 
@@ -135,6 +137,15 @@
         (function (lambda (x))))
     (gimme-inspect plist msg function)))
 
+(defun gimme-inspect-write-to-xmms2 ()
+  (interactive)
+  (save-excursion
+    (let* ((beg (progn (sane-goto-line table-first-line) (beginning-of-line) (point)))
+           (end (progn (sane-goto-line table-last-line) (end-of-line) (point)))
+           (plist (loop for key in (range-to-plists beg end)
+                        when key collect (plist-get it 'data)))
+           (alist (plist-to-pseudo-alist plist)))
+      (message "(conf_save %s)\n"  (prin1-to-string plist)))))
 
 
 (provide 'gimme-inspect)

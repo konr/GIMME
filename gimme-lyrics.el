@@ -1,3 +1,5 @@
+(require 'htmlr)
+
 (defun gimme-lyrics-display (plist lyrics)
   (let* ((plist (append '(gimme-buffer-type lyrics) plist))
          (title (plist-get plist 'title)) (source (plist-get plist 'source))
