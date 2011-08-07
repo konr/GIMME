@@ -114,16 +114,16 @@
   (let* ((beg (progn (sane-goto-line table-first-line) (beginning-of-line) (point)))
          (end (progn (sane-goto-line table-last-line) (end-of-line) (point)))
          (maxes (butlast (split-string (buffer-substring beg end) "\n")))
-         (props (mapcar (lambda (x) (get-text-property (- (length x) 3) 'data x)) maxes))
+         (all-props (mapcar (lambda (x) (text-properties-at (- (length x) 3) x)) maxes))
          (maxes (mapcar (lambda (x) (length (replace-regexp-in-string " *|$" "" x))) maxes))
          (max (apply #'max maxes)))
     (sane-goto-line table-first-line)
     (dotimes (i (length maxes))
       (let* ((beg (+ (line-beginning-position) (nth i maxes)))
-             (data (nth i props)))
+             (props (nth i all-props)))
         (delete-region beg (line-end-position))
         (goto-char (line-end-position))
-        (insert (propertize (format " %s|" (make-string (- max (nth i maxes) ) ? )) 'data data))
+        (insert (apply #'propertize (format " %s|" (make-string (- max (nth i maxes) ) ? )) props))
         (next-line)))))
 
 
@@ -145,7 +145,7 @@
            (plist (loop for key in (range-to-plists beg end)
                         when key collect (plist-get it 'data)))
            (alist (plist-to-pseudo-alist plist)))
-      (message "(conf_save %s)\n"  (prin1-to-string plist)))))
+      (gimme-send-message "(conf_save %s)\n"  (prin1-to-string alist)))))
 
 
 (provide 'gimme-inspect)

@@ -317,11 +317,12 @@ class GIMME
     end; end
 
   def conf_save (alist, silent = nil)
+    to_emacs [:message, "Changing options..."] if !silent
     dict = {}; alist.each {|key,val| dict[key] = val }
     alist.each do |k,v|
       @async.config_set_value(k, v).notifier
     end;
-    to_emacs [:message, "Options successfully changed!"] if !silent
+    to_emacs [:message, "Changing options... DONE!"] if !silent
   end
 
   def eqgain
