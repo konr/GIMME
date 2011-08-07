@@ -290,7 +290,6 @@ class GIMME
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
     ($atribs-["id","url","font-lock-face"]).each do |key|
-      puts "#{key}"
       key=key.to_sym; dict[key] = dict[key].class == Symbol ? dict[key].to_s : dict[key]
       @async.medialib_entry_property_set(dict[:id], key, dict[key]).notifier;end;end
 
@@ -365,7 +364,6 @@ class GIMME
 
   def append_coll (data)
     with_coll(data) do |coll|
-      #puts coll.idlist.to_s
       @async.coll_query_info(coll,["id"]).notifier do |adict|
         adict.each do |dict|
           add dict.to_a[0][1]

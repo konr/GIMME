@@ -95,7 +95,7 @@
                        (format "GIMME - %s (%s)" type-s name-s) 'utf-8))
          (facet (plist-get plist 'gimme-collection-facet)))
     (gimme-on-buffer buffer-name
-		     (kill-all-local-variables)
+		     (kill-local-variable 'gimme-collection-facet) ;; FIXME lousy
                      (case type
                        ('playlist (gimme-playlist-mode))
                        ('collection (gimme-filter-mode facet)))

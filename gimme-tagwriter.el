@@ -111,7 +111,7 @@
          (next (if (>= (cadr next) colls) (list (1+ (car cur)) 0) next))
          (next (if (>= (car next) rows) (list 1 0) next)))
     (goto-char (1+ (car (apply #'gimme-tagwriter-cell-boundaries next))))
-    (gimme-print-current-field)))
+    (gimme-tagwriter-print-current-field)))
 
 (defun gimme-tagwriter-prev-field ()
   (interactive)
@@ -120,7 +120,7 @@
          (prev (if (< (cadr prev) 0) (list (1- (car cur)) (1- colls)) prev))
          (prev (if (< (car prev) 1) (list (1- rows) (1- colls)) prev)))
     (goto-char (1+ (car (apply #'gimme-tagwriter-cell-boundaries prev))))
-    (gimme-print-current-field)))
+    (gimme-tagwriter-print-current-field)))
 
 (defun gimme-tagwriter-current-field ()
   (list (max 0 (1- (line-number-at-pos)))

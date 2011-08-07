@@ -68,8 +68,8 @@
      - [ ] Marketing
      - [ ] Packages
      - [ ] ELPA
-  6. GIMME's new modes [0/2]
-     - [ ] faceted-view
+  6. GIMME's new modes [1/2]
+     - [X] faceted-view
      - [ ] augmented-mode
   7. Code Polishing [0/3]
      - [ ] Faster
