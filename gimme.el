@@ -92,14 +92,16 @@
                    ('playlist (getf plist 'gimme-playlist-name))
                    ('lyrics (getf plist 'title))))
          (buffer-name (decode-coding-string
-                       (format "GIMME - %s (%s)" type-s name-s) 'utf-8)))
+                       (format "GIMME - %s (%s)" type-s name-s) 'utf-8))
+         (facet (plist-get plist 'gimme-collection-facet)))
     (gimme-on-buffer buffer-name
-                     (comment setq header-line-format
-                              `(:eval (decode-coding-string ,buffer-name 'utf-8)))
                      (case type
                        ('playlist (gimme-playlist-mode))
-                       ('collection (gimme-filter-mode)))
+                       ('collection (gimme-filter-mode facet)))
                      (kill-region 1 (point-max))
+                     (when facet (insert (format "Collection: %s\nFacet: %s\n---\n\n"
+                                                 (propertize name-s 'font-lock-face `(:foreground ,(color-for name-s)))
+                                                 (propertize facet 'font-lock-face `(:weight bold)))))
                      (loop for x = plist then (cddr x)
                            while x doing (progn (make-local-variable (car x))
                                                 (set (car x) (cadr x)))))

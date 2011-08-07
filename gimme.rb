@@ -449,6 +449,46 @@ class GIMME
     end
   end
 
+  #######################
+  ### Faceted Viewing ###
+  #######################
+
+  def faceted_pcol (data=nil, facet)
+    with_coll(data) do |coll|
+      title = coll.attributes["title"] || data.to_s
+      plist = [:quote, [:"gimme-buffer-type", :collection,
+                        :"gimme-collection-name", data,
+                        :"gimme-collection-facet", facet,
+                        :"gimme-collection-title", title]]
+      to_emacs [:"gimme-gen-buffer",plist]
+      count = Hash[]
+      @async.coll_query_info(coll,[facet,"id"]).notifier do |wrapperdict|
+        wrapperdict.each do |dict|
+          adict = {}
+          dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
+          key = adict[facet.to_sym]
+          count[key] = 0 if !count[key]
+          count[key] = count[key]+1
+        end
+        count.each do |k,v|
+          to_emacs [:"gimme-faceted-insert-group", plist, k,v]
+        end
+        true;end;end;end
+
+  def faceted_subcol (data,key,val)
+    with_coll(data) do |parent|
+      pattern = "#{key}:'#{val}'"
+      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+      match = Xmms::Collection.parse(pattern)
+      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
+      intersection.operands.push(parent)
+      intersection.operands.push(match)
+      intersection.attributes["title"] = pattern
+      to_emacs [:"gimme-bookmark-add-child", [:quote, intersection.to_a],
+                [:quote, parent.to_a]]
+      faceted_pcol(intersection,key)
+    end;end
+  
   ###########################
   ### Lyrics and Internet ###
   ###########################

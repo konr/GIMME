@@ -24,6 +24,7 @@
   '(((0 ("reference" "All Media" "title" "All media") nil))))
 (defvar gimme-anonymous-collections gimme-bookmark-minimal-collection-list)
 (defvar gimme-bookmark-name "GIMME - Bookmarks")
+(defvar gimme-bookmark-facets '("genre" "artist" "album" "timesplayed"))
 
 (defun gimme-bookmark ()
   "bookmark-view"
@@ -39,12 +40,13 @@
     (define-key map (kbd "k") 'previous-line)
     (define-key map (kbd "C-f") 'scroll-up)
     (define-key map (kbd "C-b") 'scroll-down)
-    (define-key map (kbd "TAB") 'gimme-toggle-view)
+    (define-key map (kbd "TAB") 'gimme-toggle-facet)
     (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
     (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
     (define-key map (kbd ">")  'gimme-child-coll-of-current)
-    (define-key map (kbd "RET") 'gimme-bookmark-view-collection)
+    (define-key map (kbd "RET") (lambda () (interactive) (gimme-bookmark-view-collection t)))
+    (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-bookmark-view-collection nil)))
     (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
     (define-key map (kbd "r") 'gimme-bookmark-rename-coll)
@@ -64,14 +66,22 @@
 ;; Interactive function ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun gimme-toggle-facet (&optional silent backwards)
+  (interactive)
+  (setq gimme-bookmark-facets (if backwards (append (last gimme-bookmark-facets) (butlast gimme-bookmark-facets))
+                                (append (cdr gimme-bookmark-facets) (list (car gimme-bookmark-facets)))))
+  (unless silent
+    (message "(%s)%s" (car gimme-bookmark-facets) (apply #'concat (mapcar (lambda (x) (format " %s" x)) (cdr gimme-bookmark-facets)))))
+  (car gimme-bookmark-facets))
+
 (defun gimme-child-coll-of-current ()
   ""
   (interactive)
   (let* ((props (text-properties-at (point)))
          (coll (or (plist-get props 'coll) (plist-get props 'ref)))
-	 (name (read-from-minibuffer "> "))
-         (message (format "(subcol %s %s)\n" (prin1-to-string coll) 
-			  (prin1-to-string name))))
+         (name (read-from-minibuffer "> "))
+         (message (format "(subcol %s %s)\n" (prin1-to-string coll)
+                          (prin1-to-string name))))
     (gimme-send-message message)))
 (defun gimme-bookmark-append-to-playlist ()
   (interactive)
@@ -108,16 +118,14 @@
                                 (apply #'concat as-strings))
           (message "Invalid operation!"))))))
 
-(defun gimme-bookmark-view-collection ()
+(defun gimme-bookmark-view-collection (&optional faceted-p)
   "Jumps to filter-view with the focused collection as the current"
   (interactive)
-  (cond ((get-text-property (point) 'coll)
-         (gimme-send-message "(pcol %s)\n"
-                             (prin1-to-string (get-text-property (point) 'coll))))
-        ((get-text-property (point) 'ref)
-         (setq gimme-current (get-text-property (point) 'ref))
-         (gimme-send-message "(pcol %s)\n"
-                             (prin1-to-string (get-text-property (point) 'ref))))))
+  (let* ((coll (prin1-to-string (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))))
+         (facet (car gimme-bookmark-facets))
+         (message (if faceted-p (format "(faceted_pcol %s %s)\n" coll (prin1-to-string facet))
+                    (format "(pcol %s)\n" coll))))
+    (when coll (gimme-send-message message))))
 
 (defun gimme-bookmark-delete-coll ()
   "Deletes focused collection"

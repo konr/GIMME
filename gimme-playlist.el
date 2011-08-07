@@ -27,8 +27,8 @@
 (defun gimme-playlist-mode ()
   "Displays a playlist"
   (interactive)
-  (kill-all-local-variables)
   (use-local-map gimme-playlist-map)
+  (font-lock-mode t)
   (setq truncate-lines t)
   (setq major-mode 'gimme-playlist-mode
         mode-name "gimme-playlist"))

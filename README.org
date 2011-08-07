@@ -57,10 +57,10 @@
      - [X] Playlist presets
      - [ ] Spectrum     
      - [X] Standalone
-  4. Less important new features [1/4]
+  4. Less important new features [3/4]
      - [ ] Updating collection
-     - [ ] Plugins and configuration
-     - [ ] Equalizer
+     - [X] Plugins and configuration
+     - [X] Equalizer
      - [X] gimme-lyrics
   5. Creating a community [2/5]
      - [X] Screencasts
