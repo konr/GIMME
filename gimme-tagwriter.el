@@ -10,6 +10,7 @@
   (setq major-mode 'gimme-tagwriter-mode
         mode-name gimme-tagwriter-buffer-name)
   (setq-local previous-function nil)
+  (setq-local previous-pattern nil)
   (add-hook 'minibuffer-exit-hook #'gimme-tagwriter-undo-previews nil t))
 
 (defvar gimme-tagwriter-map
@@ -26,7 +27,9 @@
     (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
     (define-key map (kbd "?") 'gimme-tagwriter-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
-    (define-key map (kbd "S") 'gimme-tagwriter-scan-current)
+    (define-key map (kbd "s") 'gimme-tagwriter-scan-current)
+    (define-key map (kbd "S") (lambda () (interactive) (gimme-tagwriter-scan-current t)))
+    (define-key map (kbd "!") 'gimme-tagwriter-scan-all)
     (define-key map (kbd "<backtab>") 'gimme-tagwriter-prev-field)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     map)
@@ -128,14 +131,16 @@
 
 (defun gimme-tagwriter-print-current-field ()
   (interactive)
-  (let ((val (get-text-property (point) 'val)))
+  (let* ((type (get-text-property (point) 'type))
+         (val (get-text-property (point) 'val))
+         (val (if (equal type 'url) (decode-percent-encoding val) val)))
     (when val (message (replace-regexp-in-string "%" "%%" val)))))
 
 (defun gimme-tagwriter-yank-current-field ()
   (interactive)
   (let ((val (get-text-property (point) 'val)))
-    (with-temp-buffer (insert val) (kill-ring-save (point-min) (point-max)) 
-		      (message "Yanked: %s" val))))
+    (with-temp-buffer (insert val) (kill-ring-save (point-min) (point-max))
+                      (message "Yanked: %s" val))))
 
 (defun gimme-tagwriter-fix-data (data)
   (let* ((relevant (loop for j in data and line = 1 then (1+ line) collecting
@@ -144,14 +149,17 @@
                                collect (list (car i) (format "%s" (cadr i))) into pairs end
                                finally return (mapcan (lambda (x) x) pairs))))
          (keys (loop for i = (car relevant) then (cddr i) while i collecting
-                     (propertize (symbol-name (car i)) 'font-lock-face `(:foreground ,(color-for (symbol-name (car i))) :weight bold))))
+                     (propertize (symbol-name (car i)) 'font-lock-face `(:foreground ,(color-for (symbol-name (car i)))
+                                                                                     :weight bold))))
          (vals (loop for j in relevant collecting
-                     (loop for i = j then (cddr i) while i collecting
-                           (propertize
-                            (if (>= (length (cadr i)) gimme-tagwriter-max-length)
-                                (format "%s..." (substring (cadr i) 0 (- gimme-tagwriter-max-length 3))) (cadr i))
-                            'font-lock-face `(:foreground ,(color-for (symbol-name (car i))))
-                            'type (car i) 'val (cadr i))))))
+                     (loop for tag in keys collecting
+                           (let* ((tag (intern tag)) (text (plist-get j tag)))
+                             (propertize
+                              (if (>= (length text) gimme-tagwriter-max-length)
+                                  (format "%s..." (substring text 0 (- gimme-tagwriter-max-length 3))) text)
+                              'font-lock-face `(:foreground ,(color-for (symbol-name tag))) 'type tag 'val text)
+                             ))
+                     )))
     (list data (cons keys vals))))
 
 (defun gimme-tagwriter-eval-formula (formula)
@@ -167,7 +175,7 @@
     text))
 
 (defun decode-percent-encoding (string)
-  (decode-coding-string (url-unhex-string string) 'utf-8))
+  (replace-regexp-in-string "+" " " (decode-coding-string (url-unhex-string string) 'utf-8)))
 
 (defun regexp-all-matches (string regexp)
   (with-temp-buffer
@@ -200,7 +208,7 @@
                       into alist and finally return (mapcan (lambda (x) x) alist))))
     plist))
 
-(defun gimme-tagwriter-scan-current ()
+(defun gimme-tagwriter-scan-current (&optional try-previous)
   (interactive)
   (unlocking-buffer
    (let* ((line (line-number-at-pos)) (fields (gimme-tagwriter-get-vals line))
@@ -211,9 +219,10 @@
      (setq-local url url)
      (setq-local line line)
      (setq-local undos 0)
-     (let* ((regexp (read-from-minibuffer (format "%s> " url) ""
-                                          gimme-tagwriter-scan-map))
-            (plist (gimme-tagwriter-scan url regexp)))
+     (let* ((pattern (if (and try-previous previous-pattern)
+                         previous-pattern (read-from-minibuffer (format "%s> " url) "" gimme-tagwriter-scan-map)))
+            (plist (gimme-tagwriter-scan url pattern)))
+       (setq-local previous-pattern pattern)
        (gimme-tagwriter-set-vals line plist)))))
 
 (defun gimme-tagwriter-undo-previews ()
@@ -283,7 +292,7 @@
          (current-field (list (1+ (car current-field)) (cadr current-field)))
          (processed (if (functionp function) (funcall function data) raw)))
     (apply #'gimme-tagwriter-update-cell `(,@current-field ,processed))
-    (setq previous-function raw)))
+    (setq-local previous-function raw)))
 
 (defun gimme-tagwriter-apply-previous-function-to-all-songs ()
   (interactive)
@@ -291,7 +300,12 @@
     (loop for line from 1 to (1- rows) doing
           (gimme-tagwriter-apply-function previous-function (list line coll)))))
 
-
+(defun gimme-tagwriter-scan-all ()
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (loop for i upto (1- rows) doing (next-line)
+	  and doing (gimme-tagwriter-scan-current t)))) 
 (provide 'gimme-tagwriter)
 
 

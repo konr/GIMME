@@ -128,7 +128,7 @@
          (right (if right-aligned string spaces)))
     (format "%s%s" left right)))
 
-(defun transpose (list-of-lists) 
+(defun transpose (list-of-lists)
   "((a b c) (d e f)) -> ((a d) (b e) (c f)). Amazing, huh?"
   (apply #'map 'list (lambda (&rest args) (apply #'list args)) list-of-lists))
 
@@ -140,6 +140,18 @@
 (defun number-in-string-p (string)
   (string-match "^\\(\\([0-9]\+\.[0-9]\*\\)\\|\\([0-9]\+\\)\\|\\([0-9]*\.[0-9]\+\\)\\)$" string))
 
+(defun alist-put (alist key val)
+  (loop for pair in alist
+        unless (equal key (car pair)) collect pair into pairs
+        finally return (cons (cons key val) pairs)))
+
+(defun completing-read-with-whitespace (prompt options)
+  "Jesus Christ..."
+  (let ((prev (cdr (assoc 32 minibuffer-local-completion-map)))
+        (placeholder (define-key completion-list-mode-map (kbd "SPC") nil))
+        (data (completing-read prompt options)))
+    (define-key completion-list-mode-map (kbd "SPC") prev)
+    data))
 
 
 (provide 'gimme-utils)

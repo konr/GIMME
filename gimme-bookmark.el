@@ -123,7 +123,7 @@
   (interactive)
   (let* ((coll (prin1-to-string (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))))
          (facet (car gimme-bookmark-facets))
-         (message (if faceted-p (format "(faceted_pcol %s %s)\n" coll (prin1-to-string facet))
+         (message (if faceted-p (format "(faceted_pcol %s)\n" coll)
                     (format "(pcol %s)\n" coll))))
     (when coll (gimme-send-message message))))
 

@@ -2,3 +2,12 @@
   - [ ] Rewrite the sort calls on lyrics.rb using max_by or inject!
   - [ ] The update broadcast changes the format of the updated tracks
   - [ ] Group the facets?
+  - [ ] Some functions take optional arguments, and some other have
+	auxiliary functions.
+  - [ ] I'm using single quotes all the time. I don't think it's gonna
+	play well with tags that include it
+* Bugs [0/3]
+  - [ ] Saving/changing a lot of songs in the tagwriter is slow.
+  - [ ] The broadcast function is sometimes returning a wrong value
+        for the :timesplayed property. Fix'd for medialib_changed but
+        not for the other.

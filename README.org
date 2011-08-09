@@ -76,9 +76,4 @@
      - [ ] Process
      - [ ] Bug hunting
 
-* Bugs [0/3]
-  - [ ] Saving/changing a lot of songs in the tagwriter is slow.
-  - [ ] The broadcast function is sometimes returning a wrong value
-        for the :timesplayed property. Fix'd for medialib_changed but
-        not for the other.
 

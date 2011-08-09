@@ -65,6 +65,7 @@
     (define-key map (kbd "C-M-S-<return>") 'gimme-filter-append-current-collection)
     (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-faceted-subcol t)))
     (define-key map (kbd "!") 'gimme-filter-toggle-faceted)
+    (define-key map (kbd "T") 'gimme-faceted-change-tags-of-subcol)
     map)
   "Keymap for browsing collections in a faceted way")
 
@@ -74,6 +75,7 @@
   (interactive)
   (font-lock-mode t)
   (use-local-map (if facet gimme-faceted-map gimme-filter-map))
+  (setq-local groups 0)
   (setq truncate-lines t)
   (setq major-mode 'gimme-filter-mode
         mode-name "gimme-filter"))
@@ -136,6 +138,7 @@
                     (apply #'gimme-first-buffer-with-vars buffer))))
       (gimme-on-buffer
        buffer
+       (setq-local groups (1+ groups))
        (goto-char (point-max))
        (insert (propertize (format "%s [%s]\n" key val) 'font-lock-face `(:foreground ,(color-for key))
                            'data key))))))
@@ -163,12 +166,27 @@
   (let* ((facet (if (boundp 'gimme-collection-facet) nil (car gimme-bookmark-facets)))
 	 (function (if facet "faceted_pcol" "pcol"))
 	 (coll gimme-collection-name))
-    (gimme-send-message "(%s %s %s)\n" function (prin1-to-string coll) (if facet (prin1-to-string facet ) ""))))
+    (gimme-send-message "(%s %s)\n" function (prin1-to-string coll))))
 
 (defun gimme-filter-append-current-collection ()
   (interactive)
   (gimme-send-message  "(append_coll %s)\n" (prin1-to-string gimme-collection-name)))
 
+(defun gimme-faceted-collect-subcols ()
+  (save-excursion
+    (goto-char (point-min))
+    (next-line 3)
+    (loop for i upto (1- groups) doing (next-line)
+	  collecting (get-text-property (point) 'data))))
+
+(defun gimme-faceted-change-tags-of-subcol ()
+  (interactive)
+  (let* ((coll (prin1-to-string gimme-collection-name))
+	 (subcol (prin1-to-string (get-text-property (point) 'data)))
+	 (key (prin1-to-string gimme-collection-facet))
+	 (val (prin1-to-string (completing-read-with-whitespace 
+				(format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
+    (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
 
 (provide 'gimme-filter)
 ;;; gimme-filter.el ends here

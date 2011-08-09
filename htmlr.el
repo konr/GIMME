@@ -606,6 +606,7 @@ filter."
   (htmlr-reset)
   (set (make-local-variable 'fill-column) (1-(window-width)))
   (while (< (point) (point-max))
+    (beginning-of-line)
     (htmlr-step)))
 
 (provide 'htmlr)
