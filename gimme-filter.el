@@ -90,7 +90,7 @@
   (let* ((parent gimme-collection-name)
          (name (read-from-minibuffer (format "%s > " gimme-collection-title)))
          (message (format "(%s %s %s)\n" (if faceted "faceted_subcol" "subcol")
-			  (prin1-to-string parent) (prin1-to-string name))))
+                          (prin1-to-string parent) (prin1-to-string name))))
     (gimme-send-message message)))
 
 (defun gimme-parent-col (&optional faceted)
@@ -155,17 +155,17 @@
   (interactive)
   (let* ((parent gimme-collection-name)
          (key gimme-collection-facet)
-	 (val (get-text-property (point) 'data))
-	 (pattern (format "%s:'%s'" key val))
+         (val (get-text-property (point) 'data))
+         (pattern (format "%s:'%s'" key val))
          (message (format "(%s %s %s)\n" (if append "append_subcol" "faceted_subcol")
-			  (prin1-to-string parent) (prin1-to-string pattern))))
+                          (prin1-to-string parent) (prin1-to-string pattern))))
     (when val (gimme-send-message message))))
 
 (defun gimme-filter-toggle-faceted ()
   (interactive)
   (let* ((facet (if (boundp 'gimme-collection-facet) nil (car gimme-bookmark-facets)))
-	 (function (if facet "faceted_pcol" "pcol"))
-	 (coll gimme-collection-name))
+         (function (if facet "faceted_pcol" "pcol"))
+         (coll gimme-collection-name))
     (gimme-send-message "(%s %s)\n" function (prin1-to-string coll))))
 
 (defun gimme-filter-append-current-collection ()
@@ -177,15 +177,15 @@
     (goto-char (point-min))
     (next-line 3)
     (loop for i upto (1- groups) doing (next-line)
-	  collecting (get-text-property (point) 'data))))
+          collecting (get-text-property (point) 'data))))
 
 (defun gimme-faceted-change-tags-of-subcol ()
   (interactive)
   (let* ((coll (prin1-to-string gimme-collection-name))
-	 (subcol (prin1-to-string (get-text-property (point) 'data)))
-	 (key (prin1-to-string gimme-collection-facet))
-	 (val (prin1-to-string (completing-read-with-whitespace 
-				(format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
+         (subcol (prin1-to-string (get-text-property (point) 'data)))
+         (key (prin1-to-string gimme-collection-facet))
+         (val (prin1-to-string (completing-read-with-whitespace
+                                (format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
     (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
 
 (provide 'gimme-filter)

@@ -6,6 +6,9 @@
 	auxiliary functions.
   - [ ] I'm using single quotes all the time. I don't think it's gonna
 	play well with tags that include it
+  - [ ] Remove the FIXMEs and put them all here
+  - [ ] Is autocompletion scaling for 10k tracks? See https://github.com/rails/auto_complete
+  - [ ] A nil in every part of gimme-mlib-overview?
 * Bugs [0/3]
   - [ ] Saving/changing a lot of songs in the tagwriter is slow.
   - [ ] The broadcast function is sometimes returning a wrong value

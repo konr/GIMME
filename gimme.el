@@ -56,6 +56,8 @@
   "The current collection. Can be a string or an idlist")
 (defvar gimme-bookmarks nil
   "Collections not saved on the core")
+(defvar gimme-mlib-overview nil)
+(defvar gimme-mlib-fidelity-level 1)
 
 (defvar gimme-bookmark-header "GIMME - bookmark View" "Initial header")
 (defvar gimme-playlist-header "GIMME - Playlist view" "Initial header")
@@ -192,6 +194,22 @@
                            (min (length ,title)
                                 (window-hscroll))))))
 
+(defun gimme-mlib-overview (data) (setq gimme-mlib-overview data))
+
+(defun gimme-assure-autocompletion-works ()
+  (when (or (not gimme-mlib-overview) (> gimme-mlib-fidelity-level 1))
+   (gimme-send-message "(mlib_overview)\n")))
+
+(defun gimme-possible-completions (incomplete &rest a)
+  "FIXME: Not sure if it would scale for 10k+ entries"
+  (let* ((key (replace-regexp-in-string "^\\(.* \\)\?\\([^ :]\+\\)\\(:.*\\)\?$" "\\2" incomplete))
+         (value (replace-regexp-in-string ".*:\\(.*\\)$" "\\1" incomplete))
+         (key-p (string-match key value))
+         (values (loop for x in gimme-mlib-overview if (equal (car x) key) return (cdadr x))))
+    (if key-p (mapcar #'car (remove-if-not (lambda (x) (string-match (format "%s.*" key) (car x))) gimme-mlib-overview))
+      (remove-if-not (lambda (x) (string-match (format ".*%s.*" (downcase value)) (downcase x))) values))))
+
+
 (defun gimme-toggle-view ()
   "Cycle through the views defined in gimme-config"
   (interactive)
@@ -223,7 +241,8 @@
   "The XMMS2 interface we all love"
   (interactive)
   (gimme-restart)
-  (gimme-playlist))
+  (gimme-playlist)
+  (gimme-assure-autocompletion-works))
 
 ;;;;;;;;;;
 ;; Init ;;

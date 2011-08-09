@@ -287,6 +287,25 @@ class GIMME
             true; end
           true;end;end;end;end
 
+  def mlib_overview
+    Thread.new do
+      to_emacs [:"message", "Caching data from the Mlib..."]
+      i = 0; j = 0
+      with_coll(nil) do |coll|
+        atribs = $atribs - ["url","duration","id","tracknr","starred","timesplayed"]
+        hash = Hash[]
+        atribs.each {|at| hash[at] = Hash[]}
+        @async.coll_query_info(coll,atribs).notifier do |all|
+          n = all.count
+          all.each do |raw|
+            i += 1
+            to_emacs [:"message", "Caching data from the Mlib... #{i*100/n}%%"]
+            dict = Hash[raw.to_a]
+            atribs.each {|at| val = dict[at.to_sym]; hash[at][val] = 0 if !hash[at][val]; hash[at][val] += 1}
+          end
+          to_emacs [:"gimme-mlib-overview", [:quote, hash.to_a.map{|x| [x[0],x[1].to_a.map{|k,_| k}]}]]
+        end; end; end; end
+
   def update_tags (alist)
     dict = {}; alist.each {|key,val| dict[key] = val }
     ($atribs-["id","url","font-lock-face"]).each do |key|
