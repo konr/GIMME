@@ -153,6 +153,11 @@
     (define-key completion-list-mode-map (kbd "SPC") prev)
     data))
 
+(defun plist-get-with-equal (coll key &optional fun)
+  (loop for x = coll then (cddr x) 
+	and fun = (or fun 'equal) 
+	while x if (funcall fun key (car x)) return (cadr x)))
+
 (defun visible-buffers ()
   (mapcan #'buffer-list (visible-frame-list)))
 

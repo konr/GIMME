@@ -286,12 +286,13 @@ class GIMME
             true; end
           true;end;end;end;end
 
-  def mlib_overview
+  def coll_overview(name = nil)
     Thread.new do
       sleep 0.5 # Feels smoother than without the sleep
-      to_emacs [:"message", "Caching data from the Mlib..."]
-      i = 0; j = 0
-      with_coll(nil) do |coll|
+      message = !name
+      to_emacs [:"message", "Caching data from the Mlib..."] if message
+      perc = [-1]; i = 0 
+      with_coll(name) do |coll|
         atribs = $atribs - ["url","duration","id","tracknr","starred","timesplayed"]
         hash = Hash[]
         $atribs.each {|at| hash[at] = Hash[]}
@@ -299,11 +300,12 @@ class GIMME
           n = all.count
           all.each do |raw|
             i += 1
-            to_emacs [:"message", "Caching data from the Mlib... #{i*100/n}%%"]
+            perc = (perc+[i*100/n])[-2..-1]
+            to_emacs [:"message", "Caching data from the Mlib... #{i*100/n}%%"] if perc[0] != perc[1] and message
             dict = Hash[raw.to_a]
             atribs.each {|at| val = dict[at.to_sym]; hash[at][val] = 0 if !hash[at][val]; hash[at][val] += 1}
           end
-          to_emacs [:"gimme-mlib-overview", [:quote, hash.to_a.map{|x| [x[0],x[1].to_a.map{|k,_| k}]}]]
+          to_emacs [:"gimme-coll-overview", name, [:quote, hash.to_a.map{|x| [x[0],x[1].to_a.map{|k,_| k}]}]]
         end; end; end; end
 
   def update_tags (alist)
@@ -447,7 +449,8 @@ class GIMME
           dict.each {|key,val| adict[key] = val.class == NilClass ? NOTHING : val}
           to_emacs [:"gimme-insert-song",plist,[:quote, adict.to_a.flatten],:t]
         end
-        true;end;end;end
+        coll_overview(data)
+        true;end;end; end
 
   def rcol (old, new)
     @async.coll_rename(old,new,Xmms::Collection::NS_COLLECTIONS).notifier {|res|}
@@ -501,6 +504,7 @@ class GIMME
         count.each do |k,v|
           to_emacs [:"gimme-faceted-insert-group", plist, k,v]
         end
+        coll_overview(data)
         true;end;end;end
 
   def faceted_subcol (data,pattern)

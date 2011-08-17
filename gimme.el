@@ -56,7 +56,8 @@
   "The current collection. Can be a string or an idlist")
 (defvar gimme-bookmarks nil
   "Collections not saved on the core")
-(defvar gimme-mlib-overview nil)
+(defvar gimme-mlib-cache-plist nil)
+(defvar gimme-mlib-cache-global nil)
 (defvar gimme-mlib-fidelity-level 1)
 
 (defvar gimme-bookmark-header "GIMME - bookmark View" "Initial header")
@@ -97,7 +98,7 @@
                        (format "GIMME - %s (%s)" type-s name-s) 'utf-8))
          (facet (plist-get plist 'gimme-collection-facet)))
     (gimme-on-buffer buffer-name
-		     (kill-local-variable 'gimme-collection-facet) ;; FIXME lousy
+                     (kill-local-variable 'gimme-collection-facet) ;; FIXME lousy
                      (case type
                        ('playlist (gimme-playlist-mode))
                        ('collection (gimme-filter-mode facet)))
@@ -194,11 +195,13 @@
                            (min (length ,title)
                                 (window-hscroll))))))
 
-(defun gimme-mlib-overview (data) (setq gimme-mlib-overview data))
+(defun gimme-coll-overview (name data)
+  (if name (setq gimme-mlib-cache-plist (plist-put gimme-mlib-cache-plist name data))
+    (setq gimme-mlib-cache-global data)))
 
-(defun gimme-assure-autocompletion-works ()
-  (when (or (not gimme-mlib-overview) (> gimme-mlib-fidelity-level 1))
-   (gimme-send-message "(mlib_overview)\n")))
+(defun gimme-assure-some-autocompletion ()
+  (when (or (not gimme-mlib-cache-global) (> gimme-mlib-fidelity-level 1))
+    (gimme-send-message "(coll_overview)\n")))
 
 (defun gimme-toggle-view ()
   "Cycle through the views defined in gimme-config"
@@ -232,7 +235,7 @@
   (interactive)
   (gimme-restart)
   (gimme-playlist)
-  (gimme-assure-autocompletion-works))
+  (gimme-assure-some-autocompletion))
 
 ;;;;;;;;;;
 ;; Init ;;

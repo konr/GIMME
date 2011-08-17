@@ -17,9 +17,10 @@
   - Change gimme-filter for something more appropriate
   - Autocomplete: Make the *GIMME Completions* buffer scroll
   - Saving/changing a lot of songs in the tagwriter is slow.
-  - The broadcast function is sometimes returning a wrong value
-        for the :timesplayed property. Fix'd for medialib_changed but
-        not for the other.
+  - The broadcast function is sometimes returning a wrong value for
+    the :timesplayed property. Fix'd for medialib_changed but not for
+    the other.
+  - Weird stuff get copied to the clipboard sometimes
 
 
 

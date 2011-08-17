@@ -5,6 +5,7 @@
 (defvar gimme-autocomplete-buffer-name "*GIMME Completions*")
 (defvar gimme-autocomplete-prompt "> ")
 (defvar gimme-autocomplete-done-with-autocompletions t)
+(defvar gimme-autocomplete-current-coll nil)
 
 (defun gimme-autocomplete-set-minibuffer (text)
   (interactive)
@@ -20,16 +21,17 @@
     (buffer-substring (+ (length gimme-autocomplete-prompt) (point-min)) (point-max))))
 
 (defvar gimme-autocomplete-prompt-map
-  (let ((map minibuffer-local-map))
+  (let ((map (copy-tree minibuffer-local-map)))
     (define-key map (kbd "TAB") 'gimme-autocomplete-toggle-alternatives-on-minibuffer)
     (define-key map (kbd "<backtab>") (lambda () (interactive) (gimme-autocomplete-toggle-alternatives-on-minibuffer -1)))
     (define-key map (kbd "SPC") (lambda () (interactive) (setq gimme-autocomplete-done-with-autocompletions t) (insert " ")))
     map)
   "FIXME: I must write lots of doc strings :(")
 
-(defun gimme-autocomplete-prompt (prompt)
+(defun gimme-autocomplete-prompt (prompt collection)
   (interactive)
   (setq gimme-autocomplete-done-with-autocompletions t)
+  (setq gimme-autocomplete-current-coll collection)
   (setq gimme-autocomplete-prompt prompt)
   (read-from-minibuffer gimme-autocomplete-prompt nil gimme-autocomplete-prompt-map))
 
@@ -38,9 +40,10 @@
   (let* ((key (replace-regexp-in-string "^\\(.* \\)\?\\([^ :]\+\\)\\(:.*\\)\?$" "\\2" incomplete))
          (value (replace-regexp-in-string ".*:\\(.*\\)$" "\\1" incomplete))
          (key-p (or (string-match key value) (string= "" incomplete)))
-         (values (loop for x in gimme-mlib-overview if (equal (car x) key) return (cdadr x)))
+	 (completions (or (plist-get-with-equal gimme-mlib-cache-plist gimme-autocomplete-current-coll) gimme-mlib-cache-global))
+         (values (loop for x in completions if (equal (car x) key) return (cdadr x)))
          (values (if key-p (mapcar (lambda (x) (format "%s:" (car x)))
-                                   (remove-if-not (lambda (x) (string-match (format "%s.*" key) (car x))) gimme-mlib-overview))
+                                   (remove-if-not (lambda (x) (string-match (format "%s.*" key) (car x))) completions))
                    (remove-if-not (lambda (x) (string-match (format ".*%s.*" (downcase value)) (downcase x))) values)))
          (with-previous (mapcar (lambda (x) (replace-regexp-in-string (format "%s$" (if key-p key value))
                                                                       (if key-p x (format "'%s'" x)) incomplete)) values)))

@@ -88,7 +88,7 @@
   "Creates and displays a new collection intersecting the search criteria and the current collection"
   (interactive)
   (let* ((parent gimme-collection-name)
-         (name (gimme-autocomplete-prompt (format "%s > " gimme-collection-title)))
+         (name (gimme-autocomplete-prompt (format "%s > " gimme-collection-title) parent))
          (message (format "(%s %s %s)\n" (if faceted "faceted_subcol" "subcol")
                           (prin1-to-string parent) (prin1-to-string name))))
     (gimme-send-message message)))

@@ -79,7 +79,7 @@
   (interactive)
   (let* ((props (text-properties-at (point)))
          (coll (or (plist-get props 'coll) (plist-get props 'ref)))
-         (name (gimme-autocomplete-prompt "> "))
+         (name (gimme-autocomplete-prompt "> " col))
          (message (format "(faceted_subcol %s %s)\n" (prin1-to-string coll)
                           (prin1-to-string name))))
     (gimme-send-message message)))
