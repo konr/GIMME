@@ -153,6 +153,9 @@
     (define-key completion-list-mode-map (kbd "SPC") prev)
     data))
 
+(defun visible-buffers ()
+  (mapcan #'buffer-list (visible-frame-list)))
+
 
 (provide 'gimme-utils)
 ;;; gimme-utils.el ends here

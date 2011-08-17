@@ -8,7 +8,7 @@
     html))
 
 (defun gimme-render-process-pairs (string)
-  (loop for x = string then (replace-regexp-in-string "<\\([^> ]+\\)[^>]*>\\([^(</\\1>)]\+\\)</\\1>"
+  (loop for x = string then (replace-regexp-in-string "<\\([^> ]+\\)[^>]*>\\([^(</\\1>)]\+\\)*</\\1>"
                                                       #'gimme-render-process-match x)
         and y = (format "%sa" string) then x until (string= x y) and finally return x))
 
@@ -24,7 +24,8 @@
                                      (attribs (regexp-all-matches attribs "\\([^= ]\+\\)=\"\\([^\"]\+\\)\"[ \$]")))
                                 (cond
                                  ((string= tag "br") "\n")
-				 (t ""))))
+                                 ((string= tag "hr") "\n--------\n")
+                                 (t ""))))
                             string))
 
 (defun gimme-render-process-match (string)
@@ -36,7 +37,7 @@
          (tag (substring tag-and-attribs 0 space))
          (attribs (substring tag-and-attribs space))
          (attribs (regexp-all-matches attribs "\\([^= ]\+\\)=\"\\([^\"]\+\\)\"[ \$]"))
-	 (props (get-text-property 0 'font-lock-face fixed)))
+         (props (get-text-property 0 'font-lock-face fixed)))
     (cond
      ((string= "b" tag) (propertize fixed 'font-lock-face (plist-put props :weight 'bold)))
      ((string= "i" tag) (propertize fixed 'font-lock-face (plist-put props :slant 'italic)))

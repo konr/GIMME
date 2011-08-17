@@ -114,7 +114,7 @@
   (interactive)
   (let* ((beg (progn (sane-goto-line table-first-line) (beginning-of-line) (point)))
          (end (progn (sane-goto-line table-last-line) (end-of-line) (point)))
-         (maxes (butlast (split-string (buffer-substring beg end) "\n")))
+         (maxes (split-string (buffer-substring beg end) "\n"))
          (all-props (mapcar (lambda (x) (text-properties-at (- (length x) 3) x)) maxes))
          (maxes (mapcar (lambda (x) (length (replace-regexp-in-string " *|$" "" x))) maxes))
          (max (apply #'max maxes)))

@@ -35,6 +35,23 @@ module Crawlyr
     end
   end
 
+  def Crawlyr.get_bachcantata (bwv, part=nil)
+    begin
+      url = "http://www.bach-cantatas.com/Texts/BWV#{bwv}-Eng3.htm"
+      agent = Mechanize.new
+      to_emacs [:message, "Fetching lyrics... [0/1]"]
+      page = agent.get(url)
+      to_emacs [:message, "Fetching lyrics... [1/1]"]
+      page = Nokogiri::HTML(page.body, 'UTF-8')
+      trs = page.css("table tr").to_a
+      trs.delete_if {|x| !(x.to_s =~ /<b>/ && x.to_s =~ /<i>/)}
+      trs = trs[2..-1]
+      html = part ? trs[part+1] : trs.inject{|a,z| a.to_s + "<hr>" + z.to_s}
+      return [html, url]
+    rescue
+      to_emacs [:message, "Fetching lyrics... ERROR!"]
+    end; end
+
   def Crawlyr.get_lyricwiki (tags)
     to_emacs [:message, "Fetching lyrics... [0/3]"]
     agent = Mechanize.new
@@ -98,8 +115,8 @@ module Crawlyr
     threads.each {|t| t.join}
     nodes.each { |node| node.children.each {|x| x.remove if !(["b", "br", "text", "i"].include?(x.name))}}
 
-    # 3. Do some preselection to make the algorithm faster 
-    nodes.delete_if do |node| 
+    # 3. Do some preselection to make the algorithm faster
+    nodes.delete_if do |node|
       # Removes 95% of the nodes
       (node.inner_text.length < 280) or \
       # SEO stuff, disclaimers, copyright laws etc
@@ -110,7 +127,7 @@ module Crawlyr
       (node.inner_text =~ /#{dict[:artist]}/)
     end
 
-    # 4. Cross the data by comparing the character distribution and clusterize into a graph. 
+    # 4. Cross the data by comparing the character distribution and clusterize into a graph.
     nodes = nodes.map { |node| Analyzer.new(node)}.delete_if {|node| !node.freq}
     adj = Hash[]; fair = 0.001; n = nodes.length - 1
     (0..n).each do |i|; (0..n).each do |j|

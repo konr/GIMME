@@ -1,16 +1,25 @@
 * To be done
-  - [ ] Rewrite the sort calls on lyrics.rb using max_by or inject!
-  - [ ] The update broadcast changes the format of the updated tracks
-  - [ ] Group the facets?
-  - [ ] Some functions take optional arguments, and some other have
-	auxiliary functions.
-  - [ ] I'm using single quotes all the time. I don't think it's gonna
-	play well with tags that include it
-  - [ ] Remove the FIXMEs and put them all here
-  - [ ] Is autocompletion scaling for 10k tracks? See https://github.com/rails/auto_complete
-  - [ ] A nil in every part of gimme-mlib-overview?
-* Bugs [0/3]
-  - [ ] Saving/changing a lot of songs in the tagwriter is slow.
-  - [ ] The broadcast function is sometimes returning a wrong value
+  - Rewrite the sort calls on lyrics.rb using max_by or inject!
+  - The update broadcast changes the format of the updated tracks
+  - Group the facets?
+  - Some functions take optional arguments, and some other have
+    auxiliary functions.
+  - I'm using single quotes all the time. I don't think it's gonna
+    play well with tags that include it
+  - Remove the FIXMEs and put them all here
+  - Is autocompletion scaling for 10k tracks? See https://github.com/rails/auto_complete
+  - A nil in every part of gimme-mlib-overview?
+  - Improve the niche lyrics fetcher
+  - Equalizer presets
+  - Radio list
+  - Replace for local variables the bunch of global variables that
+    are there whenever possible
+  - Change gimme-filter for something more appropriate
+  - Autocomplete: Make the *GIMME Completions* buffer scroll
+  - Saving/changing a lot of songs in the tagwriter is slow.
+  - The broadcast function is sometimes returning a wrong value
         for the :timesplayed property. Fix'd for medialib_changed but
         not for the other.
+
+
+

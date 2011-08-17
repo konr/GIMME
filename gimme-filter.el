@@ -88,7 +88,7 @@
   "Creates and displays a new collection intersecting the search criteria and the current collection"
   (interactive)
   (let* ((parent gimme-collection-name)
-         (name (read-from-minibuffer (format "%s > " gimme-collection-title)))
+         (name (gimme-autocomplete-prompt (format "%s > " gimme-collection-title)))
          (message (format "(%s %s %s)\n" (if faceted "faceted_subcol" "subcol")
                           (prin1-to-string parent) (prin1-to-string name))))
     (gimme-send-message message)))
@@ -187,6 +187,7 @@
          (val (prin1-to-string (completing-read-with-whitespace
                                 (format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
     (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
+
 
 (provide 'gimme-filter)
 ;;; gimme-filter.el ends here

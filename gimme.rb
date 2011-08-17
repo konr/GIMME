@@ -14,10 +14,9 @@ I bet 3 internets that '#{lib}' is missing\")"
 end
 
 
-DEBUG = false
 NOTHING = "nil"
-$stderr.reopen('/dev/null') # FIXME: Won't work on Windows
 
+$stderr.reopen(((RUBY_PLATFORM =~ /win/) ? 'NUL' : '/dev/null'), 'w')
 $atribs=["title","id","artist","album", "duration","starred","url","tracknr",
          "timesplayed"]
 
@@ -289,12 +288,13 @@ class GIMME
 
   def mlib_overview
     Thread.new do
+      sleep 0.5 # Feels smoother than without the sleep
       to_emacs [:"message", "Caching data from the Mlib..."]
       i = 0; j = 0
       with_coll(nil) do |coll|
         atribs = $atribs - ["url","duration","id","tracknr","starred","timesplayed"]
         hash = Hash[]
-        atribs.each {|at| hash[at] = Hash[]}
+        $atribs.each {|at| hash[at] = Hash[]}
         @async.coll_query_info(coll,atribs).notifier do |all|
           n = all.count
           all.each do |raw|
@@ -552,7 +552,15 @@ class GIMME
   def fetch_lyrics (plist)
     Thread.new do
       dict = Hash[plist.collect_every(2)]
-      lyrics = Crawlyr.get_lyrics(dict)
+      # FIXME: Isn't it better to leave to the lib the method
+      # selection?  Apparently so, but what if the track depends on
+      # its context to be identified?
+      if dict[:artist] == "Johann Sebastian Bach"
+        bwv = dict[:title].gsub(/[^0-9]/,"")
+        lyrics = Crawlyr.get_bachcantata(bwv)
+      else
+        lyrics = Crawlyr.get_lyrics(dict)
+      end
       plist = plist + [:source,lyrics[1]]
       lyrics = lyrics[0]
       to_emacs [:"gimme-lyrics-display", [:quote, plist], lyrics.encode('UTF-8')]

@@ -35,17 +35,18 @@
     map)
   "Tagwriter's keymap")
 
-(defvar gimme-tagwriter-scan-map
-  (let ((map minibuffer-local-map))
-    (define-key map (kbd "TAB") 'gimme-tagwriter-recalculate-tags)
-    map)
-  "Tagwriter's scan keymap")
-
 (defvar gimme-tagwriter-filter-map
   (let ((map minibuffer-local-map))
     (define-key map (kbd "TAB") 'gimme-tagwriter-recalculate-tags)
     map)
   "Tagwriter's filter keymap")
+
+
+(defvar gimme-tagwriter-scan-map
+  (let ((map minibuffer-local-map))
+    (define-key map (kbd "TAB") 'gimme-tagwriter-recalculate-tags)
+    map)
+  "Tagwriter's scan keymap")
 
 
 (defun gimme-tagwriter ()
