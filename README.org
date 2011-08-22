@@ -5,32 +5,6 @@
 
   It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps.
 
-* Quickstart
-  Currently, you have to manually add your files to XMMS2 with the
-  xmms2 utility. For example, to add everything under the '~/Music'
-  folder, you would do /xmms2 add ~/Music/**/**/. Then, you can start
-  to use GIMME's three interaces: (i) filter-view, (ii) tree-view and
-  (iii) playlist-view.
-
-  On GIMME's buffer, *!* goes to filter-view, which presents
-  everything you have in your media library. Press, *>* to get a
-  subset of your files by filtering them. This subset is called a
-  collection, and pressing *<* will get you back to its parent.
-
-  *@* gets you to tree-view, which presents a history of your
-  filtering as a tree. You can save your favorite collections from
-  there.
-
-  *#* gets you to playlist-view, which is like most media
-  players. There are many features on GIMME to explore. In any view,
-  press /C-h m/, to get the available keybindings.
-
-* Known bugs
-  - When you delete the currently playing song, the playlist state
-    gets inconsistent on the server
-  - Sometimes when you jump to another view, the buffer is displayed
-    without colors until you press a key. Perhaps an Emacs issue?
-
 * Reference:
   - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
   - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
