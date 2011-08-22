@@ -1,11 +1,6 @@
 * Info
-  GIMME is an XMMS2 client for Emacs developed for
-  Google's Summer of Code. You can read more about it
-  [[http://gimmeplayer.org/][here]].
-
-  It uses [[http://rubyforge.org/projects/sexp/][S-Expression]], a Ruby Library to deal with sexps.
-
-* Reference:
-  - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
-  - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
-
+  GIMME, which stands for GIMME Interesting Music on My Emacs, is an
+  XMMS2 interface for GNU Emacs that provides a minimalistic and
+  intuitive user experience through searches, powered by collection
+  operations, as well as several other features such as getting lyrics 
+  and information from Freebase. You can read more about it [[http://gimmeplayer.org/][here]].
