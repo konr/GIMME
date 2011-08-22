@@ -16,6 +16,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; A bunch of functions used by GIMME that might useful for other
+;; things and therefore do not have its prefix.
+
 ;;; Code
 
 (require 'hexrgb)
@@ -25,26 +30,31 @@
   (with-current-buffer buffer major-mode))
 
 (defun dfs-map (fun tree)
+  "Maps a tree using depth-first search"
   (loop for node in tree collecting
         (if (listp node) (dfs-map fun node) (funcall fun node))))
 
 (defun decode-strings-in-tree (tree encoding)
+  "Decode all strings that are in the current tree"
   (dfs-map (lambda (x) (if (stringp x) (decode-coding-string x encoding) x)) tree))
 
 (defmacro unlocking-buffer (&rest body)
+  "Macro that allows safer manipulation of a read-only buffer"
   `(progn (toggle-read-only -1)
           ,@body
           (toggle-read-only 1)))
 
 (defmacro setq-local (key val)
+  "Sets a local function. It's a macro to avoid using quotes too much"
   `(progn (make-local-variable ',key) (set ',key ,val)))
 
 (defun plist-to-alist (p)
+  "Turns an alist into a plist"
   (loop for x = p then (cddr x) while x
         collecting (cons (car x) (cadr x))))
 
 (defun plist-to-pseudo-alist (p)
-  "((foo bar)) instead of ((foo . bar)). The sexp library won't work otherwise :("
+  "((foo bar)) instead of ((foo . bar)) because the sexp library won't work otherwise :("
   (loop for x = p then (cddr x) while x
         collecting (list (car x) (cadr x))))
 
@@ -62,6 +72,7 @@
     (nth (mod hash len) colors)))
 
 (defun flatten (l)
+  "Flattens a sexp recursively."
   (cond ((null l) nil)
         ((atom l) (list l))
         (t (append (flatten (car l))
@@ -71,6 +82,7 @@
   "For debugging purposes")
 
 (defun range-of-region ()
+  "Returns the range between the lines in which the point and the mark are."
   (if (use-region-p)
       (let* ((min (min (point) (mark)))
              (max (max (point) (mark)))
@@ -121,6 +133,7 @@
      ,@body))
 
 (defun string-expanded (string size &optional right-aligned)
+  "Expands a string with whitespace or hides extra characters with an ellipsis"
   (let* ((string (if (<= (length string) size) string
                    (format "%s..." (substring string 0 (- size 3)))))
          (spaces (make-string (- size (length string)) ? ))
@@ -138,9 +151,11 @@
   (next-line (1- number)))
 
 (defun number-in-string-p (string)
+  "Returns non-nil if the string can be safely converted to a number."
   (string-match "^\\(\\([0-9]\+\.[0-9]\*\\)\\|\\([0-9]\+\\)\\|\\([0-9]*\.[0-9]\+\\)\\)$" string))
 
 (defun alist-put (alist key val)
+  "Sets or updates an alist"
   (loop for pair in alist
         unless (equal key (car pair)) collect pair into pairs
         finally return (cons (cons key val) pairs)))
@@ -154,13 +169,19 @@
     data))
 
 (defun plist-get-with-equal (coll key &optional fun)
+  "Allah the Merciful..."
   (loop for x = coll then (cddr x) 
 	and fun = (or fun 'equal) 
 	while x if (funcall fun key (car x)) return (cadr x)))
 
 (defun visible-buffers ()
+  "Returns a list of visible buffers"
   (mapcan #'buffer-list (visible-frame-list)))
 
+(defun expand-directories (files)
+  "Given a list of files and directories, expand the directories recursively, adding their children to list"
+  (mapcan (lambda (x) (if (file-directory-p x) (expand-directories (directory-files x t))
+                   (list x))) (remove-if (lambda (x) (string-match "/\\.\\.?$" x)) files)))
 
 (provide 'gimme-utils)
 ;;; gimme-utils.el ends here

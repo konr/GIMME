@@ -1,4 +1,4 @@
-;;; gimme-filter.el --- GIMME's filter-view
+;;; gimme-collection.el --- GIMME's filter-view
 
 ;; Author: Konrad Scorciapino <scorciapino@gmail.com>
 ;; Keywords: XMMS2, mp3
@@ -16,17 +16,21 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; These are the functions used to operate on collections, both when
+;; viewed as a list of songs and when faceted.
+
 ;;; Code
 
-(defun gimme-filter ()
+(defun gimme-collection ()
   "Sets up the buffer. FIXME: Should be implemented in a more robust way."
   (interactive)
   (let* ((buffer-name "GIMME - Collection (All media)")
-         (buffer (car (remove-if-not (lambda (x) (string= (buffer-name x) buffer-name))
-                                     (buffer-list)))))
+         (buffer (car (remove-if-not (lambda (x) (string= (buffer-name x) buffer-name)) (buffer-list)))))
     (if buffer (switch-to-buffer buffer) (gimme-send-message "(pcol)\n"))))
 
-(defvar gimme-filter-map
+(defvar gimme-collection-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     (define-key map (kbd "j") 'next-line)
@@ -39,11 +43,11 @@
     (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
     (define-key map (kbd "<") 'gimme-parent-col)
     (define-key map (kbd ">") 'gimme-child-col)
-    (define-key map (kbd "a") 'gimme-filter-append-focused)
-    (define-key map (kbd "RET") 'gimme-filter-play-focused)
-    (define-key map (kbd "A") 'gimme-filter-append-current-collection)
-    (define-key map (kbd "f") 'gimme-filter-same)
-    (define-key map (kbd "!") 'gimme-filter-toggle-faceted)
+    (define-key map (kbd "a") 'gimme-collection-append-focused)
+    (define-key map (kbd "RET") 'gimme-collection-play-focused)
+    (define-key map (kbd "A") 'gimme-collection-append-current-collection)
+    (define-key map (kbd "f") 'gimme-collection-same)
+    (define-key map (kbd "!") 'gimme-collection-toggle-faceted)
     map)
   "Filter-view's keymap")
 
@@ -62,23 +66,23 @@
     (define-key map (kbd "<") (lambda () (interactive) (gimme-parent-col t)))
     (define-key map (kbd ">") (lambda () (interactive) (gimme-child-col t)))
     (define-key map (kbd "RET") 'gimme-faceted-subcol)
-    (define-key map (kbd "C-M-S-<return>") 'gimme-filter-append-current-collection)
+    (define-key map (kbd "C-M-S-<return>") 'gimme-collection-append-current-collection)
     (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-faceted-subcol t)))
-    (define-key map (kbd "!") 'gimme-filter-toggle-faceted)
+    (define-key map (kbd "A") (lambda () (interactive) (gimme-faceted-subcol t)))
+    (define-key map (kbd "!") 'gimme-collection-toggle-faceted)
     (define-key map (kbd "T") 'gimme-faceted-change-tags-of-subcol)
     map)
   "Keymap for browsing collections in a faceted way")
 
 
-(defun gimme-filter-mode (&optional facet)
+(defun gimme-collection-mode (&optional facet)
   "Manipulate collections"
   (interactive)
   (font-lock-mode t)
-  (use-local-map (if facet gimme-faceted-map gimme-filter-map))
+  (use-local-map (if facet gimme-faceted-map gimme-collection-map))
   (setq-local groups 0)
   (setq truncate-lines t)
-  (setq major-mode 'gimme-filter-mode
-        mode-name "gimme-filter"))
+  (setq major-mode 'gimme-collection-mode mode-name "gimme-collection"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive Functions ;;
@@ -99,51 +103,39 @@
   (let* ((message (format "(supcol %s %s)\n" (prin1-to-string gimme-collection-name) (if faceted "t" ""))))
     (gimme-send-message message)))
 
-(defun gimme-filter-append-focused ()
+(defun gimme-collection-append-focused ()
   "Appends to the current playlist the focused song"
   (interactive)
   (gimme-send-message "(add %s)\n" (get-text-property (point) 'id)))
 
-(defun gimme-filter-play-focused ()
+(defun gimme-collection-play-focused ()
   "Appends to the current playlist the focused song and then play it"
   (interactive)
   (gimme-send-message "(addplay %s)\n" (get-text-property (point) 'id)))
 
-(defun gimme-filter-append-collection ()
+(defun gimme-collection-append-collection ()
   "Appends to the current playlist the entire collection"
   (interactive)
   (message "Appending songs to the playlist...")
   (dolist (el (range-to-plists (point-min) (point-max)))
     (gimme-send-message (format "(add %d)\n" (getf el 'id)))))
 
-(defun gimme-filter-same ()
+(defun gimme-collection-same ()
   "Creates a subcollection matching some this song's criteria"
   (interactive)
   (let* ((parent (gimme-bookmark-current-ref))
          (name (completing-read
                 "Filter? "
                 (mapcar (lambda (n) (format "%s:%s"
-                                       (car n) (prin1-to-string
-                                                (decode-coding-string (cdr n) 'utf-8))))
-                        (remove-if (lambda (m) (member (car m)
-                                                  '(id duration font-lock-face)))
+                                       (car n) (prin1-to-string (decode-coding-string (cdr n) 'utf-8))))
+                        (remove-if (lambda (m) (member (car m) '(id duration font-lock-face)))
                                    (plist-to-alist (text-properties-at (point)))))))
          (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
     (gimme-send-message message)))
 
 
-(defun gimme-faceted-insert-group (buffer key val)
-  (when buffer
-    (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
-                    (apply #'gimme-first-buffer-with-vars buffer))))
-      (gimme-on-buffer
-       buffer
-       (setq-local groups (1+ groups))
-       (goto-char (point-max))
-       (insert (propertize (format "%s [%s]\n" key val) 'font-lock-face `(:foreground ,(color-for key))
-                           'data key))))))
-
 (defun gimme-faceted-change-facet (&optional prev-p)
+  "Shows the current collection through a different facet."
   (interactive)
   (let* ((coll gimme-collection-name)
          (facet (gimme-toggle-facet t prev-p))
@@ -151,7 +143,7 @@
     (when coll (gimme-send-message message))))
 
 (defun gimme-faceted-subcol (&optional append)
-  "FIXME: There are limitations on using the quotes"
+  "Eithers displays or appends to the playlist a sub-collection containing the current group of the collection."
   (interactive)
   (let* ((parent gimme-collection-name)
          (key gimme-collection-facet)
@@ -161,25 +153,21 @@
                           (prin1-to-string parent) (prin1-to-string pattern))))
     (when val (gimme-send-message message))))
 
-(defun gimme-filter-toggle-faceted ()
+(defun gimme-collection-toggle-faceted ()
+  "Toggles between displaying the current collection as a list of tracks and faceted."
   (interactive)
   (let* ((facet (if (boundp 'gimme-collection-facet) nil (car gimme-bookmark-facets)))
          (function (if facet "faceted_pcol" "pcol"))
          (coll gimme-collection-name))
     (gimme-send-message "(%s %s)\n" function (prin1-to-string coll))))
 
-(defun gimme-filter-append-current-collection ()
+(defun gimme-collection-append-current-collection ()
+  "Appends current collection to the playlist"
   (interactive)
   (gimme-send-message  "(append_coll %s)\n" (prin1-to-string gimme-collection-name)))
 
-(defun gimme-faceted-collect-subcols ()
-  (save-excursion
-    (goto-char (point-min))
-    (next-line 3)
-    (loop for i upto (1- groups) doing (next-line)
-          collecting (get-text-property (point) 'data))))
-
 (defun gimme-faceted-change-tags-of-subcol ()
+  "Changes the current group's value of the tag used as facet to another thing."
   (interactive)
   (let* ((coll (prin1-to-string gimme-collection-name))
          (subcol (prin1-to-string (get-text-property (point) 'data)))
@@ -189,5 +177,29 @@
     (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
 
 
-(provide 'gimme-filter)
-;;; gimme-filter.el ends here
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Called by the ruby process ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-faceted-collect-subcols ()
+  "Auxiliary function used to collect all the possible values of the current tag/facet"
+  (save-excursion
+    (goto-char (point-min))
+    (next-line 3)
+    (loop for i upto (1- groups) doing (next-line)
+          collecting (get-text-property (point) 'data))))
+
+
+(defun gimme-faceted-insert-group (buffer key val)
+  "Inserts into the buffer a line that represents a group of tracks with the same value of the current facet"
+  (when buffer
+    (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer (apply #'gimme-first-buffer-with-vars buffer))))
+      (gimme-on-buffer
+       buffer
+       (setq-local groups (1+ groups))
+       (goto-char (point-max))
+       (insert (propertize (format "%s [%s]\n" key val) 'font-lock-face `(:foreground ,(color-for key)) 'data key))))))
+
+
+(provide 'gimme-collection)
+;;; gimme-collection.el ends here

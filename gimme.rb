@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 $: << File.join(File.dirname(__FILE__))
 
-require_relative 'lyrics'
-
-['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'sexp'].each do |lib|
+['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'sexp','lyrics','freebase'].each do |lib|
   begin
     require lib
   rescue LoadError
@@ -291,7 +289,7 @@ class GIMME
       sleep 0.5 # Feels smoother than without the sleep
       message = !name
       to_emacs [:"message", "Caching data from the Mlib..."] if message
-      perc = [-1]; i = 0 
+      perc = [-1]; i = 0
       with_coll(name) do |coll|
         atribs = $atribs - ["url","duration","id","tracknr","starred","timesplayed"]
         hash = Hash[]
@@ -549,9 +547,9 @@ class GIMME
 
     end;end
 
-  ###########################
-  ### Lyrics and Internet ###
-  ###########################
+  ###############################
+  ### Augmented mode and such ###
+  ###############################
 
   def fetch_lyrics (plist)
     Thread.new do
@@ -567,7 +565,99 @@ class GIMME
       end
       plist = plist + [:source,lyrics[1]]
       lyrics = lyrics[0]
-      to_emacs [:"gimme-lyrics-display", [:quote, plist], lyrics.encode('UTF-8')]
+      to_emacs [:"gimme-augmented-lyrics-display", [:quote, plist], lyrics.encode('UTF-8')]
+    end
+  end
+
+  def get_influencees (artist)
+    Thread.new do
+      to_emacs [:"message", "Querying Freebase... [0/1]"]
+      query = [{"type"=>"/music/artist", "name"=>[], "/influence/influence_node/influenced_by"=> [{"type"=>"/music/artist", "name"=> artist}]}]
+
+      req = Freebase.mqlread query
+      artists = req["result"].map {|x| x["name"][0]}
+      if artists.empty?
+      then
+        to_emacs [:"message", "Querying Freebase... Nothing found!"]
+      else
+        coll =  Xmms::Collection.new(Xmms::Collection::TYPE_UNION)
+        artists.each do |artist|
+          match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+          match = Xmms::Collection.parse("artist:'#{artist}'")
+          coll.operands.push match
+        end
+        coll.attributes["title"] = "#{artist}'s influencees #{artists.to_s}"
+        faceted_pcol(coll,"artist")
+      end
+    end
+  end
+
+  def get_influences (artist)
+    Thread.new do
+      to_emacs [:"message", "Querying Freebase... [0/1]"]
+      query = [{"type"=>"/music/artist", "name"=>[], "/influence/influence_node/influenced"=> [{"type"=>"/music/artist", "name"=> artist}]}]
+
+      req = Freebase.mqlread query
+      artists = req["result"].map {|x| x["name"][0]}
+      if artists.empty?
+      then
+        to_emacs [:"message", "Querying Freebase... Nothing found!"]
+      else
+        to_emacs [:"message", "Querying Freebase... OK!"]
+        coll =  Xmms::Collection.new(Xmms::Collection::TYPE_UNION)
+        artists.each do |artist|
+          match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+          match = Xmms::Collection.parse("artist:'#{artist}'")
+          coll.operands.push match
+        end
+        coll.attributes["title"] = "#{artist}'s influences #{artists.to_s}"
+        faceted_pcol(coll,"artist")
+      end
+    end
+  end
+
+  def get_similar (artist)
+    # Tecnically, I'm just looking for artists with the same,
+    # according to Freebase, genre. However there are so many silly
+    # subgenres, that this should in practice work to get a very broad
+    # cluster of songs.
+    Thread.new do
+      to_emacs [:"message", "Querying Freebase... [0/1]"]
+      query = [{"type"=>"/music/artist", "name"=>[], "/music/artist/genre"=>[{"type"=>"/music/genre", "id"=>[], "artists"=>[{"name"=>artist}]}]}]
+
+      req = Freebase.mqlread query
+      artists = req["result"].map {|x| x["name"][0]}
+      if artists.empty?
+      then
+        to_emacs [:"message", "Querying Freebase... Nothing found!"]
+      else
+        to_emacs [:"message", "Querying Freebase... OK!"]
+        coll =  Xmms::Collection.new(Xmms::Collection::TYPE_UNION)
+        artists.each do |artist|
+          match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+          match = Xmms::Collection.parse("artist:'#{artist}'")
+          coll.operands.push match
+        end
+        coll.attributes["title"] = "Similar to #{artist}"
+        faceted_pcol(coll,"artist")
+      end
+    end
+  end
+
+  def get_artist_info (artist)
+    Thread.new do
+      to_emacs [:"message", "Querying Freebase... [0/1]"]
+      query = {"type"=>"/music/artist", "name"=>artist, "/common/topic/article"=>[{"text"=>{"maxlength"=>16384, "chars"=>nil}}]}
+
+      res = Freebase.mqlread(query)["result"]
+      if !(res) # FIXME: Check why it's not getting just an empty list
+      then
+        to_emacs [:"message", "Querying Freebase... Nothing found!"]
+      else
+        to_emacs [:"message", "Querying Freebase... OK!"]
+        text = res["/common/topic/article"][0]["text"]["chars"]
+        to_emacs [:"gimme-augmented-show-info", text, artist]
+      end
     end
   end
 
@@ -589,7 +679,7 @@ class GIMME
     @async.coll_get(data.to_s).notifier do |coll|
       if data == nil or data == :nil
         coll = Xmms::Collection.universe
-        coll.attributes["title"] = "All media"
+        coll.attributes["title"] = "All Media"
       elsif data.class == Array
         coll = Xmms::Collection.from_a(data)
       elsif data.class == Xmms::Collection

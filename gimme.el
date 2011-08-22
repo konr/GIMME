@@ -22,48 +22,50 @@
 ;; originally developed for Google's Summer of Code. Kudos to them
 ;; and to DraX for the Support.
 
-;; GIMME works by using collections as search results, and its multiple
-;; views allows you to do that in multiple ways. As of GIMME 1.0, you
-;; can search and narrow searching using filter-view and better visualize
-;; it using bookmark-view.
+;; GIMME works by using collections as search results, and its
+;; multiple views allows you to do that in multiple ways. Check out
+;; more at http://gimmeplayer.org
 
 ;;; Code
 
-(defvar gimme-process nil
-  "Reference to the ruby process")
-(defvar gimme-executable "gimme.rb"
-  "The name of the ruby file")
-(defvar gimme-fullpath (expand-file-name
-                        (concat
-                         (file-name-directory (or load-file-name buffer-file-name))
-                         gimme-executable))
-  "The fullname of the ruby file")
-(defvar gimme-current-mode 'playlist
-  "In which mode GIMME current is")
-(defvar gimme-buffer-name "GIMME"
-  "GIMME's buffer name")
-(defvar gimme-filter-remainder ""
-  "Variable used to hold incomplete sexps received from the ruby process")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Variables used in GIMME ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar gimme-process nil           "Reference to the ruby process")
+(defvar gimme-executable "gimme.rb" "The name of the ruby file")
+(defvar gimme-filter-remainder ""   "Variable used to hold incomplete sexps received from the ruby process")
+
+(defvar gimme-fullpath (expand-file-name (concat (file-name-directory (or load-file-name buffer-file-name)) gimme-executable)) "The fullname of the ruby file")
+(defvar gimme-bookmark-minimal-collection-list '(((0 ("reference" "All Media" "title" "All Media") nil))) "The minimal collection you must have access to, which is just the Universe collection.")
+(defvar gimme-anonymous-collections gimme-bookmark-minimal-collection-list "The list to which the collections you create while explore mlib will go.")
+
+(defvar gimme-playtime nil               "Variable used to hold the current track's duration and playtime")
+(defvar gimme-mlib-cache-plist nil       "Contains cached information on the current collection")
+(defvar gimme-mlib-cache-global nil      "Contains cached information on the universal collection")
+
+(defvar gimme-autocomplete-prompt "> "                 "The prompt an user gets when asking for completion. Internal variable used to avoid passing a needed parameter to every function around")
+(defvar gimme-autocomplete-done-with-autocompletions t "Internal variable, set when the user stops tabbing to autocomplete")
+(defvar gimme-autocomplete-current-coll nil            "Internal variable, used to avoid passing a needed parameter to every function around.")
+
+(defvar gimme-augmented-info-buffer-name "GIMME - Information on" "Prefix of the buffer used to show information of an artist.")
+(defvar gimme-autocomplete-buffer-name "*GIMME Completions*"      "The name of the buffer used to show possible candidates for completion.")
+(defvar gimme-bookmark-name "GIMME - Bookmarks"                   "The name of the buffer used to show your collections.")
+(defvar gimme-inspect-buffer-name "GIMME - Inspect"               "The name of the buffer used to inspect hashes")
+(defvar gimme-tagwriter-buffer-name "GIMME - Tagwriter"           "The name of the buffer used to write tags in a fancier way")
+
+(defvar gimme-bookmark-facets
+  '("genre" "artist" "album" "timesplayed") "The facets of the collections that are worth displaying.")
+(defvar gimme-mlib-fidelity-level 1         "Determines how paranoid should GIMME be in keeping the caches up-to-date")
+(defvar gimme-inspect-max-length 50         "Maximum length of the string that will be used in every field of gimme-inspect")
+(defvar gimme-tagwriter-max-length 33       "Maximum length of the string that will be used in every field of gimme-tagwriter")
+
 (defvar gimme-debug 0
   "To debug.
   0: Do nothing extra
   1: Prints the functions being called by the ruby process
   2: Print the whole sexps
   3: Print the whole sexps and do not evaluate them")
-(defvar gimme-playtime nil
-  "Variable used to hold the current track's duration and playtime")
-(defvar gimme-current nil
-  "The current collection. Can be a string or an idlist")
-(defvar gimme-bookmarks nil
-  "Collections not saved on the core")
-(defvar gimme-mlib-cache-plist nil)
-(defvar gimme-mlib-cache-global nil)
-(defvar gimme-mlib-fidelity-level 1)
-
-(defvar gimme-bookmark-header "GIMME - bookmark View" "Initial header")
-(defvar gimme-playlist-header "GIMME - Playlist view" "Initial header")
-(defvar gimme-filter-header "GIMME" "Initial header")
-
 
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
@@ -71,13 +73,14 @@
 
 (defun gimme-buffers (&optional function)
   "Get all buffers used by GIMME. FIXME: mode"
-  (let* ((modes '(gimme-playlist-mode gimme-filter-mode gimme-bookmark-mode))
+  (let* ((modes '(gimme-playlist-mode gimme-collection-mode gimme-bookmark-mode))
          (buffers (remove-if-not (lambda (buf) (member (major-mode buf) modes))
                                  (buffer-list)))
          (filtered (remove-if-not function buffers)))
     filtered))
 
 (defun gimme-first-buffer-with-vars (&rest plist)
+  "Gets a GIMME buffer matching the variables of a plist"
   (let* ((all (gimme-buffers)) (alist (plist-to-alist plist))
          (consed (mapcar (lambda (el) (cons el (buffer-local-variables el))) all)))
     (caar (reduce (lambda (coll pair)
@@ -86,7 +89,7 @@
                                    coll)) alist :initial-value consed))))
 
 (defun gimme-gen-buffer (plist)
-  "FIXME: Filter Collection; hook; header not working"
+  "Generates a Buffer and sets the variables correctly"
   (let* ((type (getf plist 'gimme-buffer-type))
          (type-s (case type ('collection "Collection") ('playlist "Playlist")
                        ('lyrics "Lyrics")))
@@ -101,7 +104,7 @@
                      (kill-local-variable 'gimme-collection-facet) ;; FIXME lousy
                      (case type
                        ('playlist (gimme-playlist-mode))
-                       ('collection (gimme-filter-mode facet)))
+                       ('collection (gimme-collection-mode facet)))
                      (kill-region 1 (point-max))
                      (when facet (insert (format "Collection: %s\nFacet: %s\n---\n\n"
                                                  (propertize name-s 'font-lock-face `(:foreground ,(color-for name-s)))
@@ -144,7 +147,7 @@
   (setq gimme-playtime `((time . ,time) (max . ,(if (numberp max) max time)))))
 
 (defmacro gimme-on-buffer (name &rest body)
-  "FIXME: Gimme v2"
+  "Macro that does all the nasty things required to modify a buffer"
   `(with-current-buffer (get-buffer-create ,name)
      (unlocking-buffer (save-excursion (goto-char (point-max)) ,@body))))
 
@@ -155,7 +158,7 @@
     (kill-process proc))
   (setq gimme-process
         (start-process-shell-command
-         gimme-buffer-name nil
+         "GIMME" nil
          (format "ruby %s" gimme-fullpath )))
   (set-process-filter gimme-process (lambda (a b) (gimme-eval-all-sexps b))))
 
@@ -187,24 +190,18 @@
                            (plist-to-alist plist)))
              (eval (car gimme-playlist-formats))))))
 
-
-(defun gimme-set-title (title)
-  "Changes the header of a buffer"
-  (setq header-line-format
-        `(:eval (substring (decode-coding-string ,title 'utf-8)
-                           (min (length ,title)
-                                (window-hscroll))))))
-
 (defun gimme-coll-overview (name data)
+  "Caches the data present in a collection"
   (if name (setq gimme-mlib-cache-plist (plist-put gimme-mlib-cache-plist name data))
     (setq gimme-mlib-cache-global data)))
 
 (defun gimme-assure-some-autocompletion ()
+  "Makes sure that GIMME will be able to do at least a broad autocompletion."
   (when (or (not gimme-mlib-cache-global) (> gimme-mlib-fidelity-level 1))
     (gimme-send-message "(coll_overview)\n")))
 
 (defun gimme-toggle-view ()
-  "Cycle through the views defined in gimme-config"
+  "Cycle through the views defined in gimme-config."
   (interactive)
   (setq gimme-playlist-formats
         (append (cdr gimme-playlist-formats)
@@ -217,7 +214,7 @@
             (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
             (len (length data)))
        ;; Silly but required so that the cursor won't change its
-       ;; position after killing text
+       ;; position after killing text.
        (goto-char (point-min))
        (loop for n from 0 upto (- line 2) doing (insert (nth n data)))
        (move-beginning-of-line 1) (kill-line (- line 2))
@@ -225,15 +222,12 @@
        (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))
        (goto-line line)))))
 
-(defun gimme-restart ()
+(defun gimme ()
+  "The XMMS2 interface we all love."
+  (interactive)
   (setq gimme-filter-remainder "")
   (gimme-init)
-  (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags))))
-
-(defun gimme ()
-  "The XMMS2 interface we all love"
-  (interactive)
-  (gimme-restart)
+  (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-playlist)
   (gimme-assure-some-autocompletion))
 
@@ -242,16 +236,17 @@
 ;;;;;;;;;;
 
 (gimme-generate-commands clear shuffle play pause next prev stop toggle current)
+(require 'htmlr)
 (require 'gimme-utils)
 (require 'gimme-autocomplete)
 (require 'gimme-playlist)
 (require 'gimme-bookmark)
-(require 'gimme-filter)
+(require 'gimme-collection)
 (require 'gimme-status-mode)
 (require 'gimme-custom)
-(require 'gimme-etc)
+(require 'gimme-emacs)
 (require 'gimme-tagwriter)
-(require 'gimme-lyrics)
+(require 'gimme-augmented)
 (require 'gimme-inspect)
 (require 'gimme-eq)
 (provide 'gimme)

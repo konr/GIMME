@@ -6,8 +6,6 @@
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
-
-
 ;; any later version.
 ;;
 ;; This program is distributed in the hope that it will be useful,
@@ -18,19 +16,18 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; gimme-bookmark shows the collections you currently have, both those
+;; stored in the XMMS2 server, the "Saved Collections" and the
+;; transient ones you create when searching, the "History".
+
 ;;; Code
 
-(defvar gimme-bookmark-minimal-collection-list
-  '(((0 ("reference" "All Media" "title" "All media") nil))))
-(defvar gimme-anonymous-collections gimme-bookmark-minimal-collection-list)
-(defvar gimme-bookmark-name "GIMME - Bookmarks")
-(defvar gimme-bookmark-facets '("genre" "artist" "album" "timesplayed"))
-
 (defun gimme-bookmark ()
-  "bookmark-view"
+  "Goes to bookmark-mode, which shows the collections you current have."
   (interactive)
-  (gimme-send-message "(colls %s)\n" (prin1-to-string gimme-bookmark-name))
-  )
+  (gimme-send-message "(colls %s)\n" (prin1-to-string gimme-bookmark-name)))
 
 (defvar gimme-bookmark-map
   (let ((map (make-sparse-keymap)))
@@ -61,12 +58,12 @@
   (use-local-map gimme-bookmark-map)
   (setq mode-name "gimme-bookmark"))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Interactive function ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interactive functions ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-toggle-facet (&optional silent backwards)
+  "Toggles the default facet used when displaying a new collection."
   (interactive)
   (setq gimme-bookmark-facets (if backwards (append (last gimme-bookmark-facets) (butlast gimme-bookmark-facets))
                                 (append (cdr gimme-bookmark-facets) (list (car gimme-bookmark-facets)))))
@@ -75,21 +72,24 @@
   (car gimme-bookmark-facets))
 
 (defun gimme-child-coll-of-current ()
-  ""
+  "Generates a child collection, containing an intersection of what you currently have a pattern given."
   (interactive)
   (let* ((props (text-properties-at (point)))
          (coll (or (plist-get props 'coll) (plist-get props 'ref)))
-         (name (gimme-autocomplete-prompt "> " col))
+         (name (gimme-autocomplete-prompt "> " coll))
          (message (format "(faceted_subcol %s %s)\n" (prin1-to-string coll)
                           (prin1-to-string name))))
     (gimme-send-message message)))
+
 (defun gimme-bookmark-append-to-playlist ()
+  "Appends the currently focused collection to the playlist."
   (interactive)
   (let ((coll (or (get-text-property (point) 'coll)
                   (get-text-property (point) 'ref))))
     (when coll (gimme-send-message  "(append_coll %s)\n" (prin1-to-string coll)))))
 
 (defun gimme-bookmark-toggle-highlighting ()
+  "Highlights a collection, to be used by `gimme-bookmark-combine-collections'"
   (interactive)
   (when (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))
     (unlocking-buffer
@@ -104,6 +104,7 @@
                               (get-text-property beg 'oldface))))))))
 
 (defun gimme-bookmark-combine-collections ()
+  "Combine the highlighted collections with a logic operation, such as AND or OR"
   (interactive)
   (let* ((colls (get-bounds-where
                  (lambda (x) (equal (get-text-property x 'face) 'highlight))))
@@ -125,7 +126,8 @@
          (facet (car gimme-bookmark-facets))
          (message (if faceted-p (format "(faceted_pcol %s)\n" coll)
                     (format "(pcol %s)\n" coll))))
-    (when coll (gimme-send-message message))))
+    (when coll 
+      (gimme-send-message message))))
 
 (defun gimme-bookmark-delete-coll ()
   "Deletes focused collection"
@@ -173,14 +175,12 @@
     (when coll (gimme-send-message (format "(savecol %s %s)\n"
                                            (prin1-to-string coll)
                                            (prin1-to-string name))))))
-;;;;;;;;;
-;; Aux ;;
-;;;;;;;;;
-;;
-;; bookmark is like (plist child1 child2 ...)
-
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Auxiliary functions ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-bookmark-colorize (text)
+  "Colorizes a string that starts with asterisks, as org-mode headers."
   (let ((asterisks (replace-regexp-in-string "^\\(\*+\\).*" "\\1" text)))
     (propertize text 'font-lock-face `(:foreground ,(color-for asterisks)))))
 
@@ -201,6 +201,7 @@
 
 
 (defun gimme-bookmark-dfsmap (fun &optional colls flat)
+  "Maps via depth-first search."
   (loop for coll in (or colls gimme-anonymous-collections)
         collecting `(,(funcall fun coll)
                      ,@(when (cdr coll) (gimme-bookmark-dfsmap fun (cdr coll) flat)))
@@ -208,30 +209,21 @@
         (if flat (apply #'append elements) elements)))
 
 (defun gimme-bookmark-get-parents (target &optional colls stack)
+  "Gets the parents of a collection."
   (loop for coll in (or colls gimme-anonymous-collections)
         if (equal (car coll) target) return stack
         else when (cdr coll) collect
         (gimme-bookmark-get-parents target (cdr coll) (cons (car coll) stack)) into ch
         finally return (car (remove-if #'null ch))))
 
-(defun gimme-bookmark-get-children (target)
-  (loop for child in (cdr (gimme-bookmark-get-node target gimme-anonymous-collections))
-        collecting `(,(car child) ,@(mapcar #'gimme-bookmark-get-children (cdr child)))
-        into elements and finally return
-        (remove-if #'null (apply #'append elements))))
-
 (defun gimme-bookmark-get-children (target &optional including-self)
+  "Gets the children of a collection."
   (let* ((element (list (gimme-bookmark-get-node target gimme-anonymous-collections)))
          (colls (gimme-bookmark-dfsmap (lambda (x) (car x)) element t)))
     (if including-self colls (cdr colls))))
 
-(defun ajusta (lista)
-  (if (cdr lista)
-      `(,(car (ajusta lista)) ,@(cdr (ajusta lista)))
-    lista))
-
-
 (defun gimme-bookmark-dfs (colls &optional depth)
+  "Processes a list of nested collections returning a nice string with everything colored and propertized."
   (let ((depth (or depth 2)))
     (when colls
       (loop for coll in colls collecting
@@ -239,7 +231,7 @@
              (propertize
               (gimme-bookmark-colorize
                (format "%s %s\n" (make-string depth ?*)
-                       ;; getf doesn't work with strings :(
+                       ;; FIXME: getf doesn't work with strings :(
                        (loop for x = (cadar coll)
                              then (cddr x) while x
                              if (equal (car x) "title") return (cadr x)
@@ -249,12 +241,14 @@
             into strings and finally return (apply #'concat strings)))))
 
 (defun gimme-bookmark-get-node (node &optional nodes)
+  "Gets the full plist of a given node."
   (if (null node) nodes
     (when nodes
       (or (car (remove-if-not (lambda (x) (equal (car x) node)) nodes))
           (gimme-bookmark-get-node node (apply #'append (mapcar #'rest nodes)))))))
 
 (defun gimme-bookmark-add-child (data parent)
+  "Adds a child to a parent."
   (let* ((bookmark-buffer (get-buffer gimme-bookmark-name))
          (title (loop for pair = (cadr data) then (cddr pair)
                       while pair if (string= (car pair) "title") return (cadr pair)))
@@ -295,12 +289,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-register-coll (coll parent)
+  "Adds a collection to `gimme-anonymous-collections'."
   (unless (gimme-bookmark-get-node parent)
     (gimme-bookmark-add-child parent gimme-anonymous-collections))
   (gimme-bookmark-add-child coll parent))
 
 (defun gimme-bookmark-colls (buffer list)
-  "Prints the available collections as a bookmark"
+  "Prints the available collections as a tree"
   (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
          (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
     (gimme-on-buffer buffer

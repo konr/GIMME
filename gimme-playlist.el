@@ -1,5 +1,4 @@
-;;; gimme-playlist.el ends here
-;;; gimme-playlist.el --- GIMME's playlist-view
+;;; gimme-playlist.el --- GIMME Interesting Music on My Emacs
 
 ;; Author: Konrad Scorciapino <scorciapino@gmail.com>
 ;; Keywords: XMMS2, mp3
@@ -16,6 +15,12 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary
+
+;; THE playlist. Although XMMS2 supports multiple playlists, GIMME
+;; does not, as I feel this would overcomplicate things, since we
+;; already have collections.
 
 ;;; Code
 
@@ -38,10 +43,11 @@
     (define-key map (kbd "RET") 'gimme-focused-play)
     (define-key map (kbd "C") 'gimme-clear)
     (define-key map (kbd "O") 'gimme-get-conf)
-    (define-key map (kbd "I") 'gimme-get-track-conf)
+    (define-key map (kbd "i") 'gimme-get-track-conf)
+    (define-key map (kbd "I") 'gimme-augmented-ask-for-info)
     (define-key map (kbd "t") 'gimme-update-tags-prompt)
     (define-key map (kbd "T") 'gimme-tagwriter)
-    (define-key map (kbd "L") 'gimme-fetch-lyrics)
+    (define-key map (kbd "L") 'gimme-augmented-fetch-lyrics)
     (define-key map (kbd "H") 'gimme-shuffle)
     (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete nil)))
@@ -128,6 +134,21 @@
                        (gimme-playlist-update bufer)
                        (message "Playlist updated! (updating list)"))))))
 
+(defun gimme-update-tags (plist)
+  "Updates the track with the given tags in all buffers"
+  (dolist (buffer (gimme-buffers))
+    (gimme-on-buffer
+     buffer
+     (dolist (range (get-bounds-where
+                     (lambda (x) (equal (getf plist 'id) (get-text-property x 'id)))))
+       (let* ((beg (car range)) (end (cadr range))
+              (pos (get-text-property beg 'pos))
+              (face (get-text-property beg 'face))
+              (plist (plist-put plist 'font-lock-face nil))
+              (plist (plist-put plist 'pos pos))
+              (plist (if (equal face 'highlight) (plist-put plist 'face 'highlight) plist)))
+         (kill-region beg end) (goto-char beg) (insert (gimme-string plist)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Auxiliary Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -160,31 +181,13 @@
            (when beg
              (put-text-property beg (or end (point-max)) 'face 'highlight))))))))
 
-(defun gimme-update-tags (plist)
-  ""
-  (dolist (buffer (gimme-buffers))
-    (gimme-on-buffer
-     buffer
-     (dolist (range (get-bounds-where
-                     (lambda (x) (equal (getf plist 'id) (get-text-property x 'id)))))
-       (let* ((beg (car range)) (end (cadr range))
-              (pos (get-text-property beg 'pos))
-	      (face (get-text-property beg 'face))
-              (plist (plist-put plist 'font-lock-face nil))
-              (plist (plist-put plist 'pos pos))
-              (plist (if (equal face 'highlight) (plist-put plist 'face 'highlight) plist)))
-         (kill-region beg end) (goto-char beg) (insert (gimme-string plist)))))))
-
 
 (defun gimme-playlist-update (buffer)
-  (gimme-on-buffer
-   buffer
-   (kill-region 1 (point-max))
-   (gimme-send-message "(list %s 1)\n" (prin1-to-string gimme-playlist-name))))
+  "Well, it updates..."
+  (gimme-on-buffer buffer (kill-region 1 (point-max)) (gimme-send-message "(list %s 1)\n" (prin1-to-string gimme-playlist-name))))
 
 (defun gimme-insert-song (buffer plist append)
-  "Inserts (or appends) an element matching the plist
-#FIXME: For now still accepting strings"
+  "Inserts (or appends) an element matching the plist #FIXME: For now still accepting strings"
   (when buffer
     (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
                     (apply #'gimme-first-buffer-with-vars buffer))))

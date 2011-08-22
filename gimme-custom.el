@@ -16,6 +16,10 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; Customizations. Play around with the color functions, at least!
+
 ;;; Code
 
 (defgroup gimme nil
@@ -61,15 +65,41 @@
   :group 'gimme
   :type '(repeat sexp))
 
-(defcustom gimme-bookmark-file "~/.gimmebookmark"
-  "Where the Tree (storing temp collections and their relationships) will be stored"
-  :group 'gimme
-  :type 'file)
-
 (defcustom gimme-vol-delta 5
   "Raises/lowers the volume by this factor"
   :group 'gimme
   :type 'integer)
+
+(defcustom gimme-eq-time 2
+  "Time until the equalizer, when changed, disappears from the modeline, in seconds."
+  :group 'gimme
+  :type 'integer)
+
+(defcustom gimme-presets
+  "FIXME: To be done"
+  '("1965" (-20 -16 -7 -4 -4 -4 -7 -7 3 3 -2 -4 4 1 1 -4 -6 -12)
+    "Air" (0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 2)
+    "Brittle" (-12 -10 -9 -8 -7 -6 -5 -3 -2 -2 -2 -2 -1 1 4 4 1 0)
+    "Car Stereo" (-5 0 1 0 0 -4 -4 -5 -5 -5 -3 -2 -2 0 1 0 -2 -5)
+    "Classic V" (5 2 0 -2 -5 -6 -8 -8 -7 -7 -4 -3 -1 1 3 5 5 4)
+    "Clear" (1 1 0 0 0 -3 0 0 0 0 0 0 0 0 2 2 2 1)
+    "Dark" (-6 -2 -2 -2 -2 -2 -2 -2 -2 -2 -2 -5 -8 -10 -12 -14 -18 -18)
+    "DEATH" (20 17 12 8 4 0 0 0 0 0 0 0 0 0 0 0 0 0)
+    "Drums" (2 1 0 0 0 -2 0 -2 0 0 0 0 2 0 0 3 0 0)
+    "Flat" (0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+    "Home Theater" (5 2 0 -2 -3 -5 -6 -6 -5 -2 -1 0 -1 -3 3 4 3 0)
+    "Loudness" (4 4 4 2 -2 -2 -2 -2 -2 -2 -2 -4 -10 -7 0 3 4 4)
+    "Metal" (4 5 5 3 0 -1 -2 -1 0 1 1 1 1 0 -1 -1 -1 -1)
+    "Pop" (6 5 3 0 -2 -4 -4 -6 -3 1 0 0 2 1 2 4 5 6)
+    "Premaster" (0 1 3 0 -3 -3 0 0 0 2 0 0 3 0 3 1 3 2)
+    "Presence" (0 0 0 0 0 0 0 0 0 3 5 4 3 2 0 0 0 0)
+    "Punch & Sparkle" (3 5 3 -1 -3 -5 -5 -3 -2 1 1 1 0 2 1 3 5 3)
+    "Shimmer" (0 0 0 -2 -2 -7 -5 0 0 0 0 0 4 1 3 3 4 0)
+    "Soft Bass" (3 5 4 0 -13 -7 -5 -5 -1 2 5 1 -1 -1 -2 -7 -9 -14)
+    "Strings" (-3 -4 -4 -5 -5 -4 -4 -3 -2 -2 -2 -2 -1 2 3 0 -2 -2))
+  :group 'gimme
+  :type '(repeat sexp))
+
 
 ;;;;;;;;;;;;
 ;; Colors ;;
@@ -96,11 +126,13 @@
       (< min-diff (abs (- bg-b fg-b))))))
 
 (defun expand-list-of-colors (list &optional times)
+  "Expand a list of colors with variations."
   (loop for color in list collecting
 	(loop for i upto (or times 10) collecting (tilt-color color))
 	into lists and finally return (flatten lists)))
 
 (defun tilt-color (color &optional h s v)
+  "Varies in contrast, brightness etc a color"
   (let* ((h (or h 0)) (s (or s 0.3)) (v (or v 0.3)) (delta (list h s v)) 
 	 (delta (mapcar (lambda (x) (or (ignore-errors (mod (random) x)) 0)) delta))
 	 (color-in-list (mapcar (lambda (x) (/ x 255.0)) (color-string-to-list color)))
@@ -121,10 +153,11 @@
     (if appropriate (remove-if-not #'appropriatep all) all)))
 
 (defun high-contrast ()
+  "The name reminds of those bizarre Windows 3.11 color themes, but it's actually OK."
   (remove-if-not (lambda (x) (appropriatep x 200)) (all-colors)))
 
 (defun traditional-japanese-colors (&optional appropriate)
-  "According to http://en.wikipedia.org/wiki/Traditional_colors_of_Japan"
+  "Thanks for brainwashing me, mr. Hara"
   (flet ((brightness (n) (/ (apply #'+ (map 'list (lambda (x y) (* x y)) '(299 587 114) n))
                             1000)))
     (let* ((all '("#F08F90" "#F47983" "#DB5A6B" "#C93756" "#FCC9B9" "#FFB3A7"
@@ -168,18 +201,20 @@
       (if appropriate (remove-if-not #'appropriatep all) all))))
 
 (defun brazilian-flag-colors ()
+  "Ouviram do Ipiranga às margens pláaacidas..."
   (let* ((initial '("#00A859" "#FFCC29" "#3E4095")))
     (expand-list-of-colors initial)))
 
 (defun american-flag-colors ()
+  "I'll keep my guns, my freedom and my money!"
   (let* ((initial '("#000000" "#B22234" "#3C3B6E")))
     (expand-list-of-colors initial)))
-(provide 'gimme-custom)
-;;; gimme-custom.el ends here
 
-;;;; FIXME
 (defcustom gimme-colors (traditional-japanese-colors)
   "A list of colors to be used on the playlist entries"
   :group 'gimme
   :type 'sexp)
 
+
+(provide 'gimme-custom)
+;;; gimme-custom.el ends here
