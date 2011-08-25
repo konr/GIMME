@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-
 ['rparsec', 'sexp'].each do |gem|
   Dir["./gems/gems/#{gem}-*/**/"].each {|gem| $LOAD_PATH << gem}
 end
@@ -704,13 +703,19 @@ $channel = GLib::IOChannel.new(STDIN)
 client = GIMME.new
 
 Thread.new do; while true
-                 # FIXME FIXME FIXME
-                 # The lib doesn't play well with accented chars :(
-                 # Tired of wasting hours on this, so I'm saving their unicode position
-                 # Will fix it when preparing GIMME for Ruby 1.9
-                 p = gets.strip.scan(/./).map {|x| x.ord > 127 ? "fix#{x.ord}me" : x}.join
-                 p = p.parse_sexp.first
-                 p = p.rmap2(lambda {|x| x.class == String ? x.gsub(/fix[0-9][0-9][0-9]me/) {|m| m.gsub(/[a-z]/,"").to_i.chr(Encoding::UTF_8)} : x})
+                 p = gets
+                 if (RUBY_VERSION =~ /1.8/)
+                 then
+                   p = p.parse_sexp.first
+                 else
+                   # FIXME FIXME FIXME
+                   # The lib doesn't play well with accented chars :(
+                   # Tired of wasting hours on this, so I'm saving their unicode position
+                   # Will fix it when preparing GIMME for Ruby 1.9
+                   p = p.strip.scan(/./).map {|x| x.ord > 127 ? "fix#{x.ord}me" : x}.join
+                   p = p.parse_sexp.first
+                   p = p.rmap2(lambda {|x| x.class == String ? x.gsub(/fix[0-9][0-9][0-9]me/) {|m| m.gsub(/[a-z]/,"").to_i.chr(Encoding::UTF_8)} : x})
+                 end
                  client.send(*p) if (p.class == Array && client.respond_to?(p.first))
                end;end
 
