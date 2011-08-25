@@ -56,7 +56,7 @@
   "Edits the information contained in plist, and writes it back using the write-function. A top message will be provided to the users, too"
   (interactive)
   (let* ((strs (mapcar (lambda (x) (format "%s" x)) plist))
-         (keys (loop for x = plist then (cddr x) while x collect (car x)))
+         (new-keys (loop for x = plist then (cddr x) while x collect (car x)))
          (max (loop for x =  strs then (cddr x) while x
                     maximizing (length (car x)) into i
                     maximizing (length (cadr x)) into j
@@ -65,7 +65,7 @@
          (total (+ 7 (apply #'+ max))))
     (gimme-on-buffer
      gimme-inspect-buffer-name
-     (setq-local keys (mapcar #'symbol-name keys))
+     (setq-local keys (mapcar #'symbol-name new-keys))
      (setq-local write-function write-function)
      (setq-local max-key (car max)) (setq-local max-val (cadr max))
      (delete-region (point-min) (point-max))

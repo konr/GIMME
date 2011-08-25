@@ -1,5 +1,38 @@
-* To be done 
-** Style and neatness
+* Roadmap for 3.0
+** 1. Embracing new users
+   - [ ] Prettier Github intro
+	 - [ ] Figure out features
+	 - [ ] Take screenshots and put them in the wiki
+	       - [ ] Integration with Freebase (augmented)
+	       - [ ] Lyrics
+	       - [ ] Autocompletion
+	       - [ ] Faceted view and collections
+	       - [ ] Bookmark (collection management and searches)
+	       - [ ] Customizations
+	       - [ ] Integration with Dired
+	       - [ ] Neat equalizer
+	       - [ ] Inspect
+	       - [ ] Starred
+	       - [ ] Status mode
+	       - [ ] 1337 tagwriter
+	 - [ ] Write github intro
+   - [ ] Some tutorial on how to set the equalizer
+   - [ ] Show key bindings. I think this is crucial
+   - [ ] Propaganda
+   - [ ] Help system integrated with the wiki
+** 2. Meta
+   - [ ] Remove the FIXMEs and put them all here
+   - [ ] Bot to send me back changes in gimmeplayer.org
+** 3. Bugs
+   - [ ] The update broadcast changes the format of the updated tracks
+   - [ ] I'm using single quotes all the time. I don't think it's gonna
+	 play well with tags that include it
+   - [ ] The broadcast function is sometimes returning a wrong value
+	 for the :timesplayed property. Fix'd for medialib_changed but not
+	 for the other.
+   - [ ] 'colls' is not set sometimes, for some reason, in the tagwriter.
+   - [ ] Saving/changing a lot of songs in the tagwriter is slow.
+** 4. Style and neatness
    - [X] Change gimme-filter for something more appropriate
    - [ ] Rewrite the sort calls on lyrics.rb using max_by or inject!
    - [ ] Some functions take optional arguments, and some other have
@@ -16,26 +49,7 @@
 	 it requires traditional-japanese-colors
    - [ ] The tagwriter sometimes refer to the line from the top of the
 	 document and sometimes from the top of the table.
-** Bugs
-   - [ ] The update broadcast changes the format of the updated tracks
-   - [ ] I'm using single quotes all the time. I don't think it's gonna
-	 play well with tags that include it
-   - [ ] The broadcast function is sometimes returning a wrong value
-	 for the :timesplayed property. Fix'd for medialib_changed but not
-	 for the other.
-   - [ ] 'colls' is not set sometimes, for some reason, in the tagwriter.
-** User experience
-   - [ ] Group the facets?
-   - [ ] Autocomplete: Make the *GIMME Completions* buffer scroll
-   - [ ] Weird stuff get copied to the clipboard sometimes
-   - [ ] Make collection-mode more powerful
-** Meta
-   - [ ] Remove the FIXMEs and put them all here
-   - [ ] Bot to send me back changes in gimmeplayer.org
-** Efficiency concerns
-   - [ ] Is autocompletion scaling for 10k tracks? See https://github.com/rails/auto_complete
-   - [ ] Saving/changing a lot of songs in the tagwriter is slow.
-** Augmented
+** 5. Augmented
    - [ ] Improve the niche lyrics fetcher
    - [ ] Try first getting lyrics using the extended properties of Freebase
    - [ ] Radio list
@@ -47,28 +61,24 @@
     	"/common/topic/alias"=>"Johann Sebastian Bach"}}]'
    - [ ] 'ask-for-info' could format the data more neatly and provide more info
    - [ ] Saving lyrics and such on lyricwiki
-** Sane defaults
+** 6. User experience and Sane defaults
    - [ ] Equalizer presets
-** Embracing new users
-   - [ ] Show key bindings. I think this is crucial
-   - [ ] Some tutorial on how to set the equalizer
-   - [ ] Propaganda
-   - [ ] Prettier Github intro
-** Remove dependencies
-   - [ ] A better htmlr
-** GIMME 3
+   - [ ] Group the facets?
+   - [ ] Autocomplete: Make the *GIMME Completions* buffer scroll
+   - [ ] Weird stuff get copied to the clipboard sometimes
+   - [ ] Make collection-mode more powerful
+   - [ ] Keybindings for augmented mode
+** 7. Rewrite everything in Elisp
+   - [ ] Bindings
+   - [ ] Spectrum analyzer
    - [ ] Write everything in Elisp
    - [ ] Collection inpector as neat as vdust's
    - [ ] Musicbrainz interface
+   - [ ] A better htmlr
    - [ ] Undo
    - [ ] Nesting collections. It seems that it's possible to add a "parent" key to it.
-** Acessibility
-   - [ ] Keybindings for augmented mode
-	 
 * What I didn't do in the GSoC
   - [ ] New collections' format and parser: they are not ready yet
-  - [ ] Spectrum analyzer: couldn't really. I think there is no
-	support for that
   - [ ] Updating collection: It's done by some client, as far I could
 	comprehend
   - [ ] ELPA: I think I'll have to make it more lispy first
@@ -251,9 +261,11 @@
     
     
     
-    
+* Other things to be done
 * Reference for developers
   - [[http://rubyforge.org/projects/sexp/][S-Expression]] library
   - [[http://xmms2.org/wiki/Component:Ruby_bindings][Ruby Bindings]]
   - [[http://numbers.xmms.se/~tilman/ruby-api-docs-0.7/][xmmsclient's API]]
+
+
 

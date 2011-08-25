@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 
+
 ['rparsec', 'sexp'].each do |gem|
   Dir["./gems/gems/#{gem}-*/**/"].each {|gem| $LOAD_PATH << gem}
 end
 
 # Local Ruby Files
-$LOAD_PATH << '.'
+$LOAD_PATH << File.dirname(__FILE__)
 
 ['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'crawlyr','freebase','sexp'].each do |lib|
   begin

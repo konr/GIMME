@@ -1,6 +1,5 @@
-* Info
-  GIMME, which stands for GIMME Interesting Music on My Emacs, is an
-  XMMS2 interface for GNU Emacs that provides a minimalistic and
-  intuitive user experience through searches, powered by collection
-  operations, as well as several other features such as getting lyrics 
-  and information from Freebase. You can read more about it [[http://gimmeplayer.org/][here]].
+* So you think your music player rocks?
+
+  Oh yeah? Does it have:
+  - Lyrics fetcher
+  - Etc. TBD.
