@@ -1,6 +1,6 @@
 ;;; gimme-utils.el --- Utility functions used on GIMME
 
-;; Author: Konrad Scorciapino <scorciapino@gmail.com>
+;; Author: Konrad Scorciapino <konr@konr.mobi>
 ;; Keywords: XMMS2, mp3
 
 ;; This program is free software; you can redistribute it and/or modify
