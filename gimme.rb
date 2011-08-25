@@ -1,18 +1,13 @@
 # -*- coding: utf-8 -*-
 
 dir=File.dirname(__FILE__)
-['rparsec', 'sexp'].each do |gem|
-  Dir["#{dir}/gems/gems/#{gem}-*/**/"].each {|gem| $LOAD_PATH << gem}
-end
-
-# Local Ruby Files
 $LOAD_PATH << dir
 
+['rparsec', 'sexp'].each { |gem| Dir["#{dir}/gems/gems/#{gem}-*/**/"].each {|g| $LOAD_PATH << g}}
 ['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'crawlyr','freebase','sexp'].each do |lib|
   begin
     require lib
   rescue LoadError
-    puts $LOAD_PATH
     warn "(message \"Oops! Something didn't go right. I bet that '#{lib}' is missing\")"
     exit
   end
