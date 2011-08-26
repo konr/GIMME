@@ -87,32 +87,32 @@
   "Asks for lyrics for the current track"
   (interactive)
   (let ((plist (text-properties-at (point))))
-    (gimme-send-message "(fetch_lyrics %s)\n" (prin1-to-string plist))))
+    (gimme-send-message "(fetch_lyrics %s)\n" (hyg-prin1 plist))))
 
 (defun gimme-augmented-get-influencees ()
   "Gets a collection of music created by people influenced by the current artist"
   (interactive)
   (let* ((artist (get-text-property (point) 'artist)))
-    (gimme-send-message "(get_influencees %s)\n" (prin1-to-string artist))))
+    (gimme-send-message "(get_influencees %s)\n" (hyg-prin1 artist))))
 
 (defun gimme-augmented-get-influences ()
   "Gets a collection of music created by people who influenced the current artist"
   (interactive)
   (let* ((artist (get-text-property (point) 'artist)))
-    (gimme-send-message "(get_influences %s)\n" (prin1-to-string artist))))
+    (gimme-send-message "(get_influences %s)\n" (hyg-prin1 artist))))
 
 (defun gimme-augmented-get-similar ()
   "Gets a collection of music created by people of the same genres. As any artist has dozens of genres,
 this means that it'll get a very broad range of results"
   (interactive)
   (let* ((artist (get-text-property (point) 'artist)))
-    (gimme-send-message "(get_similar %s)\n" (prin1-to-string artist))))
+    (gimme-send-message "(get_similar %s)\n" (hyg-prin1 artist))))
 
 (defun gimme-augmented-ask-for-info ()
   "Asks for information on the current artist"
   (interactive)
   (let* ((artist (get-text-property (point) 'artist)))
-    (gimme-send-message "(get_artist_info %s)\n" (prin1-to-string artist))))
+    (gimme-send-message "(get_artist_info %s)\n" (hyg-prin1 artist))))
 
 (provide 'gimme-augmented)
 ;;; gimme-augmented.el ends here

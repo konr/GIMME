@@ -170,9 +170,9 @@
 
 (defun plist-get-with-equal (coll key &optional fun)
   "Allah the Merciful..."
-  (loop for x = coll then (cddr x) 
-	and fun = (or fun 'equal) 
-	while x if (funcall fun key (car x)) return (cadr x)))
+  (loop for x = coll then (cddr x)
+        and fun = (or fun 'equal)
+        while x if (funcall fun key (car x)) return (cadr x)))
 
 (defun visible-buffers ()
   "Returns a list of visible buffers"
@@ -182,6 +182,14 @@
   "Given a list of files and directories, expand the directories recursively, adding their children to list"
   (mapcan (lambda (x) (if (file-directory-p x) (expand-directories (directory-files x t))
                    (list x))) (remove-if (lambda (x) (string-match "/\\.\\.?$" x)) files)))
+
+(defun hyg-prin1 (&rest args)
+  "Saves the value of print-level and print-length and then runs prin1-to-string"
+  (let ((level print-level) (length print-length))
+    (setq print-level nil print-length nil)
+    (let ((prin1 (apply #'prin1-to-string args)))
+      (setq print-level level print-length length)
+      prin1)))
 
 (provide 'gimme-utils)
 ;;; gimme-utils.el ends here

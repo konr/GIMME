@@ -1,7 +1,14 @@
 require 'rubygems'
 require 'nokogiri'
 require 'mechanize'
+require 'sexp'
 require 'cgi'
+
+  def to_emacs (array)
+    # Because this is a feature, not a bug!
+    # http://www.gnu.org/s/emacs/manual/html_node/elisp/Non_002dASCII-in-Strings.html
+    puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1\\\\ \2')
+  end
 
 module Crawlyr
   class Analyzer

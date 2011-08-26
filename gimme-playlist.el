@@ -27,7 +27,7 @@
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)
-  (gimme-send-message "(list %s)\n" (prin1-to-string "Default")))
+  (gimme-send-message "(list %s)\n" (hyg-prin1 "Default")))
 
 (defun gimme-playlist-mode ()
   "Displays a playlist"
@@ -184,7 +184,7 @@
 
 (defun gimme-playlist-update (buffer)
   "Well, it updates..."
-  (gimme-on-buffer buffer (kill-region 1 (point-max)) (gimme-send-message "(list %s 1)\n" (prin1-to-string gimme-playlist-name))))
+  (gimme-on-buffer buffer (kill-region 1 (point-max)) (gimme-send-message "(list %s 1)\n" (hyg-prin1 gimme-playlist-name))))
 
 (defun gimme-insert-song (buffer plist append)
   "Inserts (or appends) an element matching the plist #FIXME: For now still accepting strings"
@@ -297,7 +297,7 @@
          (alist (mapcar (lambda (n) `(,(car n) ,(if (stringp (cadr n))
                                                (format "%s" (decode-coding-string (cadr n) 'utf-8))
                                              (cadr n)))) alist)))
-    (gimme-send-message "(update_tags %s)\n" (prin1-to-string alist))))
+    (gimme-send-message "(update_tags %s)\n" (hyg-prin1 alist))))
 
 (defun gimme-update-tags-prompt ()
   "Prompts and updates title/artist and album"
@@ -314,7 +314,7 @@
                                                           (format "%s" (cadr n)))))
                                  n))
                         alist)))
-    (gimme-send-message "(update_tags %s)\n" (prin1-to-string alist))))
+    (gimme-send-message "(update_tags %s)\n" (hyg-prin1 alist))))
 
 
 

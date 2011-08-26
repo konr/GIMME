@@ -69,7 +69,7 @@
          (alist (loop for el in adjusted and i = 0 then (1+ i)
                       collecting (list (format "equalizer.gain%02d" i) (format "%f" el)))))
     (if (string-match "^[0-9]\+$" given)
-        (progn (gimme-send-message "(conf_save %s nil)\n"(prin1-to-string alist))
+        (progn (gimme-send-message "(conf_save %s nil)\n"(hyg-prin1 alist))
                (gimme-send-message "(eqgain)\n"))
       (message "Invalid input!"))))
 

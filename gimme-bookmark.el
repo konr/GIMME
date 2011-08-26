@@ -27,7 +27,7 @@
 (defun gimme-bookmark ()
   "Goes to bookmark-mode, which shows the collections you current have."
   (interactive)
-  (gimme-send-message "(colls %s)\n" (prin1-to-string gimme-bookmark-name)))
+  (gimme-send-message "(colls %s)\n" (hyg-prin1 gimme-bookmark-name)))
 
 (defvar gimme-bookmark-map
   (let ((map (make-sparse-keymap)))
@@ -77,8 +77,8 @@
   (let* ((props (text-properties-at (point)))
          (coll (or (plist-get props 'coll) (plist-get props 'ref)))
          (name (gimme-autocomplete-prompt "> " coll))
-         (message (format "(faceted_subcol %s %s)\n" (prin1-to-string coll)
-                          (prin1-to-string name))))
+         (message (format "(faceted_subcol %s %s)\n" (hyg-prin1 coll)
+                          (hyg-prin1 name))))
     (gimme-send-message message)))
 
 (defun gimme-bookmark-append-to-playlist ()
@@ -86,7 +86,7 @@
   (interactive)
   (let ((coll (or (get-text-property (point) 'coll)
                   (get-text-property (point) 'ref))))
-    (when coll (gimme-send-message  "(append_coll %s)\n" (prin1-to-string coll)))))
+    (when coll (gimme-send-message  "(append_coll %s)\n" (hyg-prin1 coll)))))
 
 (defun gimme-bookmark-toggle-highlighting ()
   "Highlights a collection, to be used by `gimme-bookmark-combine-collections'"
@@ -110,19 +110,19 @@
                  (lambda (x) (equal (get-text-property x 'face) 'highlight))))
          (data (mapcar (lambda (x) (or (get-text-property (car x) 'coll)
                                   (get-text-property (car x) 'ref))) colls))
-         (as-strings (mapcar (lambda (x) (format " %s" (prin1-to-string x))) data)))
+         (as-strings (mapcar (lambda (x) (format " %s" (hyg-prin1 x))) data)))
     (if (= (length colls) 0) (message "No collections selected!")
       (let* ((ops (if (= (length as-strings) 1) '("not") '("and" "or")))
              (op (completing-read "Combine with? " ops)))
         (if (member op ops)
-            (gimme-send-message "(combine %s () (%s))\n" (prin1-to-string op)
+            (gimme-send-message "(combine %s () (%s))\n" (hyg-prin1 op)
                                 (apply #'concat as-strings))
           (message "Invalid operation!"))))))
 
 (defun gimme-bookmark-view-collection (&optional faceted-p)
   "Jumps to filter-view with the focused collection as the current"
   (interactive)
-  (let* ((coll (prin1-to-string (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))))
+  (let* ((coll (hyg-prin1 (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))))
          (facet (car gimme-bookmark-facets))
          (message (if faceted-p (format "(faceted_pcol %s)\n" coll)
                     (format "(pcol %s)\n" coll))))
@@ -146,7 +146,7 @@
           (when buffer
             (gimme-on-buffer buffer
                              (dolist (x bounds) (delete-region (car x) (cadr x))))))
-      (when ref (gimme-send-message "(dcol %s)\n" (prin1-to-string ref)))))
+      (when ref (gimme-send-message "(dcol %s)\n" (hyg-prin1 ref)))))
   (unless gimme-anonymous-collections
     (setq gimme-anonymous-collections gimme-bookmark-minimal-collection-list)))
 
@@ -163,8 +163,8 @@
         (setcar node data))
     (when (get-text-property (point) 'ref)
       (gimme-send-message "(rcol %s %s)\n"
-                          (prin1-to-string (get-text-property (point) 'ref))
-                          (prin1-to-string (read-from-minibuffer "New name: "))))))
+                          (hyg-prin1 (get-text-property (point) 'ref))
+                          (hyg-prin1 (read-from-minibuffer "New name: "))))))
 
 
 (defun gimme-bookmark-save-collection ()
@@ -173,8 +173,8 @@
   (let* ((coll  (get-text-property (point) 'coll))
          (name (read-from-minibuffer "Save as: ")))
     (when coll (gimme-send-message (format "(savecol %s %s)\n"
-                                           (prin1-to-string coll)
-                                           (prin1-to-string name))))))
+                                           (hyg-prin1 coll)
+                                           (hyg-prin1 name))))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Auxiliary functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;

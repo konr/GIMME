@@ -94,13 +94,13 @@
   (let* ((parent gimme-collection-name)
          (name (gimme-autocomplete-prompt (format "%s > " gimme-collection-title) parent))
          (message (format "(%s %s %s)\n" (if faceted "faceted_subcol" "subcol")
-                          (prin1-to-string parent) (prin1-to-string name))))
+                          (hyg-prin1 parent) (hyg-prin1 name))))
     (gimme-send-message message)))
 
 (defun gimme-parent-col (&optional faceted)
   "Jumps to the current collection's parent collection."
   (interactive)
-  (let* ((message (format "(supcol %s %s)\n" (prin1-to-string gimme-collection-name) (if faceted "t" ""))))
+  (let* ((message (format "(supcol %s %s)\n" (hyg-prin1 gimme-collection-name) (if faceted "t" ""))))
     (gimme-send-message message)))
 
 (defun gimme-collection-append-focused ()
@@ -127,10 +127,10 @@
          (name (completing-read
                 "Filter? "
                 (mapcar (lambda (n) (format "%s:%s"
-                                       (car n) (prin1-to-string (decode-coding-string (cdr n) 'utf-8))))
+                                       (car n) (hyg-prin1 (decode-coding-string (cdr n) 'utf-8))))
                         (remove-if (lambda (m) (member (car m) '(id duration font-lock-face)))
                                    (plist-to-alist (text-properties-at (point)))))))
-         (message (format "(subcol %s %s)\n" parent (prin1-to-string name))))
+         (message (format "(subcol %s %s)\n" parent (hyg-prin1 name))))
     (gimme-send-message message)))
 
 
@@ -139,7 +139,7 @@
   (interactive)
   (let* ((coll gimme-collection-name)
          (facet (gimme-toggle-facet t prev-p))
-         (message (format "(faceted_pcol %s %s)\n" (prin1-to-string coll) (prin1-to-string facet))))
+         (message (format "(faceted_pcol %s %s)\n" (hyg-prin1 coll) (hyg-prin1 facet))))
     (when coll (gimme-send-message message))))
 
 (defun gimme-faceted-subcol (&optional append)
@@ -150,7 +150,7 @@
          (val (get-text-property (point) 'data))
          (pattern (format "%s:'%s'" key val))
          (message (format "(%s %s %s)\n" (if append "append_subcol" "faceted_subcol")
-                          (prin1-to-string parent) (prin1-to-string pattern))))
+                          (hyg-prin1 parent) (hyg-prin1 pattern))))
     (when val (gimme-send-message message))))
 
 (defun gimme-collection-toggle-faceted ()
@@ -159,20 +159,20 @@
   (let* ((facet (if (boundp 'gimme-collection-facet) nil (car gimme-bookmark-facets)))
          (function (if facet "faceted_pcol" "pcol"))
          (coll gimme-collection-name))
-    (gimme-send-message "(%s %s)\n" function (prin1-to-string coll))))
+    (gimme-send-message "(%s %s)\n" function (hyg-prin1 coll))))
 
 (defun gimme-collection-append-current-collection ()
   "Appends current collection to the playlist"
   (interactive)
-  (gimme-send-message  "(append_coll %s)\n" (prin1-to-string gimme-collection-name)))
+  (gimme-send-message  "(append_coll %s)\n" (hyg-prin1 gimme-collection-name)))
 
 (defun gimme-faceted-change-tags-of-subcol ()
   "Changes the current group's value of the tag used as facet to another thing."
   (interactive)
-  (let* ((coll (prin1-to-string gimme-collection-name))
-         (subcol (prin1-to-string (get-text-property (point) 'data)))
-         (key (prin1-to-string gimme-collection-facet))
-         (val (prin1-to-string (completing-read-with-whitespace
+  (let* ((coll (hyg-prin1 gimme-collection-name))
+         (subcol (hyg-prin1 (get-text-property (point) 'data)))
+         (key (hyg-prin1 gimme-collection-facet))
+         (val (hyg-prin1 (completing-read-with-whitespace
                                 (format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
     (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
 

@@ -3,7 +3,7 @@
 dir=File.dirname(__FILE__)
 $LOAD_PATH << dir
 
-['rparsec', 'sexp'].each { |gem| Dir["#{dir}/gems/gems/#{gem}-*/**/"].each {|g| $LOAD_PATH << g}}
+['rparsec', 'sexp'].each {|gem| Dir["#{dir}/gems/gems/#{gem}-*/**/"].each {|d| $LOAD_PATH << d}}
 ['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'crawlyr','freebase','sexp'].each do |lib|
   begin
     require lib

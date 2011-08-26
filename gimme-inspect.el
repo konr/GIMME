@@ -222,7 +222,7 @@
 (defun gimme-inspect-write-options-to-xmms2 ()
   "Function used to write back options to XMMS2"
   (interactive)
-  (gimme-send-message "(conf_save %s)\n"  (prin1-to-string (gimme-inspect-collect-alist))))
+  (gimme-send-message "(conf_save %s)\n"  (hyg-prin1 (gimme-inspect-collect-alist))))
 
 (defun gimme-inspect-write-track-options-to-xmms2 ()
   "Function used to write back track attrivutes to XMMS2"
@@ -231,7 +231,7 @@
          (fancy-format (loop for pair in alist collecting
                              (list (intern (car pair)) (if (number-in-string-p (cadr pair)) (string-to-number (cadr pair)) (cadr pair))))))
     (message "Sending changes to XMMS2")
-    (gimme-send-message "(update_tags %s)\n"  (prin1-to-string fancy-format))))
+    (gimme-send-message "(update_tags %s)\n"  (hyg-prin1 fancy-format))))
 
 (provide 'gimme-inspect)
 ;;; gimme-inspect.el ends here

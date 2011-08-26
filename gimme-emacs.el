@@ -28,7 +28,7 @@
 
 (defun gimme-add-path-to-playlist (path)
   "Adds a given path to the collection and playlist. Requires a fullpath"
-  (gimme-send-message "(add %s)\n" (prin1-to-string (format "file://%s" path))))
+  (gimme-send-message "(add %s)\n" (hyg-prin1 (format "file://%s" path))))
 
 ;;;;;;;;;;;
 ;; Dired ;;

@@ -299,7 +299,7 @@
           into plists and finally
           (dolist (plist plists)
             (gimme-send-message "(update_tags %s)\n"
-                                (prin1-to-string (plist-to-pseudo-alist plist)))))))
+                                (hyg-prin1 (plist-to-pseudo-alist plist)))))))
 
 (defun gimme-tagwriter-scan-current (&optional try-previous)
   "Scans fields from the URL."
