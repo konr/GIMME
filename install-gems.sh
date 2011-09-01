@@ -55,8 +55,7 @@ function Packages {
     echo $packages
 }
 
-## Packages #####################################
-
+  ## Packages #####################################
 distro=$(Distro)
 if [[ $distro == "Unknown" ]]; then
     packages="xmms2 ruby-glib2 emacs-color-theme emacs ruby rubygems"
@@ -80,6 +79,7 @@ else
 fi
 
 if [[ $old -eq "1" ]]; then
+  ## Ruby 1.8 #####################################
     Bold "2. Installing Sexp and Parsec from Rubygems..."
     sudo gem install sexp
     Bold "3. Installing Mechanize from Rubygems..."
@@ -114,7 +114,7 @@ else
     Bold "5. Cleaning up..."
     cd $srcdir
     rm -Rf rparsec
-  # Checking #####################################
+  ## Checking #####################################
     Bold "6. Checking installation..."
     errors=0
     if [ $(gem list | grep mechanize | wc -l) -ne "1" ]; then
@@ -134,6 +134,7 @@ else
 fi
 
 if [ $errors -eq 0 ]; then
+  ## Did it go right? #############################
     Victory "Everything was correctly installed!"
 else
     exit 1
