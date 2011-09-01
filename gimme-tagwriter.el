@@ -82,6 +82,7 @@
             (rows (length fixed))
             (max-list (mapcar (lambda (x) (min gimme-tagwriter-max-length (apply #'max x))) (transpose (mapcar (lambda (x) (mapcar #'length x)) fixed)))))
        (setq-local data (car old-and-fixed))
+       (setq-local mass-operation nil)
        (setq-local colls colls) (setq-local rows rows)
        (loop for row in fixed
              doing (insert "| ")
@@ -101,6 +102,7 @@
             (beg (car bounds)) (end (cadr bounds)))
        (delete-region beg end) (goto-char beg)
        (insert (format " %s " val))
+       ;; FIXME: This is the place that must separated.
        (let ((largest (loop for r from 0 upto (1- rows) collecting
                             (progn (goto-char (cadr (gimme-tagwriter-cell-boundaries r coll)))
                                    (current-column))
@@ -296,10 +298,8 @@
                 and new-plist = (plist-put datum (car head) (cadr head))
                 then (plist-put datum (car head) (cadr head))
                 while head finally return (butlast (butlast new-plist)))
-          into plists and finally
-          (dolist (plist plists)
-            (gimme-send-message "(update_tags %s)\n"
-                                (hyg-prin1 (plist-to-pseudo-alist plist)))))))
+          into plists and finally (dolist (plist plists) 
+				    (gimme-send-message "(update_tags %s)\n" (hyg-prin1 (plist-to-pseudo-alist plist)))))))
 
 (defun gimme-tagwriter-scan-current (&optional try-previous)
   "Scans fields from the URL."
@@ -348,10 +348,12 @@
 (defun gimme-tagwriter-scan-all ()
   "Scans fields from the URL of all songs."
   (interactive)
+  (setq-local mass-operation t)
   (save-excursion
     (goto-char (point-min))
     (loop for i upto (1- rows) doing (next-line)
-          and doing (gimme-tagwriter-scan-current t))))
+          and doing (gimme-tagwriter-scan-current t)))
+  (setq-local mass-operation nil))
 (provide 'gimme-tagwriter)
 
 
