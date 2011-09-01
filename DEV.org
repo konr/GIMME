@@ -1,20 +1,22 @@
 * Roadmap for 3.0
 ** 1. Embracing new users
-   - [ ] Prettier Github intro
-	 - [ ] Figure out features
-	 - [ ] Take screenshots and put them in the wiki
-	       - [ ] Integration with Freebase (augmented)
-	       - [ ] Lyrics
-	       - [ ] Autocompletion
-	       - [ ] Faceted view and collections
-	       - [ ] Bookmark (collection management and searches)
-	       - [ ] Customizations
-	       - [ ] Integration with Dired
-	       - [ ] Neat equalizer
-	       - [ ] Inspect
-	       - [ ] Starred
-	       - [ ] Status mode
-	       - [ ] 1337 tagwriter
+   - [-] More information!
+	 - [X] Figure out features
+	 - [X] Take screenshots and put them in the wiki
+	       - [X] Starred
+	       - [X] Status mode
+	       - [X] Integration with Freebase (augmented)
+	       - [X] Lyrics
+	       - [X] Autocompletion
+	       - [X] Faceted view and collections
+	       - [X] Bookmark (collection management and searches)
+	       - [X] Customizations
+	       - [X] Integration with Dired
+	       - [X] Neat equalizer
+	       - [X] Inspect
+	       - [X] 1337 tagwriter
+	       - [X] Collections
+	 - [ ] Fill up the wiki with text
 	 - [ ] Write github intro
    - [ ] Some tutorial on how to set the equalizer
    - [ ] Show key bindings. I think this is crucial
