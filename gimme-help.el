@@ -24,12 +24,14 @@
 ;;; Code
 
 (defun gimme-help-show-keybindings ()
+  "Shows the available keybindings"
   (interactive)
   (message "oi")
   (let* ((name "GIMME - Keybindings")
          (map (cdr (current-local-map)))
-         (docs (loop for k in map when (and (numberp (car k)) (functionp (cdr k)))
-                     collect `(key ,(format "%c" (car k)) function ,(cdr k) docs ,(documentation (cdr k)))
+         (docs (loop for k in map when (and (atom (car k)) (functionp (cdr k)))
+                     collect `(key ,(if (numberp (car k)) (key-description (format "%c" (car k)))
+				      (format "%s" (car k))) function ,(cdr k) docs ,(documentation (cdr k)))
 		     into list-that-needs-to-be-reverted
 		     finally return (reverse list-that-needs-to-be-reverted)))
 	 (header "Here are the currently set Keybindings.\n\n---\n\n"))
@@ -40,9 +42,9 @@
      (loop for plist in docs doing
            (let* ((key (propertize (plist-get plist 'key) 'font-lock-face '(:weight bold)))
 		  (nodocs (propertize "FIXME: NO DOCS FOUND!" 'font-lock-face '(:foreground "#ff0000")))
-		  (docs (car (split-string (or (plist-get plist 'docs) nodocs) "\n")))
-		  (docs (format "%s" (plist-get plist 'function)))) 
-	     (insert (format "%s\t%s\n" key docs))))
+		  (docs (car (split-string (or (plist-get plist 'docs) nodocs) "\n")))) 
+	     (insert (format "%s%s%s\n" key 
+			     (make-string (ceiling (/ (- (* 2.0 tab-width) (length key)) tab-width)) ?\t) docs))))
      (font-lock-mode 1)
      (use-local-map (gimme-make-basic-map))
      (switch-to-buffer name)

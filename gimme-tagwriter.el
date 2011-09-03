@@ -45,7 +45,7 @@
     (define-key map (kbd ".") 'gimme-tagwriter-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
     (define-key map (kbd "s") 'gimme-tagwriter-scan-current)
-    (define-key map (kbd "S") (lambda () (interactive) (gimme-tagwriter-scan-current t)))
+    (define-key map (kbd "S") 'gimme-tagwriter-scan-current-reusing)
     (define-key map (kbd "!") 'gimme-tagwriter-scan-all)
     (define-key map (kbd "<backtab>") 'gimme-tagwriter-prev-field)
     map)
@@ -295,6 +295,11 @@
                 while head finally return (butlast (butlast new-plist)))
           into plists and finally (dolist (plist plists) 
 				    (gimme-send-message "(update_tags %s)\n" (hyg-prin1 (plist-to-pseudo-alist plist)))))))
+
+(defun gimme-tagwriter-scan-current ()
+  "Scans fields from the URL, using, if possible, the previous formula."
+  (interactive)
+  (gimme-tagwriter-scan-current t))
 
 (defun gimme-tagwriter-scan-current (&optional try-previous)
   "Scans fields from the URL."

@@ -27,7 +27,7 @@
 (defvar gimme-inspect-map
   (let ((map (gimme-make-basic-map)))
     (define-key map (kbd "RET") 'gimme-inspect-change-current-line-prompt)
-    (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-inspect-change-current-line-prompt t)))
+    (define-key map (kbd "S-<return>") 'gimme-inspect-change-current-line-prompt-reusing)
     (define-key map (kbd "W") 'gimme-inspect-write)
     (define-key map (kbd ".") 'gimme-inspect-print-current-value)
     (define-key map (kbd "y") 'gimme-inspect-yank-current-value)
@@ -174,6 +174,12 @@
   (let ((val (gimme-inspect-get-current-value)))
     (with-temp-buffer (insert val) (kill-ring-save (point-min) (point-max))
                       (message "Yanked: %s" val))))
+
+
+(defun gimme-inspect-change-current-line-prompt-reusing ()
+  "Changes the value of the current line to another thing, reusing the previous value given, if possible"
+  (interactive)
+  (gimme-inspect-change-current-line-prompt t))
 
 (defun gimme-inspect-change-current-line-prompt (&optional reuse)
   "Changes the value of the current line to another thing"

@@ -46,13 +46,13 @@
 (defvar gimme-faceted-map
   (let ((map (gimme-make-basic-map)))
     (define-key map (kbd "TAB") 'gimme-faceted-change-facet)
-    (define-key map (kbd "<backtab>") (lambda () (interactive) (gimme-faceted-change-facet t)))
-    (define-key map (kbd "<") (lambda () (interactive) (gimme-parent-col t)))
-    (define-key map (kbd ">") (lambda () (interactive) (gimme-child-col t)))
+    (define-key map (kbd "<backtab>") 'gimme-faceted-change-facet-to-prev)
+    (define-key map (kbd "<") 'gimme-parent-col-with-facets)
+    (define-key map (kbd ">") 'gimme-child-col-with-facets)
     (define-key map (kbd "RET") 'gimme-faceted-subcol)
     (define-key map (kbd "C-M-S-<return>") 'gimme-collection-append-current-collection)
-    (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-faceted-subcol t)))
-    (define-key map (kbd "A") (lambda () (interactive) (gimme-faceted-subcol t)))
+    (define-key map (kbd "S-<return>") 'gimme-faceted-subcol-append)
+    (define-key map (kbd "A") 'gimme-faceted-subcol-append)
     (define-key map (kbd "!") 'gimme-collection-toggle-faceted)
     (define-key map (kbd "T") 'gimme-faceted-change-tags-of-subcol)
     map)
@@ -71,6 +71,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-child-col-with-facets ()
+  "Creates a new collection intersecting the search criteria and the current collection and displays it with facets"
+  (interactive) (gimme-child-col t))
+
+(defun gimme-parent-col-with-facets ()
+  "Jumps to the current collection's parent collection and displays it with facets."
+  (interactive) (gimme-parent-col t))
 
 (defun gimme-child-col (&optional faceted)
   "Creates and displays a new collection intersecting the search criteria and the current collection"
@@ -118,13 +126,22 @@
     (gimme-send-message message)))
 
 
+(defun gimme-faceted-change-facet-to-prev ()
+  "Shows the current collection through the previous facet."
+  (interactive)
+  (gimme-faceted-change-facet t))
+
 (defun gimme-faceted-change-facet (&optional prev-p)
-  "Shows the current collection through a different facet."
+  "Shows the current collection through the next facet."
   (interactive)
   (let* ((coll gimme-collection-name)
          (facet (gimme-toggle-facet t prev-p))
          (message (format "(faceted_pcol %s %s)\n" (hyg-prin1 coll) (hyg-prin1 facet))))
     (when coll (gimme-send-message message))))
+
+(defun gimme-faceted-subcol-append ()
+  "Appends to the playlist a sub-collection containing the current group of the collection."
+  (interactive) (gimme-faceted-subcol t))
 
 (defun gimme-faceted-subcol (&optional append)
   "Eithers displays or appends to the playlist a sub-collection containing the current group of the collection."
@@ -157,7 +174,7 @@
          (subcol (hyg-prin1 (get-text-property (point) 'data)))
          (key (hyg-prin1 gimme-collection-facet))
          (val (hyg-prin1 (completing-read-with-whitespace
-                                (format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
+                          (format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
     (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
 
 

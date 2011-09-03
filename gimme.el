@@ -169,17 +169,6 @@
     (when (> gimme-debug 0) (message message))
     (process-send-string gimme-process message)))
 
-(defmacro gimme-generate-commands (&rest args)
-  "Generates commands that don't require arguments"
-  `(mapcar 'eval
-           ',(mapcar (lambda (f)
-                       `(fset ',(read (format "gimme-%s" f))
-                              (lambda () (interactive)
-                                (process-send-string gimme-process
-                                                     ,(format "%s\n" (list f))))))
-                     args)))
-
-
 (defun gimme-string (plist)
   "Receives a song represented as a plist and binds each key as %key to be used by the formatting functions at gimme-playlist-formats"
   (let ((plist (plist-put plist 'font-lock-face nil)))
@@ -249,7 +238,6 @@
 ;; Init ;;
 ;;;;;;;;;;
 
-(gimme-generate-commands clear shuffle play pause next prev stop toggle current)
 (require 'htmlr)
 
 (require 'gimme-augmented)

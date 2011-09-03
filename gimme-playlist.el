@@ -44,6 +44,7 @@
     (define-key map [remap paste] (lambda () (interactive) (gimme-paste-deleted nil)))
     ;; Navigation
     (define-key map (kbd "l")   'gimme-center)
+    (define-key map (kbd "TAB") 'gimme-toggle-view)
     ;; Playlist manipulation
     (define-key map (kbd "C")   'gimme-clear)
     (define-key map (kbd "H")   'gimme-shuffle)
@@ -206,6 +207,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun gimme-clear () "Clears the playlist" (gimme-send-message "(clear)\n"))
+(defun gimme-shuffle () "Shuffles the playlist" (gimme-send-message "(shuffle)\n"))
+(defun gimme-prev () "Goes to the previous song in the playlist." (gimme-send-message "(prev)\n"))
+(defun gimme-next () "Goes to the next song in the playlist." (gimme-send-message "(next)\n"))
+(defun gimme-pause () "Pauses playback." (gimme-send-message "(pause)\n"))
+(defun gimme-play () "Starts playback." (gimme-send-message "(play)\n"))
+(defun gimme-stop () "Stops playback." (gimme-send-message "(stop)\n"))
+(defun gimme-toggle () "Toggles between pause and play." (gimme-send-message "(toggle)\n"))
 
 (defun gimme-playback-back ()
   "Goes back 100ms in the playback"

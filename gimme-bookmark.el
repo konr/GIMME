@@ -32,9 +32,9 @@
 (defvar gimme-bookmark-map
   (let ((map (gimme-make-basic-map)))
     (define-key map (kbd "TAB") 'gimme-toggle-facet)
-    (define-key map (kbd "RET") (lambda () (interactive) (gimme-bookmark-view-collection t)))
+    (define-key map (kbd "RET") 'gimme-bookmark-view-collection-with-facets)
     (define-key map (kbd ">")  'gimme-child-coll-of-current)
-    (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-bookmark-view-collection nil)))
+    (define-key map (kbd "S-<return>") 'gimme-bookmark-view-collection )
     (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
     (define-key map (kbd "r") 'gimme-bookmark-rename-coll)
@@ -110,8 +110,14 @@
                                 (apply #'concat as-strings))
           (message "Invalid operation!"))))))
 
+
+(defun gimme-bookmark-view-collection-with-facets ()
+  "Jumps to faceted-view with the focused collection as the current collection."
+  (interactive)
+  (gimme-bookmark-view-collection t))
+
 (defun gimme-bookmark-view-collection (&optional faceted-p)
-  "Jumps to filter-view with the focused collection as the current"
+  "Jumps to collection-view with the focused collection as the current collection."
   (interactive)
   (let* ((coll (hyg-prin1 (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))))
          (facet (car gimme-bookmark-facets))
