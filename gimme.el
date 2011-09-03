@@ -223,7 +223,7 @@
        (goto-line line)))))
 
 (defun gimme-make-basic-map ()
-  "Generates a map with common, basic functionalities"
+  "Generates a map with common, basic functionalities."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q")   'kill-current-buffer)
     (define-key map (kbd "j")   'next-line)
