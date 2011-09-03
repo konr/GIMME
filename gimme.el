@@ -191,7 +191,7 @@
              (eval (car gimme-playlist-formats))))))
 
 (defun gimme-coll-overview (name data)
-  "Caches the data present in a collection"
+  "Caches the data present in a collection."
   (if name (setq gimme-mlib-cache-plist (plist-put gimme-mlib-cache-plist name data))
     (setq gimme-mlib-cache-global data)))
 
