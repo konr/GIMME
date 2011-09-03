@@ -222,6 +222,20 @@
        (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))
        (goto-line line)))))
 
+(defun gimme-make-basic-map ()
+  "Generates a map with common, basic functionalities"
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q")   'kill-current-buffer)
+    (define-key map (kbd "j")   'next-line)
+    (define-key map (kbd "k")   'previous-line)
+    (define-key map (kbd "C-f") 'scroll-up)
+    (define-key map (kbd "C-b") 'scroll-down)
+    (define-key map (kbd "?")   'gimme-help-show-keybindings)
+    (define-key map (kbd "=")   'gimme-increase-volume)
+    (define-key map (kbd "+")   'gimme-increase-volume)
+    (define-key map (kbd "-")   'gimme-decrease-volume)
+    map))
+
 (defun gimme ()
   "The XMMS2 interface we all love."
   (interactive)
@@ -237,19 +251,21 @@
 
 (gimme-generate-commands clear shuffle play pause next prev stop toggle current)
 (require 'htmlr)
-(require 'gimme-utils)
+
+(require 'gimme-augmented)
 (require 'gimme-autocomplete)
-(require 'gimme-playlist)
 (require 'gimme-bookmark)
 (require 'gimme-collection)
-(require 'gimme-status-mode)
-(require 'gimme-custom)
 (require 'gimme-emacs)
-(require 'gimme-tagwriter)
-(require 'gimme-augmented)
-(require 'gimme-inspect)
 (require 'gimme-eq)
-(provide 'gimme)
+(require 'gimme-custom)
+(require 'gimme-help)
+(require 'gimme-inspect)
+(require 'gimme-playlist)
+(require 'gimme-status-mode)
+(require 'gimme-tagwriter)
+(require 'gimme-utils)
 
+(provide 'gimme)
 ;;; gimme.el ends here
 

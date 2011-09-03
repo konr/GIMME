@@ -39,54 +39,49 @@
         mode-name "gimme-playlist"))
 
 (defvar gimme-playlist-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "RET") 'gimme-focused-play)
-    (define-key map (kbd "C") 'gimme-clear)
-    (define-key map (kbd "O") 'gimme-get-conf)
-    (define-key map (kbd "i") 'gimme-get-track-conf)
-    (define-key map (kbd "I") 'gimme-augmented-ask-for-info)
-    (define-key map (kbd "t") 'gimme-update-tags-prompt)
-    (define-key map (kbd "T") 'gimme-tagwriter)
-    (define-key map (kbd "L") 'gimme-augmented-fetch-lyrics)
-    (define-key map (kbd "H") 'gimme-shuffle)
-    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
+  (let ((map (gimme-make-basic-map)))
     (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete nil)))
-    (define-key map (kbd "d") 'kill-line)
     (define-key map [remap paste] (lambda () (interactive) (gimme-paste-deleted nil)))
-    (define-key map (kbd "y") (lambda () (interactive) (gimme-focused-delete t)))
-    (define-key map (kbd "p") 'paste)
-    (define-key map (kbd "S") 'gimme-sort)
-    (define-key map (kbd "s") 'gimme-toggle-sort)
+    ;; Navigation
+    (define-key map (kbd "l")   'gimme-center)
+    ;; Playlist manipulation
+    (define-key map (kbd "C")   'gimme-clear)
+    (define-key map (kbd "H")   'gimme-shuffle)
+    (define-key map (kbd "d")   'kill-line)
+    (define-key map (kbd "y")   'gimme-focused-yank)
+    (define-key map (kbd "p")   'paste)
+    (define-key map (kbd "S")   'gimme-sort)
+    (define-key map (kbd "s")   'gimme-toggle-sort)
+    ;; Info
+    (define-key map (kbd "T")   'gimme-tagwriter)
+    (define-key map (kbd "*")   'gimme-toggle-star)
+    (define-key map (kbd "O")   'gimme-get-conf)
+    (define-key map (kbd "i")   'gimme-get-track-conf)
+    (define-key map (kbd "I")   'gimme-augmented-ask-for-info)
+    (define-key map (kbd "L")   'gimme-augmented-fetch-lyrics)
+    (define-key map (kbd "t")   'gimme-update-tags-prompt)
+    ;; Playback
     (define-key map (kbd "SPC") 'gimme-toggle)
-    (define-key map (kbd "j") 'next-line)
-    (define-key map (kbd "k") 'previous-line)
-    (define-key map (kbd "C-f") 'scroll-up)
-    (define-key map (kbd "C-b") 'scroll-down)
-    (define-key map (kbd "l") 'gimme-center)
-    (define-key map (kbd "J") 'gimme-next)
-    (define-key map (kbd "K") 'gimme-prev)
-    (define-key map (kbd "TAB") 'gimme-toggle-view)
-    (define-key map (kbd "=") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
-    (define-key map (kbd "+") (lambda () (interactive) (gimme-vol gimme-vol-delta)))
-    (define-key map (kbd "-") (lambda () (interactive) (gimme-vol (- gimme-vol-delta))))
-    (define-key map (kbd "?") 'gimme-focused-url)
-    (define-key map (kbd "*") 'gimme-toggle-star)
-    (define-key map (kbd "[") (lambda () (interactive) (gimme-seek -1000  t)))
-    (define-key map (kbd "{") (lambda () (interactive) (gimme-seek -10000 t)))
-    (define-key map (kbd "]") (lambda () (interactive) (gimme-seek  1000  t)))
-    (define-key map (kbd "}") (lambda () (interactive) (gimme-seek  10000 t)))
-    (define-key map (kbd "g") 'gimme-goto-pos)
-    (define-key map (kbd "1") (lambda () (interactive) (gimme-eq-change 0   5  5)))
-    (define-key map (kbd "2") (lambda () (interactive) (gimme-eq-change 6  11  5)))
-    (define-key map (kbd "3") (lambda () (interactive) (gimme-eq-change 12 17  5)))
-    (define-key map (kbd "4") (lambda () (interactive) (gimme-eq-change 18 24  5)))
-    (define-key map (kbd "5") (lambda () (interactive) (gimme-eq-change 25 30  5)))
-    (define-key map (kbd "!") (lambda () (interactive) (gimme-eq-change 0   5 -5)))
-    (define-key map (kbd "@") (lambda () (interactive) (gimme-eq-change 6  11 -5)))
-    (define-key map (kbd "#") (lambda () (interactive) (gimme-eq-change 12 17 -5)))
-    (define-key map (kbd "$") (lambda () (interactive) (gimme-eq-change 18 24 -5)))
-    (define-key map (kbd "%") (lambda () (interactive) (gimme-eq-change 25 30 -5)))
-    (define-key map (kbd "6") 'gimme-eq-draw)
+    (define-key map (kbd "[")   'gimme-playback-back)
+    (define-key map (kbd "]")   'gimme-playback-forward)
+    (define-key map (kbd "{")   'gimme-playback-way-back)
+    (define-key map (kbd "}")   'gimme-playback-way-forward)
+    (define-key map (kbd "g")   'gimme-goto-pos)
+    (define-key map (kbd "RET") 'gimme-focused-play)
+    (define-key map (kbd "J")   'gimme-next)
+    (define-key map (kbd "K")   'gimme-prev)
+    ;; Equalizer
+    (define-key map (kbd "1")   'gimme-eq-increase-1st-band)
+    (define-key map (kbd "2")   'gimme-eq-increase-2nd-band)
+    (define-key map (kbd "3")   'gimme-eq-increase-3rd-band)
+    (define-key map (kbd "4")   'gimme-eq-increase-4th-band)
+    (define-key map (kbd "5")   'gimme-eq-increase-5th-band)
+    (define-key map (kbd "!")   'gimme-eq-decrease-1st-band)
+    (define-key map (kbd "@")   'gimme-eq-decrease-2nd-band)
+    (define-key map (kbd "#")   'gimme-eq-decrease-3rd-band)
+    (define-key map (kbd "$")   'gimme-eq-decrease-4th-band)
+    (define-key map (kbd "%")   'gimme-eq-decrease-5th-band)
+    (define-key map (kbd "6")   'gimme-eq-draw)
     map)
   "Playlist-view's keymap")
 
@@ -199,15 +194,44 @@
        (insert (gimme-string plist))
        (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max)))))))
 
+(defun gimme-vol (delta)
+  "Increases the current volume by delta (can be non-positive, too)"
+  (when (integerp delta)
+    (gimme-send-message "(vol %d)\n" delta)))
+
+(defun gimme-seek (time relativep)
+  "Jumps to a different position. Time must be given in miliseconds."
+  (gimme-send-message "(%s \"%d\")\n" (if relativep "seek_rel" "seek") time))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun gimme-vol (delta)
-  "Increases the current volume by delta (can be non-positive, too)"
-  (interactive)
-  (when (integerp delta)
-    (gimme-send-message "(vol %d)\n" delta)))
+(defun gimme-playback-back ()
+  "Goes back 100ms in the playback"
+  (interactive) (gimme-seek -100 t))
+
+(defun gimme-playback-way-back ()
+  "Goes back 1s in the playback"
+  (interactive) (gimme-seek -1000 t))
+
+(defun gimme-playback-forward ()
+  "Goes forward 100ms in the playback"
+  (interactive) (gimme-seek 100 t))
+
+(defun gimme-playback-way-forward ()
+  "Goes forward 1s in the playback"
+  (interactive) (gimme-seek 1000 t))
+
+(defun gimme-increase-volume ()
+  "Increases the current volume"
+  (interactive) 
+  (gimme-vol gimme-vol-delta))
+
+(defun gimme-decrease-volume ()
+  "Increases the current volume"
+  (interactive) 
+  (gimme-vol (- gimme-vol-delta)))
 
 (defun gimme-sort ()
   "Sorts the current playlist"
@@ -242,6 +266,11 @@
         (gimme-send-message "(insert %s %s)\n" pos id)))))
 
 
+(defun gimme-focused-yank ()
+  "Yanks the currently focused song."
+  (interactive)
+  (gimme-focused-delete t))
+
 (defun gimme-focused-delete (yank-p)
   "Deletes the currently focused song."
   (interactive)
@@ -265,11 +294,6 @@
   (with-current-buffer (current-buffer)
     (let ((h-beg (text-property-any (point-min) (point-max) 'face 'highlight)))
       (if h-beg (goto-char h-beg) (message "Not on the playlist.")))))
-
-(defun gimme-seek (time relativep)
-  "Jumps to a different position. Time must be given in miliseconds."
-  (interactive)
-  (gimme-send-message "(%s \"%d\")\n" (if relativep "seek_rel" "seek") time))
 
 (defun gimme-goto-pos ()
   "Prompts for a position, to be given in percentage or [[hours:]minutes:]seconds"

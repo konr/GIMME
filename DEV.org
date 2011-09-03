@@ -24,16 +24,14 @@
    - [ ] Help system integrated with the wiki
 ** 2. Meta
    - [ ] Remove the FIXMEs and put them all here
-   - [ ] Bot to send me back changes in gimmeplayer.org
+   - [X] Bot to send me back changes in gimmeplayer.org
 ** 3. Bugs
    - [ ] The update broadcast changes the format of the updated tracks
-   - [ ] I'm using single quotes all the time. I don't think it's gonna
+   - [ ] i'm using single quotes all the time. i don't think it's gonna
 	 play well with tags that include it
    - [ ] The broadcast function is sometimes returning a wrong value
 	 for the :timesplayed property. Fix'd for medialib_changed but not
 	 for the other.
-   - [ ] 'colls' is not set sometimes, for some reason, in the tagwriter.
-   - [ ] Saving/changing a lot of songs in the tagwriter is slow.
 ** 4. Style and neatness
    - [X] Change gimme-filter for something more appropriate
    - [ ] Rewrite the sort calls on lyrics.rb using max_by or inject!
@@ -51,6 +49,7 @@
 	 it requires traditional-japanese-colors
    - [ ] The tagwriter sometimes refer to the line from the top of the
 	 document and sometimes from the top of the table.
+   - [ ] focused or current?
 ** 5. Augmented
    - [ ] Improve the niche lyrics fetcher
    - [ ] Try first getting lyrics using the extended properties of Freebase

@@ -25,20 +25,15 @@
 ;;; Code
 
 (defvar gimme-inspect-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "j") 'next-line)
-    (define-key map (kbd "k") 'previous-line)
-    (define-key map (kbd "C-f") 'scroll-up)
-    (define-key map (kbd "C-b") 'scroll-down)
+  (let ((map (gimme-make-basic-map)))
     (define-key map (kbd "RET") 'gimme-inspect-change-current-line-prompt)
     (define-key map (kbd "S-<return>") (lambda () (interactive) (gimme-inspect-change-current-line-prompt t)))
     (define-key map (kbd "W") 'gimme-inspect-write)
-    (define-key map (kbd "?") 'gimme-inspect-print-current-value)
+    (define-key map (kbd ".") 'gimme-inspect-print-current-value)
     (define-key map (kbd "y") 'gimme-inspect-yank-current-value)
     (define-key map (kbd "N") 'gimme-inspect-new-line-prompt)
     (define-key map (kbd "TAB") 'gimme-inspect-next-line)
     (define-key map (kbd "<backtab>") 'gimme-inspect-prev-line)
-    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
     map)
   "Inspect mode's keymap")
 

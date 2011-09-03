@@ -29,12 +29,7 @@
 ;;; Code
 
 (defvar gimme-augmented-lyrics-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") (lambda () (interactive) (kill-buffer (current-buffer))))
-    (define-key map (kbd "j") 'next-line)
-    (define-key map (kbd "k") 'previous-line)
-    (define-key map (kbd "C-f") 'scroll-up)
-    (define-key map (kbd "C-b") 'scroll-down)
+  (let ((map (gimme-make-basic-map)))
     map)
   "Keymap for GIMME's lyrics' view")
 

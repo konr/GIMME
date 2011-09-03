@@ -191,5 +191,10 @@
       (setq print-level level print-length length)
       prin1)))
 
+(defun kill-current-buffer ()
+  "Kills the current-buffer"
+  (interactive) 
+  (kill-buffer (current-buffer)))
+
 (provide 'gimme-utils)
 ;;; gimme-utils.el ends here

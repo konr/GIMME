@@ -47,12 +47,58 @@
     (getf '(0 " " 1 "▁" 2 "▂" 3 "▃" 4 "▄" 5 "▅" 6 "▆" 7 "▇" 8 "█")
           (floor (/ (+ 20 number) 5)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Boring equalizer functions. Defining them instead of using ;;
+;; anonymous functions just because I want the docs to be     ;;
+;; smoother                                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-eq-increase-1st-band () 
+  "Increases the 1st fifth of the equalizer"
+  (interactive) (gimme-eq-change 0 5 5))
+
+(defun gimme-eq-increase-2nd-band () 
+  "Increases the 2nd fifth of the equalizer"
+  (interactive) (gimme-eq-change 6 11 5))
+
+(defun gimme-eq-increase-3rd-band () 
+  "Increases the 3rd fifth of the equalizer"
+  (interactive) (gimme-eq-change 12 17 5))
+
+(defun gimme-eq-increase-4th-band () 
+  "Increases the 4th fifth of the equalizer"
+  (interactive) (gimme-eq-change 18 24 5))
+
+(defun gimme-eq-increase-5th-band () 
+  "Increases the 5th fifth of the equalizer"
+  (interactive) (gimme-eq-change 25 30 5))
+
+(defun gimme-eq-decrease-1st-band () 
+  "Decreases the 1st fifth of the equalizer"
+  (interactive) (gimme-eq-change 0 5 -5))
+
+(defun gimme-eq-decrease-2nd-band () 
+  "Decreases the 2nd fifth of the equalizer"
+  (interactive) (gimme-eq-change 6 11 -5))
+
+(defun gimme-eq-decrease-3rd-band () 
+  "Decreases the 3rd fifth of the equalizer"
+  (interactive) (gimme-eq-change 12 17 -5))
+
+(defun gimme-eq-decrease-4th-band () 
+  "Decreases the 4th fifth of the equalizer"
+  (interactive) (gimme-eq-change 18 24 -5))
+
+(defun gimme-eq-decrease-5th-band () 
+  "Decreases the 5th fifth of the equalizer"
+  (interactive) (gimme-eq-change 25 30 -5))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defun gimme-eq-change (beg end change) 
+(defun gimme-eq-change (beg end change)
   "Increases the value of the channels in range [beg;end] by the value given."
   (gimme-send-message "(eqchange %d %d %d)\n" beg end change))
 
