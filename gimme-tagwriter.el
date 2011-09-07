@@ -168,10 +168,6 @@
                 formula)))
     text))
 
-(defun decode-percent-encoding (string)
-  "Makes an URL-formatted string human-readable."
-  (replace-regexp-in-string "+" " " (decode-coding-string (url-unhex-string string) 'utf-8)))
-
 (defun regexp-all-matches (string regexp)
   "All matches of a regexp, given a string."
   (with-temp-buffer

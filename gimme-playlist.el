@@ -143,7 +143,7 @@
               (plist (plist-put plist 'font-lock-face nil))
               (plist (plist-put plist 'pos pos))
               (plist (if (equal face 'highlight) (plist-put plist 'face 'highlight) plist)))
-         (kill-region beg end) (goto-char beg) (insert (gimme-string plist)))))))
+         (delete-region beg end) (goto-char beg) (insert (gimme-string plist)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Auxiliary Functions ;;

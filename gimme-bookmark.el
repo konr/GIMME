@@ -296,7 +296,7 @@
   (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
          (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
     (gimme-on-buffer buffer
-                     (kill-region 1 (point-max))
+                     (delete-region 1 (point-max))
                      (insert (gimme-bookmark-colorize "* History\n"))
                      (insert (gimme-bookmark-dfs gimme-anonymous-collections))
                      (insert (gimme-bookmark-colorize "\n"))
@@ -331,14 +331,14 @@
          ('rename
           (let ((bounds (car (get-bounds-where
                               (lambda (x) (string= name (get-text-property x 'ref)))))))
-            (kill-region (car bounds) (cadr bounds))
+            (delete-region (car bounds) (cadr bounds))
             (goto-char (car bounds))
             (insert (gimme-bookmark-colorize
                      (propertize (format "** %s\n" newname) 'ref newname)))))
          ('remove
           (let ((bounds (car (get-bounds-where
                               (lambda (x) (string= name (get-text-property x 'ref)))))))
-            (kill-region (car bounds) (cadr bounds)))))))))
+            (delete-region (car bounds) (cadr bounds)))))))))
 
 (provide 'gimme-bookmark)
 ;;; gimme-bookmark.el ends here

@@ -105,7 +105,7 @@
                      (case type
                        ('playlist (gimme-playlist-mode))
                        ('collection (gimme-collection-mode facet)))
-                     (kill-region 1 (point-max))
+                     (delete-region 1 (point-max))
                      (when facet (insert (format "Collection: %s\nFacet: %s\n---\n\n"
                                                  (propertize name-s 'font-lock-face `(:foreground ,(color-for name-s)))
                                                  (propertize facet 'font-lock-face `(:weight bold)))))
@@ -207,7 +207,7 @@
        (goto-char (point-min))
        (loop for n from 0 upto (- line 2) doing (insert (nth n data)))
        (move-beginning-of-line 1) (kill-line (- line 2))
-       (kill-region (point) (point-max))
+       (delete-region (point) (point-max))
        (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))
        (goto-line line)))))
 

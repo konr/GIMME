@@ -193,8 +193,24 @@
 
 (defun kill-current-buffer ()
   "Kills the current-buffer"
-  (interactive) 
+  (interactive)
   (kill-buffer (current-buffer)))
+
+(defun decode-percent-encoding (string)
+  "Makes an URL-formatted string human-readable."
+  (replace-regexp-in-string "+" " " (decode-coding-string (url-unhex-string string) 'utf-8)))
+
+(defun time-distance-to-now (unix-time)
+  "Returns a string like '100 years ago'."
+  (let* ((diff (- (string-to-int (format-time-string "%s")) unix-time))
+         (from-ago (if (> diff 0) "ago" "in the future"))
+         (diff (if (> diff 0) diff (- diff)))
+         (interval-alist '(("second" . 60) ("minute" . 60) ("hour" . 24) ("day" . 30) ("month" . 12) ("year" . 1000))))
+    (loop for intervals = interval-alist then (cdr intervals)
+          and time = diff then (/ time (or (cdar intervals) 1))
+          while (and intervals (<= (cdar intervals) time)) finally return
+          (if intervals (format "%s %s%s %s." time (caar intervals) (if (> time 1) "s" "") from-ago) 
+	    "A long time ago in a galaxy far, far away...."))))
 
 (provide 'gimme-utils)
 ;;; gimme-utils.el ends here

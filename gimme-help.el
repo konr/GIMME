@@ -26,7 +26,6 @@
 (defun gimme-help-show-keybindings ()
   "Shows the available keybindings"
   (interactive)
-  (message "oi")
   (let* ((name "GIMME - Keybindings")
          (map (cdr (current-local-map)))
          (docs (loop for k in map when (and (atom (car k)) (functionp (cdr k)))
@@ -34,7 +33,7 @@
 				      (format "%s" (car k))) function ,(cdr k) docs ,(documentation (cdr k)))
 		     into list-that-needs-to-be-reverted
 		     finally return (reverse list-that-needs-to-be-reverted)))
-	 (header "Here are the currently set Keybindings.\n\n---\n\n"))
+	 (header "Here are the currently set keybindings.\n\n---\n\n"))
     (gimme-on-buffer
      name
      (delete-region (point-min) (point-max))
