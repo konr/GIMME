@@ -7,7 +7,7 @@
   - [[http://gimmeplayer.org/mediawiki/images/d/da/Augmented_Features.png][Go beyond what your computer knows and use the semantic web to get augmented information and lyrics?]]
   - [[http://gimmeplayer.org/mediawiki/images/a/a0/Online_documentation.png][Grab the docs as required from the project's wiki instead of relying on arcane manuals?]]
   - [[http://gimmeplayer.org/mediawiki/images/1/1b/XMMS2_configuration.png][Fine-tune configurations and plugins?]]
-  - [[http://gimmeplayer.org/mediawiki/images/7/74/Customization.png][Colorize your playlist using the colors of your contry?]]
+  - [[http://gimmeplayer.org/mediawiki/images/7/74/Customization.png][Colorize your playlist using the colors of your country?]]
   - [[http://gimmeplayer.org/mediawiki/images/9/96/Equalizer.png][Have such a kick-ass equalizer?]]
     
     Yes? But it doesn't run on Emacs. Check out [[http://gimmeplayer.org]]
