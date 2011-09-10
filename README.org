@@ -10,4 +10,4 @@
   - [[http://gimmeplayer.org/mediawiki/images/7/74/Customization.png][Colorize your playlist using the colors of your country?]]
   - [[http://gimmeplayer.org/mediawiki/images/9/96/Equalizer.png][Have such a kick-ass equalizer?]]
     
-    Yes? But it doesn't run on Emacs. Check out [[http://gimmeplayer.org]]
+    Yes? But it doesn't run on Emacs. Check out [[http://gimmeplayer.org][http://gimmeplayer.org]].
