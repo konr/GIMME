@@ -29,6 +29,7 @@
     (define-key map (kbd "RET") 'gimme-inspect-change-current-line-prompt)
     (define-key map (kbd "S-<return>") 'gimme-inspect-change-current-line-prompt-reusing)
     (define-key map (kbd "W") 'gimme-inspect-write)
+    (define-key map (kbd ",") 'gimme-inspect-print-current-key)
     (define-key map (kbd ".") 'gimme-inspect-print-current-value)
     (define-key map (kbd "y") 'gimme-inspect-yank-current-value)
     (define-key map (kbd "N") 'gimme-inspect-new-line-prompt)
@@ -47,7 +48,7 @@
         mode-name gimme-inspect-buffer-name)
   (setq-local previous-function nil))
 
-(defun gimme-inspect (plist top-message write-function)
+(defun gimme-inspect (plist top-message write-function help-function)
   "Edits the information contained in plist, and writes it back using the write-function. A top message will be provided to the users, too"
   (interactive)
   (let* ((strs (mapcar (lambda (x) (format "%s" x)) plist))
@@ -60,6 +61,7 @@
          (total (+ 7 (apply #'+ max))))
     (gimme-on-buffer
      gimme-inspect-buffer-name
+     (setq-local help-function help-function)
      (setq-local keys (mapcar #'symbol-name new-keys))
      (setq-local write-function write-function)
      (setq-local max-key (car max)) (setq-local max-val (cadr max))
@@ -86,6 +88,11 @@
            (plist (loop for key in (range-to-plists beg end)
                         when key collect (plist-get it 'data))))
       (plist-to-pseudo-alist plist))))
+
+(defun gimme-inspect-get-current-key ()
+  "Returns the key of the current line"
+  (when (gimme-inspect-on-table-p)
+    (get-text-property (+ (line-beginning-position) 2) 'data)))
 
 
 (defun gimme-inspect-get-current-value ()
@@ -163,6 +170,11 @@
                         (1- table-first-line) line))))
     (sane-goto-line (if (>= table-first-line line) table-last-line (1- line)))))
 
+(defun gimme-inspect-print-current-key ()
+  "Displays some description of the current key"
+  (interactive)
+  (funcall help-function (gimme-inspect-get-current-key)))
+
 (defun gimme-inspect-print-current-value ()
   "Displays the value of the current line"
   (interactive)
@@ -210,15 +222,17 @@
   "Called by the ruby process to inspect XMMS2's options"
   (let ((plist (flatten alist))
         (msg "These are the configuration options of XMMS2.")
-        (function #'gimme-inspect-write-options-to-xmms2))
-    (gimme-inspect plist msg function)))
+        (function #'gimme-inspect-write-options-to-xmms2)
+	(help-function #'gimme-help-get-property))
+    (gimme-inspect plist msg function help-function)))
 
 (defun gimme-track-conf (alist)
   "Called by the ruby process to inspect a track's attributes"
   (let ((plist (flatten alist))
         (msg (format "There are the attributes of the track."))
-        (function #'gimme-inspect-write-track-options-to-xmms2))
-    (gimme-inspect plist msg function)))
+        (function #'gimme-inspect-write-track-options-to-xmms2)
+	(help-function #'gimme-help-get-property))
+    (gimme-inspect plist msg function help-function)))
 
 (defun gimme-inspect-write-options-to-xmms2 ()
   "Function used to write back options to XMMS2"

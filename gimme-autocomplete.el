@@ -71,7 +71,7 @@
                                    (remove-if-not (lambda (x) (string-match (format "%s.*" key) (car x))) completions))
                    (remove-if-not (lambda (x) (string-match (format ".*%s.*" (downcase value)) (downcase x))) values)))
          (with-previous (mapcar (lambda (x) (replace-regexp-in-string (format "%s$" (if key-p key value))
-                                                                 (if key-p x (format "'%s'" x)) incomplete)) values)))
+                                                                 (if key-p x (format "'%s'" (replace-regexp-in-string "'" "\\\\\\\\'" x))) incomplete)) values)))
     with-previous))
 
 (defun gimme-autocomplete-display-completion-buffer (incomplete)

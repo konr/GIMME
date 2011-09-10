@@ -43,11 +43,11 @@
          (title (plist-get plist 'title)) (source (plist-get plist 'source))
          (title (format "GIMME - Lyrics for %s" title))
          (header (format "(source: %s)\n\n" source))
-         (formatted (replace-regexp-in-string "" "" data)))
+         (formatted (replace-regexp-in-string "" "" data))
+	 (lyr (with-temp-buffer (insert formatted) (goto-char (point-min)) (htmlr-render) (buffer-string))))
     (gimme-on-buffer
      (gimme-gen-buffer plist)
-     (insert formatted)
-     (goto-char (point-min)) (htmlr-render)
+     (insert (prettify-lyrics lyr))
      (goto-char (point-min)) (insert (propertize header 'font-lock-face `(:foreground ,(color-for source))))
      (gimme-augmented-lyrics-mode))))
 

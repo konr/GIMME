@@ -56,7 +56,6 @@
 
 (defvar gimme-bookmark-facets
   '("genre" "artist" "album" "timesplayed") "The facets of the collections that are worth displaying.")
-(defvar gimme-mlib-fidelity-level 1         "Determines how paranoid should GIMME be in keeping the caches up-to-date")
 (defvar gimme-inspect-max-length 50         "Maximum length of the string that will be used in every field of gimme-inspect")
 (defvar gimme-tagwriter-max-length 33       "Maximum length of the string that will be used in every field of gimme-tagwriter")
 
@@ -101,6 +100,7 @@
                        (format "GIMME - %s (%s)" type-s name-s) 'utf-8))
          (facet (plist-get plist 'gimme-collection-facet)))
     (gimme-on-buffer buffer-name
+                     (setq-local formats gimme-playlist-formats)
                      (kill-local-variable 'gimme-collection-facet) ;; FIXME lousy
                      (case type
                        ('playlist (gimme-playlist-mode))
@@ -177,24 +177,22 @@
                                         (if (and (symbolp (cdr n)) (not (null (cdr n))))
                                             (list 'quote (cdr n)) (cdr n))))
                            (plist-to-alist plist)))
-             (eval (car gimme-playlist-formats))))))
+             (eval (car formats))))))
 
 (defun gimme-coll-overview (name data)
   "Caches the data present in a collection."
   (if name (setq gimme-mlib-cache-plist (plist-put gimme-mlib-cache-plist name data))
     (setq gimme-mlib-cache-global data)))
 
-(defun gimme-assure-some-autocompletion ()
-  "Makes sure that GIMME will be able to do at least a broad autocompletion."
-  (when (or (not gimme-mlib-cache-global) (> gimme-mlib-fidelity-level 1))
-    (gimme-send-message "(coll_overview)\n")))
+(defun gimme-try-the-best-to-ensure-fancy-features ()
+  "Makes sure that GIMME will be able to do at least a general-scoped autocompletion and that the help features will be loaded."
+  (unless gimme-mlib-cache-global (gimme-send-message "(coll_overview)\n"))
+  (gimme-send-message "(get_help_info)\n"))
 
 (defun gimme-toggle-view ()
   "Cycle through the views defined in gimme-config."
   (interactive)
-  (setq gimme-playlist-formats
-        (append (cdr gimme-playlist-formats)
-                (list (car gimme-playlist-formats))))
+  (setq-local formats (append (cdr formats) (list (car formats))))
   ;; Won't work with the macro because of the (goto (point-max))
   (unlocking-buffer
    (save-excursion
@@ -232,7 +230,7 @@
   (gimme-init)
   (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-playlist)
-  (gimme-assure-some-autocompletion))
+  (gimme-try-the-best-to-ensure-fancy-features))
 
 ;;;;;;;;;;
 ;; Init ;;

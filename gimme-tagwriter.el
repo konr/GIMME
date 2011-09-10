@@ -71,7 +71,6 @@
          (fixed (cadr old-and-fixed)))
     (gimme-on-buffer
      gimme-tagwriter-buffer-name
-     (gimme-tagwriter-mode)
      (delete-region (point-min) (point-max))
      (let* ((colls (length (car fixed)))
             (rows (length fixed))
@@ -82,7 +81,8 @@
        (loop for row in fixed
              doing (insert "| ")
              doing (loop for coll in row and i = 0 then (1+ i) doing (insert (format "%s | " (string-expanded coll (nth i max-list)))))
-             doing (insert "\n")))))
+             doing (insert "\n"))
+     (gimme-tagwriter-mode))))
   (switch-to-buffer gimme-tagwriter-buffer-name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

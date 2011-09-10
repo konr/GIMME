@@ -663,6 +663,21 @@ class GIMME
     end
   end
 
+
+  ############
+  ### Help ###
+  ############
+
+  def get_help_info
+    Thread.new do
+      url = "http://gimmeplayer.org/wiki/Special:Ask/-5B-5BCategory:Song-20properties-5D-5D/-3FName/-3FDescription/-3FExample/-3FDisplay-20function/mainlabel%3D/format%3Djson"
+      agent = Mechanize.new
+      page = agent.get(url)
+      j = JSON page.body
+      to_emacs [:"gimme-help-set-properties", [:"quote", j["items"].map {|x| x.to_a.flatten}]]
+    end
+  end
+
   ########################
   ### Misc and Private ###
   ########################

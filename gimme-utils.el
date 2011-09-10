@@ -163,7 +163,7 @@
 (defun completing-read-with-whitespace (prompt options)
   "Jesus Christ..."
   (let ((prev (cdr (assoc 32 minibuffer-local-completion-map)))
-        (placeholder (define-key completion-list-mode-map (kbd "SPC") nil))
+        (placeholder (define-key completion-list-mode-map (kbd "SPC") 'self-insert-command))
         (data (completing-read prompt options)))
     (define-key completion-list-mode-map (kbd "SPC") prev)
     data))
@@ -209,8 +209,16 @@
     (loop for intervals = interval-alist then (cdr intervals)
           and time = diff then (/ time (or (cdar intervals) 1))
           while (and intervals (<= (cdar intervals) time)) finally return
-          (if intervals (format "%s %s%s %s." time (caar intervals) (if (> time 1) "s" "") from-ago) 
-	    "A long time ago in a galaxy far, far away...."))))
+          (if intervals (format "%s %s%s %s." time (caar intervals) (if (> time 1) "s" "") from-ago)
+            "A long time ago in a galaxy far, far away...."))))
+
+(defun prettify-lyrics (lyrics &optional count)
+  "Removes empty lines when it's a recurring pattern ATM"
+  (let* ((empty (length (regexp-all-matches lyrics "^\n")))
+         (all (length (regexp-all-matches lyrics "\n")))
+         (count (or count 0)))
+    (if (and (> 20 count) (> (* empty 4) all))
+        (prettify-lyrics (replace-regexp-in-string "\n\n" "\n" lyrics) (1+ count)) lyrics)))
 
 (provide 'gimme-utils)
 ;;; gimme-utils.el ends here
