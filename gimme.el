@@ -33,6 +33,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar gimme-process nil           "Reference to the ruby process")
+(defvar gimme-help-function-groups nil "Variable that holds extra information on functions")
 (defvar gimme-executable "gimme.rb" "The name of the ruby file")
 (defvar gimme-filter-remainder ""   "Variable used to hold incomplete sexps received from the ruby process")
 

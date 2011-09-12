@@ -76,11 +76,24 @@
  |[___I_I_I_I_I_I_I_I_I_I_I_I____] [_I_I_] [___I_I_j|
  | [__I__I_________________I__L_]                   |
  l__________________________________________________j")
-	 (function `(lambda (x) (let* ((k (substring x 1 -1)) 
-				  (p (plist-get-with-equal ',plist k)))
-			     (if p (propertize (plist-get p 'key) 'plist p) k))))
+         (function `(lambda (x) (let* ((k (substring x 1 -1))
+                                  (p (plist-get-with-equal ',plist k)))
+                             (if p (propertize (plist-get p 'key) 'plist p) k))))
          (filled (replace-regexp-in-string "\([^\\(]*\)" function kb)))
     filled))
+
+(gimme-defun xoxota ()
+             "foobar"
+             "test"
+             (message "test"))
+
+(defmacro gimme-defun (function-name arglist help-string group &rest rest)
+  "Special macro to define provide a better help system"
+  `(defun ,function-name ,arglist
+     ,help-string
+     ,(plist-put gimme-help-function-groups function-name group)
+     ,@rest))
+
 
 (provide 'gimme-help)
 ;;; gimme-help.el ends here
