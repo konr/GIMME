@@ -670,7 +670,7 @@ class GIMME
 
   def get_help_info
     Thread.new do
-      url = "http://gimmeplayer.org/wiki/Special:Ask/-5B-5BCategory:Song-20properties-5D-5D/-3FName/-3FDescription/-3FExample/-3FDisplay-20function/mainlabel%3D/format%3Djson"
+      url = "http://gimmeplayer.org/wiki/Special:Ask/-5B-5BCategory:Song-20properties-5D-5D/-3FName/-3FDescription/-3FExample/-3FDisplay-20function/mainlabel%3D/limit%3D1000/format%3Djson"
       agent = Mechanize.new
       page = agent.get(url)
       j = JSON page.body

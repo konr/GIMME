@@ -63,5 +63,24 @@
          (plist (plist-get gimme-song-properties name)))
     (message (or (plist-get plist 'description) "No description available!"))))
 
+
+(defun gimme-help-generate-cute-keyboard (plists)
+  "Displays the help information in a cute keyboard."
+  (let* ((plist (loop for x in plists collecting (list (plist-get x 'key) x) into alists and finally return (apply #'append alists)))
+         (kb "  __________________________________________________
+ [[(<escape>)j  L(<f1>)I(<f2>)I(<f3>)I(<f4>)j L(<f1>)I(<f2>)I(<f3>)I(<f4>)j L(<f1>)I(<f2>)I(<f3>)I(<f4>)j   ]
+ | _______________________________  _____  _________|
+ |[__I(q)I(w)I(e)I(r)I(t)I(y)I(u)I(i)I(o)I(p)I(')I([)] [__I__] [_I_I_I_]|
+ |[___I_I_I_I_I_I_I_I_I_I_I_I_L  I   ___   [_I_I_I_]|
+ |[__I_I_I_I_I_I_I_I_I_I_I_I_I_L_I __I_]_  [_I_I_T ||
+ |[___I_I_I_I_I_I_I_I_I_I_I_I____] [_I_I_] [___I_I_j|
+ | [__I__I_________________I__L_]                   |
+ l__________________________________________________j")
+	 (function `(lambda (x) (let* ((k (substring x 1 -1)) 
+				  (p (plist-get-with-equal ',plist k)))
+			     (if p (propertize (plist-get p 'key) 'plist p) k))))
+         (filled (replace-regexp-in-string "\([^\\(]*\)" function kb)))
+    filled))
+
 (provide 'gimme-help)
 ;;; gimme-help.el ends here
