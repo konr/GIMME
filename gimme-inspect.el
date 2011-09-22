@@ -210,6 +210,7 @@
 (defun gimme-get-conf ()
   "Asks XMMS2 for its configuration options"
   (interactive)
+  (message "Getting configuration...")
   (gimme-send-message "(conf)\n"))
 
 (defun gimme-get-track-conf ()

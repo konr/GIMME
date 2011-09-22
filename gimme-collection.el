@@ -37,6 +37,7 @@
     (define-key map (kbd ">") 'gimme-child-col)
     (define-key map (kbd "a") 'gimme-collection-append-focused)
     (define-key map (kbd "RET") 'gimme-collection-play-focused)
+    (define-key map (kbd "R")   'gimme-related)
     (define-key map (kbd "A") 'gimme-collection-append-current-collection)
     (define-key map (kbd "f") 'gimme-collection-same)
     (define-key map (kbd "!") 'gimme-collection-toggle-faceted)
@@ -67,6 +68,13 @@
   (setq-local groups 0)
   (setq truncate-lines t)
   (setq major-mode 'gimme-collection-mode mode-name "gimme-collection"))
+
+(defun gimme-collection-same (criterion)
+  "Creates a subcollection matching some criterion"
+  (let* ((data (get-text-property (point) criterion))
+         (query (format "%s:'%s'" criterion (replace-regexp-in-string "'" "\\\\\\\\'" data)))
+	 (message (format "(faceted_subcol nil %s)\n" (hyg-prin1 query))))
+    (gimme-send-message message)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive Functions ;;
@@ -111,20 +119,6 @@
   (message "Appending songs to the playlist...")
   (dolist (el (range-to-plists (point-min) (point-max)))
     (gimme-send-message (format "(add %d)\n" (getf el 'id)))))
-
-(defun gimme-collection-same ()
-  "Creates a subcollection matching some this song's criteria"
-  (interactive)
-  (let* ((parent (gimme-bookmark-current-ref))
-         (name (completing-read
-                "Filter? "
-                (mapcar (lambda (n) (format "%s:%s"
-                                       (car n) (hyg-prin1 (decode-coding-string (cdr n) 'utf-8))))
-                        (remove-if (lambda (m) (member (car m) '(id duration font-lock-face)))
-                                   (plist-to-alist (text-properties-at (point)))))))
-         (message (format "(subcol %s %s)\n" parent (hyg-prin1 name))))
-    (gimme-send-message message)))
-
 
 (defun gimme-faceted-change-facet-to-prev ()
   "Shows the current collection through the previous facet."

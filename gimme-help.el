@@ -82,10 +82,6 @@
          (filled (replace-regexp-in-string "\([^\\(]*\)" function kb)))
     filled))
 
-(gimme-defun xoxota ()
-             "foobar"
-             "test"
-             (message "test"))
 
 (defmacro gimme-defun (function-name arglist help-string group &rest rest)
   "Special macro to define provide a better help system"
@@ -94,6 +90,10 @@
      ,(plist-put gimme-help-function-groups function-name group)
      ,@rest))
 
+(gimme-defun xoxota ()
+             "foobar"
+             "test"
+             (message "test"))
 
 (provide 'gimme-help)
 ;;; gimme-help.el ends here

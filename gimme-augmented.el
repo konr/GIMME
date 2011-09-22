@@ -109,5 +109,18 @@ this means that it'll get a very broad range of results"
   (let* ((artist (get-text-property (point) 'artist)))
     (gimme-send-message "(get_artist_info %s)\n" (hyg-prin1 artist))))
 
+
+(defun gimme-related ()
+  "Gets related content"
+  (interactive)
+  (let* ((options '("Same artist" (lambda () (interactive) (gimme-collection-same 'artist))
+		    "Same album" (lambda () (interactive) (gimme-collection-same 'album))
+		    "Artist's influences (Freebase)" gimme-augmented-get-influences
+		    "Artist's influencees (Freebase)" gimme-augmented-get-influencees
+		    "Similar artists (Freebase)" gimme-augmented-get-similar))
+	 (names (loop for x = options then (cddr x) while x collect (car x)))
+	 (chosen (completing-read "Related? " names nil t)))
+    (funcall (plist-get-with-equal options chosen))))
+
 (provide 'gimme-augmented)
 ;;; gimme-augmented.el ends here

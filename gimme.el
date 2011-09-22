@@ -218,6 +218,7 @@
     (define-key map (kbd "k")   'previous-line)
     (define-key map (kbd "C-f") 'scroll-up)
     (define-key map (kbd "C-b") 'scroll-down)
+    (define-key map (kbd "O")   'gimme-get-conf)
     (define-key map (kbd "?")   'gimme-help-show-keybindings)
     (define-key map (kbd "=")   'gimme-increase-volume)
     (define-key map (kbd "+")   'gimme-increase-volume)

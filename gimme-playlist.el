@@ -54,9 +54,9 @@
     (define-key map (kbd "S")   'gimme-sort)
     (define-key map (kbd "s")   'gimme-toggle-sort)
     ;; Info
+    (define-key map (kbd "R")   'gimme-related)
     (define-key map (kbd "T")   'gimme-tagwriter)
     (define-key map (kbd "*")   'gimme-toggle-star)
-    (define-key map (kbd "O")   'gimme-get-conf)
     (define-key map (kbd "i")   'gimme-get-track-conf)
     (define-key map (kbd "I")   'gimme-augmented-ask-for-info)
     (define-key map (kbd "L")   'gimme-augmented-fetch-lyrics)
@@ -240,7 +240,7 @@
   (gimme-vol gimme-vol-delta))
 
 (defun gimme-decrease-volume ()
-  "Increases the current volume"
+  "Decreases the current volume"
   (interactive) 
   (gimme-vol (- gimme-vol-delta)))
 
@@ -350,7 +350,6 @@
                                  n))
                         alist)))
     (gimme-send-message "(update_tags %s)\n" (hyg-prin1 alist))))
-
 
 
 (provide 'gimme-playlist)
