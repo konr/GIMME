@@ -45,7 +45,7 @@ module Xmms
       tracks; end
 
     def genmd5 (tracks)
-      dict = {}
+      dict = {}; dict[nil] = []
       length = tracks.length; last = -1; i = 0
       tracks.each do |track|
         i += 1; cur = i * 100 / length; print "#{cur}%... " if cur > last; last = cur
@@ -59,7 +59,6 @@ module Xmms
           end
           dict[digest] = track[:id]
         else
-          dict[nil] = [] if dict[nil].class == NilClass
           dict[nil] = dict[nil] + [track]
         end
       end
@@ -89,6 +88,11 @@ module Xmms
       end
       puts
       unrec; end
+
+    def delete_track (id)
+      @sync.medialib_entry_remove(id).wait
+      print "."
+    end
   end
 end
 
@@ -112,7 +116,9 @@ elsif ARGV[0] == "-p"; then
 elsif ARGV[0] == "-d"; then
   media = client.gettracks
   media.delete_if {|t| File.exists?(CGI.unescape(t[:url]))}
-  media.each {|t| puts t[:id]}
+  print "Deleting #{media.length} tracks from Mlib."
+  media.each {|t| client.delete_track t[:id]}
+  puts
 else
   puts "./fix-mlib.rb <-u|-p|-d>"
   [["u","Updates the collection by calculating MD5s and recovering moved filed."],

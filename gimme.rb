@@ -520,7 +520,20 @@ class GIMME
       faceted_pcol(intersection,nil)
     end;end
 
-  def subcol_change_tags (data, pattern, key, val)
+  def delete_subcol (data, pattern)
+    with_coll(data) do |parent|
+      match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
+      match = Xmms::Collection.parse(pattern)
+      intersection = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
+      intersection.operands.push(parent)
+      intersection.operands.push(match)
+      @async.coll_query_ids(intersection).notifier do |ids|
+        ids.each {|id| @async.medialib_entry_remove(id).notifier }
+      end
+      to_emacs [:"message", "Entries removed!"]
+    end;end
+
+  def subcol_change_tags (data, pattern, key, val, dont = nil)
     with_coll(data) do |parent|
       pattern="#{key}:'#{pattern}'"
       match = Xmms::Collection.new(Xmms::Collection::TYPE_MATCH)
@@ -531,7 +544,7 @@ class GIMME
       @async.coll_query_ids(intersection).notifier do |ids|
         to_emacs [:"message", "Changing over 1000 tracks. Please wait for a couple of seconds..."] if ids.count > 1000
         ids.each { |id| @async.medialib_entry_property_set(id, key.to_sym, val).notifier }
-        faceted_pcol(parent,key)
+        faceted_pcol(parent,key) unless dont
       end
     end;end
 

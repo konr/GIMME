@@ -54,6 +54,8 @@
     (define-key map (kbd "C-M-S-<return>") 'gimme-collection-append-current-collection)
     (define-key map (kbd "S-<return>") 'gimme-faceted-subcol-append)
     (define-key map (kbd "A") 'gimme-faceted-subcol-append)
+    (define-key map (kbd "D") 'gimme-faceted-delete-from-mlib)
+    (define-key map (kbd "y") 'gimme-faceted-yank)
     (define-key map (kbd "!") 'gimme-collection-toggle-faceted)
     (define-key map (kbd "T") 'gimme-faceted-change-tags-of-subcol)
     map)
@@ -73,12 +75,32 @@
   "Creates a subcollection matching some criterion"
   (let* ((data (get-text-property (point) criterion))
          (query (format "%s:'%s'" criterion (replace-regexp-in-string "'" "\\\\\\\\'" data)))
-	 (message (format "(faceted_subcol nil %s)\n" (hyg-prin1 query))))
+         (message (format "(faceted_subcol nil %s)\n" (hyg-prin1 query))))
     (gimme-send-message message)))
+
+(defun gimme-collection-similar ()
+  "Creates a subcollection with rel")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Interactive Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun gimme-faceted-delete-from-mlib ()
+  "Deletes group from Mlib"
+  (interactive)
+  (if (y-or-n-p "Really delete from Mlib the selected subcollection?")
+      (let* ((parent gimme-collection-name)
+             (key gimme-collection-facet)
+             (val (get-text-property (point) 'data))
+             (pattern (format "%s:'%s'" key val)))
+        (gimme-send-message (format "(delete_subcol %s %s)\n" (hyg-prin1 parent) (hyg-prin1 pattern))))
+    (message "Phew! That was close!")))
+
+(defun gimme-faceted-yank ()
+  "Yanks the current group name"
+  (interactive)
+  (let ((data (get-text-property (point) 'data)))
+    (with-temp-buffer (insert data) (kill-ring-save (point-min) (point-max)) (message "Yanked: %s" data))))
 
 (defun gimme-child-col-with-facets ()
   "Creates a new collection intersecting the search criteria and the current collection and displays it with facets"
@@ -161,7 +183,7 @@
   (interactive)
   (gimme-send-message  "(append_coll %s)\n" (hyg-prin1 gimme-collection-name)))
 
-(defun gimme-faceted-change-tags-of-subcol ()
+(defun gimme-faceted-change-tags-of-subcol (&optional dont-update)
   "Changes the current group's value of the tag used as facet to another thing."
   (interactive)
   (let* ((coll (hyg-prin1 gimme-collection-name))
@@ -169,7 +191,7 @@
          (key (hyg-prin1 gimme-collection-facet))
          (val (hyg-prin1 (completing-read-with-whitespace
                           (format "Change %s to: " subcol) (gimme-faceted-collect-subcols)))))
-    (gimme-send-message "(subcol_change_tags %s %s %s %s)\n" coll subcol key val)))
+    (gimme-send-message "(subcol_change_tags %s %s %s %s %s)\n" coll subcol key val (or dont-update ""))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
