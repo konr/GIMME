@@ -293,7 +293,7 @@
 
 (defun gimme-bookmark-colls (buffer list)
   "Prints the available collections as a tree"
-  (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
+  (let* ((list (remove-if (lambda (n) (member n `(,gimme-playlist-name "_active"))) list))
          (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
     (gimme-on-buffer buffer
                      (delete-region 1 (point-max))

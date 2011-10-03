@@ -24,10 +24,13 @@
 
 ;;; Code
 
+(defvar gimme-playlist-name "Default"
+  "Name of the playlist used by GIMME")
+
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)
-  (gimme-send-message "(list %s)\n" (hyg-prin1 "Default")))
+  (gimme-send-message "(list %s)\n" (hyg-prin1 gimme-playlist-name)))
 
 (defun gimme-playlist-mode ()
   "Displays a playlist"
