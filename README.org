@@ -94,7 +94,7 @@
    In the initialization file we were working on, you must tell Emacs
    to load GIMME, like you'd do with most packages. Add the line
    #+BEGIN_SRC emacs-lisp
-     (require 'gimme)
+     (autoload 'gimme "gimme" "launch GIMME" t)
    #+END_SRC
    restart and that'll be enough to run GIMME.
 
