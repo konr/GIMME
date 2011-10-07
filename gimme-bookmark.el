@@ -45,7 +45,8 @@
   "bookmark-map's keymap")
 
 (define-derived-mode gimme-bookmark-mode fundamental-mode
-  "Used on GIMME" ""
+  "Used on GIMME" "Mode to leek at collection
+\\{gimme-bookmark-map}"
   (use-local-map gimme-bookmark-map)
   (setq mode-name "gimme-bookmark"))
 

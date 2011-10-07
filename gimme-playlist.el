@@ -33,7 +33,9 @@
   (gimme-send-message "(list %s)\n" (hyg-prin1 gimme-playlist-name)))
 
 (defun gimme-playlist-mode ()
-  "Displays a playlist"
+  "Displays a playlist
+
+\\{gimme-playlist-map}"
   (interactive)
   (use-local-map gimme-playlist-map)
   (font-lock-mode t)

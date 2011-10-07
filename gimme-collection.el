@@ -63,7 +63,13 @@
 
 
 (defun gimme-collection-mode (&optional facet)
-  "Manipulate collections"
+  "Manipulate collections
+
+Faceted binding:
+\\{gimme-faceted-map}
+
+Not faceted binding:
+\\{gimme-collection-map}"
   (interactive)
   (font-lock-mode t)
   (use-local-map (if facet gimme-faceted-map gimme-collection-map))

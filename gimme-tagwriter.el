@@ -23,7 +23,9 @@
 ;;; Code
 
 (defun gimme-tagwriter-mode ()
-  "Mode used to change tags in a list of tracks."
+  "Mode used to change tags in a list of tracks.
+
+\\{gimme-tagwriter-map}"
   (interactive)
   (font-lock-mode t)
   (use-local-map gimme-tagwriter-map)

@@ -69,7 +69,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun gimme-augmented-lyrics-mode ()
-  "Just allows coloring and exiting"
+  "Just allows coloring and exiting
+
+\\{gimme-augmented-lyrics-map}"
   (use-local-map gimme-augmented-lyrics-map)
   (font-lock-mode t)
   (setq major-mode 'gimme-augmented-lyrics-mode mode-name "gimme-lyrics-mode"))

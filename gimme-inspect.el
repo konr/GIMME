@@ -39,7 +39,9 @@
   "Inspect mode's keymap")
 
 (defun gimme-inspect-mode ()
-  "Mode used to edit hash-like information"
+  "Mode used to edit hash-like information
+
+\\{gimme-inspect-map}"
   (interactive)
   (font-lock-mode t)
   (use-local-map gimme-inspect-map)
