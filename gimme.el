@@ -137,7 +137,7 @@
                 doing (let* ((s (decode-strings-in-tree (car x) 'utf-8))
                              (f (caar x)))
                         (when (> gimme-debug 0)
-                          (message (format "GIMME: %s" (if (>= gimme-debug 2) s f))))
+                          (message "GIMME: %s" (if (>= gimme-debug 2) s f)))
                         (when (> 3 gimme-debug)
                           (ignore-errors (eval s))))
                 finally (return (substring s position))))))

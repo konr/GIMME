@@ -328,7 +328,7 @@
                    (and (goto-char max)
                         (insert (gimme-bookmark-colorize
                                  (propertize (format "** %s\n" name) 'ref name)))
-                        (message (format "Collection %s added!" name))))))
+                        (message "Collection %s added!" name)))))
          ('rename
           (let ((bounds (car (get-bounds-where
                               (lambda (x) (string= name (get-text-property x 'ref)))))))

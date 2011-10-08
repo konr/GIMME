@@ -241,7 +241,7 @@
   (let* ((type (get-text-property (point) 'type))
          (val (get-text-property (point) 'val))
          (val (if (equal type 'url) (decode-percent-encoding val) val)))
-    (when val (message (replace-regexp-in-string "%" "%%" val)))))
+    (when val (message "%s" val))))
 
 (defun gimme-tagwriter-yank-current-field ()
   "Yanks current field."

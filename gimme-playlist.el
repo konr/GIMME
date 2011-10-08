@@ -259,9 +259,9 @@
   (interactive)
   (setq gimme-sort-criteria (append (cdr gimme-sort-criteria)
                                     (list (car gimme-sort-criteria))))
-  (message (format "Sorting now by %s%s" (caar gimme-sort-criteria)
-                   (apply #'concat (mapcar (lambda (n) (format " > %s" n))
-                                           (cdar gimme-sort-criteria))))))
+  (message "Sorting now by %s%s" (caar gimme-sort-criteria)
+           (apply #'concat (mapcar (lambda (n) (format " > %s" n))
+                                   (cdar gimme-sort-criteria)))))
 
 (defun gimme-focused-play ()
   "Plays the currently focused song"
@@ -302,7 +302,7 @@
 (defun gimme-focused-url ()
   "Asks for the song's current URL."
   (interactive)
-  (message (get-text-property (point) 'url)))
+  (message "%s" (get-text-property (point) 'url)))
 
 (defun gimme-center ()
   "Centers buffer on currently playing song"

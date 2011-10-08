@@ -180,7 +180,7 @@
 (defun gimme-inspect-print-current-value ()
   "Displays the value of the current line"
   (interactive)
-  (message (gimme-inspect-get-current-value)))
+  (message "%s" (gimme-inspect-get-current-value)))
 
 (defun gimme-inspect-yank-current-value ()
   "Yanks the value of the current line"
