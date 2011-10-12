@@ -34,6 +34,7 @@
     (define-key map (kbd "TAB") 'gimme-toggle-facet)
     (define-key map (kbd "RET") 'gimme-bookmark-view-collection-with-facets)
     (define-key map (kbd ">")  'gimme-child-coll-of-current)
+    (define-key map (kbd "s")  'gimme-search)
     (define-key map (kbd "S-<return>") 'gimme-bookmark-view-collection )
     (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
@@ -72,6 +73,20 @@
          (message (format "(faceted_subcol %s %s)\n" (hyg-prin1 coll)
                           (hyg-prin1 name))))
     (gimme-send-message message)))
+
+(defun gimme-search (pattern)
+  "Generates a collection for searching a 'modified' pattern"
+  (interactive "Mpattern: ")
+  (let* ((patterns (split-string pattern " "))
+         (corrected-pattern (mapcar (lambda (pattern)
+                                      (if (string-match "\\(.*\\):\\(.*\\)" pattern)
+                                          (concat (match-string 1 pattern) ":*" (match-string 1 pattern) "*")
+                                          (concat "*" pattern "*")))
+                                    patterns)))
+    (gimme-send-message "(faceted_subcol nil %s)\n"
+                        (hyg-prin1 (mapconcat #'identity corrected-pattern " ")))))
+
+
 
 (defun gimme-bookmark-append-to-playlist ()
   "Appends the currently focused collection to the playlist."
