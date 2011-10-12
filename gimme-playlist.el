@@ -24,8 +24,12 @@
 
 ;;; Code
 
-(defvar gimme-playlist-name "Default"
-  "Name of the playlist used by GIMME")
+(require 'gimme-custom)
+
+(defcustom gimme-playlist-name "Default"
+  "Name of the playlist used by GIMME"
+  :type '(string)
+  :group 'gimme)
 
 (defun gimme-playlist ()
   "Sets up the buffer"
