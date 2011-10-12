@@ -213,6 +213,7 @@
 (defun gimme-make-basic-map ()
   "Generates a map with common, basic functionalities."
   (let ((map (make-sparse-keymap)))
+    (suppress-keymap map t)
     (define-key map (kbd "q")   'kill-current-buffer)
     (define-key map (kbd "j")   'next-line)
     (define-key map (kbd "k")   'previous-line)
