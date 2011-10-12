@@ -278,8 +278,8 @@
                     while pos collecting (get-text-property pos 'id last))))
     (when (and pos ids)
       (dolist (id ids)
-        (setq pos (+ 1 pos))
-        (gimme-send-message "(insert %s %s)\n" pos id)))))
+        (gimme-send-message "(insert %s %s)\n" pos id)
+        (setq pos (+ 1 pos))))))
 
 
 (defun gimme-focused-yank ()
