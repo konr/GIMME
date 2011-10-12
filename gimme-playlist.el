@@ -45,8 +45,8 @@
 
 (defvar gimme-playlist-map
   (let ((map (gimme-make-basic-map)))
-    (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete nil)))
-    (define-key map [remap paste] (lambda () (interactive) (gimme-paste-deleted nil)))
+    (define-key map [remap kill-line] 'gimme-focused-delete)
+    (define-key map [remap yank] 'gimme-paste-deleted)
     ;; Navigation
     (define-key map (kbd "l")   'gimme-center)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
