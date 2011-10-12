@@ -269,7 +269,7 @@
   (let ((pos (get-text-property (point) 'pos)))
     (when pos (gimme-send-message "(playn %s)\n" pos))))
 
-(defun gimme-paste-deleted (undo)
+(defun gimme-paste-deleted (&optional undo)
   "Pastes a song at the car of the kill-ring"
   (interactive)
   (let* ((last (car kill-ring))
@@ -287,7 +287,7 @@
   (interactive)
   (gimme-focused-delete t))
 
-(defun gimme-focused-delete (yank-p)
+(defun gimme-focused-delete (&optional yank-p)
   "Deletes the currently focused song."
   (interactive)
   (apply #'kill-ring-save (range-of-region))
