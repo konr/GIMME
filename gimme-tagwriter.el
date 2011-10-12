@@ -44,6 +44,7 @@
     (define-key map (kbd "C-S-<return>")
       'gimme-tagwriter-apply-previous-function-to-all-songs)
     (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
+    (define-key map [remap save-buffer] 'gimme-tagwriter-write-to-mlib)
     (define-key map (kbd ".") 'gimme-tagwriter-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
     (define-key map (kbd "s") 'gimme-tagwriter-scan-current)
