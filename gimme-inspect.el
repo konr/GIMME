@@ -39,7 +39,9 @@
   "Inspect mode's keymap")
 
 (defun gimme-inspect-mode ()
-  "Mode used to edit hash-like information"
+  "Mode used to edit hash-like information
+
+\\{gimme-inspect-map}"
   (interactive)
   (font-lock-mode t)
   (use-local-map gimme-inspect-map)
@@ -178,7 +180,7 @@
 (defun gimme-inspect-print-current-value ()
   "Displays the value of the current line"
   (interactive)
-  (message (gimme-inspect-get-current-value)))
+  (message "%s" (gimme-inspect-get-current-value)))
 
 (defun gimme-inspect-yank-current-value ()
   "Yanks the value of the current line"

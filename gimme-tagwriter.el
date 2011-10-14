@@ -23,7 +23,9 @@
 ;;; Code
 
 (defun gimme-tagwriter-mode ()
-  "Mode used to change tags in a list of tracks."
+  "Mode used to change tags in a list of tracks.
+
+\\{gimme-tagwriter-map}"
   (interactive)
   (font-lock-mode t)
   (use-local-map gimme-tagwriter-map)
@@ -42,6 +44,7 @@
     (define-key map (kbd "C-S-<return>")
       'gimme-tagwriter-apply-previous-function-to-all-songs)
     (define-key map (kbd "W") 'gimme-tagwriter-write-to-mlib)
+    (define-key map [remap save-buffer] 'gimme-tagwriter-write-to-mlib)
     (define-key map (kbd ".") 'gimme-tagwriter-print-current-field)
     (define-key map (kbd "TAB") 'gimme-tagwriter-next-field)
     (define-key map (kbd "s") 'gimme-tagwriter-scan-current)
@@ -239,7 +242,7 @@
   (let* ((type (get-text-property (point) 'type))
          (val (get-text-property (point) 'val))
          (val (if (equal type 'url) (decode-percent-encoding val) val)))
-    (when val (message (replace-regexp-in-string "%" "%%" val)))))
+    (when val (message "%s" val))))
 
 (defun gimme-tagwriter-yank-current-field ()
   "Yanks current field."

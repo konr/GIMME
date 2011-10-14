@@ -24,13 +24,22 @@
 
 ;;; Code
 
+(require 'gimme-custom)
+
+(defcustom gimme-playlist-name "Default"
+  "Name of the playlist used by GIMME"
+  :type '(string)
+  :group 'gimme)
+
 (defun gimme-playlist ()
   "Sets up the buffer"
   (interactive)
-  (gimme-send-message "(list %s)\n" (hyg-prin1 "Default")))
+  (gimme-send-message "(list %s)\n" (hyg-prin1 gimme-playlist-name)))
 
 (defun gimme-playlist-mode ()
-  "Displays a playlist"
+  "Displays a playlist
+
+\\{gimme-playlist-map}"
   (interactive)
   (use-local-map gimme-playlist-map)
   (font-lock-mode t)
@@ -40,8 +49,8 @@
 
 (defvar gimme-playlist-map
   (let ((map (gimme-make-basic-map)))
-    (define-key map [remap kill-line] '(lambda () (interactive) (gimme-focused-delete nil)))
-    (define-key map [remap paste] (lambda () (interactive) (gimme-paste-deleted nil)))
+    (define-key map [remap kill-line] 'gimme-focused-delete)
+    (define-key map [remap yank] 'gimme-paste-deleted)
     ;; Navigation
     (define-key map (kbd "l")   'gimme-center)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
@@ -254,9 +263,9 @@
   (interactive)
   (setq gimme-sort-criteria (append (cdr gimme-sort-criteria)
                                     (list (car gimme-sort-criteria))))
-  (message (format "Sorting now by %s%s" (caar gimme-sort-criteria)
-                   (apply #'concat (mapcar (lambda (n) (format " > %s" n))
-                                           (cdar gimme-sort-criteria))))))
+  (message "Sorting now by %s%s" (caar gimme-sort-criteria)
+           (apply #'concat (mapcar (lambda (n) (format " > %s" n))
+                                   (cdar gimme-sort-criteria)))))
 
 (defun gimme-focused-play ()
   "Plays the currently focused song"
@@ -264,7 +273,7 @@
   (let ((pos (get-text-property (point) 'pos)))
     (when pos (gimme-send-message "(playn %s)\n" pos))))
 
-(defun gimme-paste-deleted (undo)
+(defun gimme-paste-deleted (&optional undo)
   "Pastes a song at the car of the kill-ring"
   (interactive)
   (let* ((last (car kill-ring))
@@ -273,8 +282,8 @@
                     while pos collecting (get-text-property pos 'id last))))
     (when (and pos ids)
       (dolist (id ids)
-        (setq pos (+ 1 pos))
-        (gimme-send-message "(insert %s %s)\n" pos id)))))
+        (gimme-send-message "(insert %s %s)\n" pos id)
+        (setq pos (+ 1 pos))))))
 
 
 (defun gimme-focused-yank ()
@@ -282,7 +291,7 @@
   (interactive)
   (gimme-focused-delete t))
 
-(defun gimme-focused-delete (yank-p)
+(defun gimme-focused-delete (&optional yank-p)
   "Deletes the currently focused song."
   (interactive)
   (apply #'kill-ring-save (range-of-region))
@@ -297,7 +306,7 @@
 (defun gimme-focused-url ()
   "Asks for the song's current URL."
   (interactive)
-  (message (get-text-property (point) 'url)))
+  (message "%s" (get-text-property (point) 'url)))
 
 (defun gimme-center ()
   "Centers buffer on currently playing song"
