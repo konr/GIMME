@@ -36,7 +36,7 @@
     (define-key map (kbd ">")  'gimme-child-coll-of-current)
     (define-key map (kbd "s")  'gimme-search)
     (define-key map (kbd "S-<return>") 'gimme-bookmark-view-collection )
-    (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
+    (define-key map (kbd "SPC") 'gimme-bookmark-mark)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
     (define-key map (kbd "r") 'gimme-bookmark-rename-coll)
     (define-key map (kbd "S") 'gimme-bookmark-save-collection)
@@ -95,8 +95,8 @@
                   (get-text-property (point) 'ref))))
     (when coll (gimme-send-message  "(append_coll %s)\n" (hyg-prin1 coll)))))
 
-(defun gimme-bookmark-toggle-highlighting ()
-  "Highlights a collection, to be used by `gimme-bookmark-combine-collections'"
+(defun gimme-bookmark-mark ()
+  "Mark a collection, to be used by `gimme-bookmark-combine-collections'"
   (interactive)
   (when (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))
     (unlocking-buffer
