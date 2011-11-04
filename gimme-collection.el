@@ -36,6 +36,7 @@
     (define-key map (kbd "<") 'gimme-parent-col)
     (define-key map (kbd ">") 'gimme-child-col)
     (define-key map (kbd "a") 'gimme-collection-append-focused)
+    (define-key map (kbd "i") 'gimme-collection-insert-focused)
     (define-key map (kbd "RET") 'gimme-collection-play-focused)
     (define-key map (kbd "R")   'gimme-related)
     (define-key map (kbd "A") 'gimme-collection-append-current-collection)
@@ -63,7 +64,13 @@
 
 
 (defun gimme-collection-mode (&optional facet)
-  "Manipulate collections"
+  "Manipulate collections
+
+Faceted binding:
+\\{gimme-faceted-map}
+
+Not faceted binding:
+\\{gimme-collection-map}"
   (interactive)
   (font-lock-mode t)
   (use-local-map (if facet gimme-faceted-map gimme-collection-map))
@@ -129,6 +136,11 @@
   "Appends to the current playlist the focused song"
   (interactive)
   (gimme-send-message "(add %s)\n" (get-text-property (point) 'id)))
+
+(defun gimme-collection-insert-focused ()
+  "Appends to the current playlist the focused song"
+  (interactive)
+  (gimme-send-message "(insert_next %s)\n" (get-text-property (point) 'id)))
 
 (defun gimme-collection-play-focused ()
   "Appends to the current playlist the focused song and then play it"

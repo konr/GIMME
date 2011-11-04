@@ -11,3 +11,101 @@
   - [[http://gimmeplayer.org/mediawiki/images/9/96/Equalizer.png][Have such a kick-ass equalizer?]]
     
     Yes? But it doesn't run on Emacs. Check out [[http://www.gimmeplayer.org/][gimmeplayer.org]].
+
+* Installing GIMME
+** On Archlinux: 
+   If you are running Arch Linux, simply install it from AUR. pacaur -S gimme-git
+** On other distros
+*** Cloning from Github
+
+    First of all, clone GIMME from Github.
+    #+BEGIN_SRC sh
+      git clone git://github.com/konr/GIMME.git
+    #+END_SRC
+
+** Installing dependencies
+
+   GIMME comes with a handy script that has been tested in a couple of
+   distributions. It installs the necessary files, fetches and patches
+   gems and so on. Try it:
+
+   #+BEGIN_SRC sh
+     cd GIMME
+     bash install-dependencies.sh
+   #+END_SRC
+
+   It should work if your distribution is supported. In case it isn't,
+   you need to install some packages manually, as instructed by the
+   script, and then the script will install and patch the gems. If
+   this is what failed, read down the troubleshooting.
+
+** Preparing Emacs.
+
+   First of all, you must put GIMME's files on Emacs's PATH. If you
+   haven't set it up on Emacs, here is a code snippet you can use to add
+   all subdirectories under ~/.emacs.d/ to it:
+
+   #+BEGIN_SRC emacs-lisp
+     ;;;;;;;;;;
+     ;; Path ;;
+     ;;;;;;;;;;
+
+     (require 'cl)
+
+     (defun reload-path ()
+       (interactive)
+       (let* ((directory "~/.emacs.d")
+              (newdirs (lp-subdir-list directory)))
+         (setq load-path (remove-duplicates (append load-path newdirs) :test #'string=)))
+       (message "Path reloaded!"))
+
+     (defconst +lp-ignore-list+
+       (list "CVS" ".git" ".svn" ".." "."))
+
+     (defun lp-subdir-list (base &optional ignore)
+       (unless ignore
+         (setq ignore +lp-ignore-list+))
+       (let ((pending (list base))
+             (retval nil))
+         (while pending
+           (let ((dir (pop pending)))
+             (push dir retval)
+             (dolist (f (directory-files dir))
+               (let ((name (concat dir "/" f)))
+                 (when (and (not (member f ignore))
+                            (file-directory-p name))
+                   (push name pending)
+                   (push name retval))))))
+         (reverse retval)))
+
+     (reload-path)
+   #+END_SRC
+
+   You must add these lines to your initialization file, which is
+   usually either ~/.emacs or ~/.emacs.d/init.el. If you are new to
+   Emacs and have neither file, it's advisable to create the latter
+   and keep everything in a single directory. Then, move or link GIMME
+   to that folder with:
+
+   #+BEGIN_SRC sh
+     ln -s $HOME/Repositories/GIMME ~/.emacs.d/
+   #+END_SRC
+
+   In the initialization file we were working on, you must tell Emacs
+   to load GIMME, like you'd do with most packages. Add the line
+   #+BEGIN_SRC emacs-lisp
+     (autoload 'gimme "gimme" "launch GIMME" t)
+   #+END_SRC
+   restart and that'll be enough to run GIMME.
+
+   #+BEGIN_SRC fundamental
+     M-x gimme.
+   #+END_SRC
+
+   On Emacs, press M-x, alternate notation for Alt-x, to launch the
+   command prompt, and then gimme. You should now learn about its
+   Features and, in particular, about customization.
+
+
+
+  

@@ -34,8 +34,9 @@
     (define-key map (kbd "TAB") 'gimme-toggle-facet)
     (define-key map (kbd "RET") 'gimme-bookmark-view-collection-with-facets)
     (define-key map (kbd ">")  'gimme-child-coll-of-current)
+    (define-key map (kbd "s")  'gimme-search)
     (define-key map (kbd "S-<return>") 'gimme-bookmark-view-collection )
-    (define-key map (kbd "SPC") 'gimme-bookmark-toggle-highlighting)
+    (define-key map (kbd "SPC") 'gimme-bookmark-mark)
     (define-key map (kbd "d") 'gimme-bookmark-delete-coll)
     (define-key map (kbd "r") 'gimme-bookmark-rename-coll)
     (define-key map (kbd "S") 'gimme-bookmark-save-collection)
@@ -45,7 +46,8 @@
   "bookmark-map's keymap")
 
 (define-derived-mode gimme-bookmark-mode fundamental-mode
-  "Used on GIMME" ""
+  "Used on GIMME" "Mode to leek at collection
+\\{gimme-bookmark-map}"
   (use-local-map gimme-bookmark-map)
   (setq mode-name "gimme-bookmark"))
 
@@ -72,6 +74,20 @@
                           (hyg-prin1 name))))
     (gimme-send-message message)))
 
+(defun gimme-search (pattern)
+  "Generates a collection for searching a 'modified' pattern"
+  (interactive "Mpattern: ")
+  (let* ((patterns (split-string pattern " "))
+         (corrected-pattern (mapcar (lambda (pattern)
+                                      (if (string-match "\\(.*\\):\\(.*\\)" pattern)
+                                          (concat (match-string 1 pattern) ":*" (match-string 1 pattern) "*")
+                                          (concat "*" pattern "*")))
+                                    patterns)))
+    (gimme-send-message "(faceted_subcol nil %s)\n"
+                        (hyg-prin1 (mapconcat #'identity corrected-pattern " ")))))
+
+
+
 (defun gimme-bookmark-append-to-playlist ()
   "Appends the currently focused collection to the playlist."
   (interactive)
@@ -79,8 +95,8 @@
                   (get-text-property (point) 'ref))))
     (when coll (gimme-send-message  "(append_coll %s)\n" (hyg-prin1 coll)))))
 
-(defun gimme-bookmark-toggle-highlighting ()
-  "Highlights a collection, to be used by `gimme-bookmark-combine-collections'"
+(defun gimme-bookmark-mark ()
+  "Mark a collection, to be used by `gimme-bookmark-combine-collections'"
   (interactive)
   (when (or (get-text-property (point) 'coll) (get-text-property (point) 'ref))
     (unlocking-buffer
@@ -293,7 +309,7 @@
 
 (defun gimme-bookmark-colls (buffer list)
   "Prints the available collections as a tree"
-  (let* ((list (remove-if (lambda (n) (member n '("Default" "_active"))) list))
+  (let* ((list (remove-if (lambda (n) (member n `(,gimme-playlist-name "_active"))) list))
          (list (mapcar (lambda (n) (decode-coding-string n 'utf-8)) list)))
     (gimme-on-buffer buffer
                      (delete-region 1 (point-max))
@@ -327,7 +343,7 @@
                    (and (goto-char max)
                         (insert (gimme-bookmark-colorize
                                  (propertize (format "** %s\n" name) 'ref name)))
-                        (message (format "Collection %s added!" name))))))
+                        (message "Collection %s added!" name)))))
          ('rename
           (let ((bounds (car (get-bounds-where
                               (lambda (x) (string= name (get-text-property x 'ref)))))))
