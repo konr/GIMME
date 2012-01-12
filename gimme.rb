@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+$stderr.reopen(((RUBY_PLATFORM =~ /win/) ? 'NUL' : '/dev/null'), 'w')
+$atribs=["title","id","artist","album", "duration","starred","url","tracknr",
+         "timesplayed"]
 
 dir=File.dirname(__FILE__)
 $LOAD_PATH << dir
@@ -13,12 +16,7 @@ $LOAD_PATH << dir
   end
 end
 
-
 NOTHING = "nil"
-
-$stderr.reopen(((RUBY_PLATFORM =~ /win/) ? 'NUL' : '/dev/null'), 'w')
-$atribs=["title","id","artist","album", "duration","starred","url","tracknr",
-         "timesplayed"]
 
 
 ##################################
