@@ -50,7 +50,8 @@
 (defvar gimme-playlist-map
   (let ((map (gimme-make-basic-map)))
     (define-key map [remap kill-line] 'gimme-focused-delete)
-    (define-key map [remap yank] 'gimme-paste-deleted)
+    (define-key map [remap yank]      'gimme-focused-yank)
+    (define-key map [remap paste]     'gimme-paste-deleted)
     ;; Navigation
     (define-key map (kbd "l")   'gimme-center)
     (define-key map (kbd "TAB") 'gimme-toggle-view)
