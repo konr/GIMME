@@ -4,11 +4,11 @@ require 'mechanize'
 require 'sexp'
 require 'cgi'
 
-  def to_emacs (array)
-    # Because this is a feature, not a bug!
-    # http://www.gnu.org/s/emacs/manual/html_node/elisp/Non_002dASCII-in-Strings.html
-    puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1\\\\ \2')
-  end
+def to_emacs (array)
+  # Because this is a feature, not a bug!
+  # http://www.gnu.org/s/emacs/manual/html_node/elisp/Non_002dASCII-in-Strings.html
+  puts array.to_sexp.gsub(/(\\x[0-9A-F][0-9A-F])([0-9A-Fa-f])/,'\1\\\\ \2')
+end
 
 module Crawlyr
   class Analyzer
@@ -89,15 +89,16 @@ module Crawlyr
   def Crawlyr.get_lyrics (dict)
     # 0. Initialize
     terms = "\"#{dict[:artist]}\" \"#{dict[:title]}\""
-    to_emacs [:message, "Fetching lyrics... [0/11]"]
+    to_emacs [:message, "Querying DuckDuckGo..."]
     agent = Mechanize.new
     terms = CGI.escape("lyrics #{terms}")
 
     # 1. Get links
-    page = agent.get("http://google.com/search?q=#{terms}")
+    page = agent.get("http://duckduckgo.com/lite/?q=#{terms}")
     page = Nokogiri::HTML(page.body, 'UTF-8')
-    links = page.css('h3.r a').to_a.map {|l| l['href']}
-    to_emacs [:message, "Fetching lyrics... [1/11]"]
+    links = page.css('a').to_a.map {|l| l['href']}
+    n = links.count + 1
+    to_emacs [:message, "Crawling websites... [1/#{n}]"]
 
     # 2. Get all nodes and remove non-markup children
     threads = []; i = 2; nodes = []
@@ -106,7 +107,7 @@ module Crawlyr
         begin; page = agent.get(l); encoding = page.detected_encoding; page = page.body
         rescue; page = ""; encoding = "UTF-8"; end
         page = Nokogiri::HTML(page, encoding).css("*")
-        to_emacs [:message, "Fetching lyrics... [#{i}/11]"]
+        to_emacs [:message, "Fetching lyrics... [#{i}/#{n}]"]
         i += 1
         nodes = nodes + page.to_a
       end
@@ -121,6 +122,8 @@ module Crawlyr
       # SEO stuff, disclaimers, copyright laws etc
       (node.inner_text =~ /Music Videos Wizard/) or \
       (node.inner_text =~ /Search and Download/) or \
+      (node.inner_text =~ /Tabs/) or \
+      (node.inner_text =~ /copyright/) or \
       (node.inner_text =~ /9610\/98/) or \
       # Short biographies stolen from wikipedia are sometimes popular
       (node.inner_text =~ /#{dict[:artist]}/)
@@ -133,6 +136,7 @@ module Crawlyr
         adj[[i,j]] = nodes[i].distance(nodes[j]) <= fair ? 1 : 0
       end; end
 
+
     # 5. Get the largest connected subgraph
     (0..n).each do |i|; (0..n).each do |j|
         (0..n).each {|k| adj[[i,k]] = 1 if adj[[j,k]] == 1} if (adj [[i,j]] == 1)
@@ -140,6 +144,8 @@ module Crawlyr
     size = (0..n).map {|i| m=0; (0..n).each {|j| m += adj[[i,j]]}; [i,m]}.sort{|a,b| a[1] <= b[1] ? 1 : -1}
     max = size[0][1]
     group = size.delete_if{|x| x[1] != max}.map{|x| x[0]}
+
+    to_emacs [:message, "Didn't work :("] if group.count == 0
 
     # 6. Reconstruct the text. Let's trust Google and get the topmost result
     group.sort{|a,b| a[0] > b[0] ? 1 : -1}
