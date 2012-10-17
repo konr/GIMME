@@ -31,7 +31,7 @@
 (defcustom gimme-playlist-formats
   '((apply #'propertize
            (decode-coding-string
-            (format "| %s | %s | %s | %s |\n"
+            (format "| %s | %s | %s | %s |"
                     (string-expanded (format "%s" %timesplayed) 3 t)
                     (string-expanded %artist 22)
                     (string-expanded %album  20)
@@ -41,17 +41,17 @@
                                     ,@(unless (string= "nil" %starred)
                                         `(:weight bold)))))
     (apply #'propertize (decode-coding-string
-                         (format "%s%s\n"
+                         (format "%s%s"
                                  (if (string= %starred "nil") "" "* ") %title) 'utf-8)
            (plist-put plist 'font-lock-face
                       `(:foreground ,(color-for %album)
                                     ,@(unless (string= "nil" %starred)
                                         `(:weight bold)))))
     (if (and (string= "nil" %title) (string= "nil" %album) (string= "nil" %artist))
-        (apply #'propertize (decode-coding-string (format "%s\n" %url) 'utf-8)
+        (apply #'propertize (decode-coding-string (format "%s" %url) 'utf-8)
                (plist-put plist 'font-lock-face `(:foreground ,(color-for %url))))
       (apply #'propertize (decode-coding-string
-                           (format "%s > %s\n" %genre %title) 'utf-8)
+                           (format "%s > %s" %genre %title) 'utf-8)
              (plist-put plist 'font-lock-face `(:foreground ,(color-for %genre))))))
   "A list of sexps that can be toggled and will be evaluated for every collection/playlist entry with %variables and 'plist' bound to its mlib tags"
   :group 'gimme

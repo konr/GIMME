@@ -54,7 +54,7 @@
     (define-key map [remap paste]     'gimme-paste-deleted)
     ;; Navigation
     (define-key map (kbd "l")   'gimme-center)
-    (define-key map (kbd "TAB") 'gimme-toggle-view)
+    (define-key map (kbd "TAB") 'ecoli-toggle-view)
     ;; Playlist manipulation
     (define-key map (kbd "C")   'gimme-clear)
     (define-key map (kbd "H")   'gimme-shuffle)
@@ -114,16 +114,7 @@
                       (message "Song added!")))
       ('remove (progn (run-hook-with-args 'gimme-broadcast-pl-remove-hook plist)
                       (with-current-buffer (get-buffer buffer)
-                        (unlocking-buffer
-                         (save-excursion
-                           (let* ((beg (text-property-any (point-min) (point-max) 'pos
-                                                          (getf plist 'pos)))
-                                  (end (or (next-property-change (or beg (point-min)))
-                                           (point-max))))
-                             (when (and beg end)
-                               (goto-char beg)
-                               (delete-region beg end)
-                               (gimme-update-pos buffer #'1- (point) (point-max)))))))))
+                        (ecoli-delete-item (getf plist 'pos)))))
       ('move    (progn (run-hook-with-args 'gimme-broadcast-pl-move-hook plist)
                        (gimme-playlist-update buffer)
                        (message "Playlist updated! (moving element)")))
@@ -197,13 +188,8 @@
   (when buffer
     (let ((buffer (if (or (bufferp buffer) (stringp buffer)) buffer
                     (apply #'gimme-first-buffer-with-vars buffer))))
-      (gimme-on-buffer
-       buffer
-       (goto-char (if append (point-max)
-                    (or (text-property-any (point-min) (point-max)
-                                           'pos (getf plist 'pos)) (point-max))))
-       (insert (gimme-string plist))
-       (unless append (gimme-update-pos buffer #'1+ (point-marker) (point-max)))))))
+      (if append (ecoli-append buffer plist)
+        (ecoli-insert buffer plist (plist-get plist 'pos))))))
 
 (defun gimme-vol (delta)
   "Increases the current volume by delta (can be non-positive, too)"
@@ -246,12 +232,12 @@
 
 (defun gimme-increase-volume ()
   "Increases the current volume"
-  (interactive) 
+  (interactive)
   (gimme-vol gimme-vol-delta))
 
 (defun gimme-decrease-volume ()
   "Decreases the current volume"
-  (interactive) 
+  (interactive)
   (gimme-vol (- gimme-vol-delta)))
 
 (defun gimme-sort ()
@@ -278,30 +264,25 @@
   "Pastes a song at the car of the kill-ring"
   (interactive)
   (let* ((last (car kill-ring))
-         (pos (get-text-property (point) 'pos))
-         (ids (loop for pos = 0 then (next-property-change pos last)
-                    while pos collecting (get-text-property pos 'id last))))
-    (when (and pos ids)
-      (dolist (id ids)
-        (gimme-send-message "(insert %s %s)\n" pos id)
-        (setq pos (+ 1 pos))))))
+         (pos (cadr (ecoli-between-region t)))
+         (ids (loop for pos = 0 then (next-property-change pos last) while pos
+                    when (get-text-property pos 'id last) collect it)))
+    (loop for id in ids and p = pos then (1+ pos) doing
+          (gimme-send-message "(insert %s %s)\n" pos id))))
 
 
 (defun gimme-focused-yank ()
   "Yanks the currently focused song."
   (interactive)
-  (gimme-focused-delete t))
+  (apply #'kill-ring-save (ecoli-between-region))
+  (message "Now on clipboard!"))
 
 (defun gimme-focused-delete (&optional yank-p)
   "Deletes the currently focused song."
   (interactive)
-  (apply #'kill-ring-save (range-of-region))
-  (if yank-p
-      (message "Yanked!")
-    (let ((items (loop for pos = 0 then (next-property-change pos (car kill-ring))
-                       while pos collecting
-                       (get-text-property pos 'pos (car kill-ring)))))
-      (gimme-send-message "(remove_many %d %d)\n" (car items) (length items)))))
+  (gimme-focused-yank)
+  (let* ((both (ecoli-between-region t)) (min (car both)) (max (cadr both)))
+    (gimme-send-message "(remove_many %d %d)\n" min (- max min))))
 
 
 (defun gimme-focused-url ()

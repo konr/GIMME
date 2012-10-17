@@ -34,10 +34,9 @@
 
 (defvar gimme-process nil           "Reference to the ruby process")
 (defvar gimme-help-function-groups nil "Variable that holds extra information on functions")
-(defvar gimme-executable "gimme.rb" "The name of the ruby file")
 (defvar gimme-filter-remainder ""   "Variable used to hold incomplete sexps received from the ruby process")
 
-(defvar gimme-fullpath (expand-file-name (concat (file-name-directory (or load-file-name buffer-file-name)) gimme-executable)) "The fullname of the ruby file")
+(defvar gimme-path (expand-file-name (file-name-directory (or load-file-name buffer-file-name))) "The fullname of the ruby file")
 (defvar gimme-bookmark-minimal-collection-list '(((0 ("reference" "All Media" "title" "All Media") nil))) "The minimal collection you must have access to, which is just the Universe collection.")
 (defvar gimme-anonymous-collections gimme-bookmark-minimal-collection-list "The list to which the collections you create while explore mlib will go.")
 
@@ -66,6 +65,15 @@
   1: Prints the functions being called by the ruby process
   2: Print the whole sexps
   3: Print the whole sexps and do not evaluate them")
+
+;;;;;;;;;;;;;;
+;; Adapters ;;
+;;;;;;;;;;;;;;
+
+(defvar gimme-adapters '(xmms2 (exec "ruby %s/xmms2.rb")
+                               mplayer (exec "ruby %s/mplayer.rb"))
+  "Available adapters")
+(defvar gimme-default-adapter 'xmms2 "The default adapter")
 
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
@@ -99,22 +107,17 @@
                    ('lyrics (getf plist 'title))))
          (buffer-name (decode-coding-string
                        (format "GIMME - %s (%s)" type-s name-s) 'utf-8))
-         (facet (plist-get plist 'gimme-collection-facet)))
-    (gimme-on-buffer buffer-name
-                     (setq-local formats gimme-playlist-formats)
-                     (kill-local-variable 'gimme-collection-facet) ;; FIXME lousy
-                     (case type
-                       ('playlist (gimme-playlist-mode))
-                       ('collection (gimme-collection-mode facet)))
-                     (delete-region 1 (point-max))
+         (facet (plist-get plist 'gimme-collection-facet))
+         (setup-plist `(ecoli-separator "\n" ecoli-format-function gimme-string))
+         (plist (append plist `(buffer-name ,buffer-name ecoli-formats ,gimme-playlist-formats)))
+         (function (lambda ()
                      (when facet (insert (format "Collection: %s\nFacet: %s\n---\n\n"
                                                  (propertize name-s 'font-lock-face `(:foreground ,(color-for name-s)))
                                                  (propertize facet 'font-lock-face `(:weight bold)))))
-                     (loop for x = plist then (cddr x)
-                           while x doing (progn (make-local-variable (car x))
-                                                (set (car x) (cadr x)))))
-    (switch-to-buffer (get-buffer buffer-name))
-    buffer-name))
+                     (funcall (case type (playlist #'gimme-playlist-mode)
+                                    (collection (lambda () (gimme-collection-mode facet))))))))
+    (ecoli-gen-buffer plist setup-plist function)))
+
 
 
 (defun gimme-extract-needed-tags ()
@@ -154,13 +157,11 @@
 
 (defun gimme-init ()
   "Creates the buffer and manages the processes"
-  (dolist (proc (remove-if-not (lambda (el) (string-match "GIMME" el))
-                               (mapcar #'process-name (process-list))))
+  (dolist (proc (remove-if-not (lambda (el) (string-match "GIMME" el)) (mapcar #'process-name (process-list))))
     (kill-process proc))
-  (setq gimme-process
-        (start-process-shell-command
-         "GIMME" nil
-         (format "ruby %s" gimme-fullpath )))
+ (let* ((adapter (plist-get gimme-adapters gimme-default-adapter))
+	(path (format (plist-get adapter 'exec) gimme-path))) 
+  (setq gimme-process (start-process-shell-command "GIMME" nil path)))
   (set-process-filter gimme-process (lambda (a b) (gimme-eval-all-sexps b))))
 
 (defun gimme-send-message (&rest args)
@@ -178,7 +179,7 @@
                                         (if (and (symbolp (cdr n)) (not (null (cdr n))))
                                             (list 'quote (cdr n)) (cdr n))))
                            (plist-to-alist plist)))
-             (eval (car formats))))))
+             (eval (car ecoli-formats))))))
 
 (defun gimme-coll-overview (name data)
   "Caches the data present in a collection."
@@ -189,26 +190,6 @@
   "Makes sure that GIMME will be able to do at least a general-scoped autocompletion and that the help features will be loaded."
   (unless gimme-mlib-cache-global (gimme-send-message "(coll_overview)\n"))
   (gimme-send-message "(get_help_info)\n"))
-
-(defun gimme-toggle-view ()
-  "Cycle through the views defined in gimme-config."
-  (interactive)
-  (setq-local formats (append (cdr formats) (list (car formats))))
-  ;; Won't work with the macro because of the (goto (point-max))
-  (unlocking-buffer
-   (save-excursion
-     (let* ((pos (point)) (line (line-number-at-pos))
-            (data (range-to-plists (point-min) (point-max)))
-            (data (mapcar (lambda (n) (gimme-string (plist-put n 'font-lock-face nil))) data))
-            (len (length data)))
-       ;; Silly but required so that the cursor won't change its
-       ;; position after killing text.
-       (goto-char (point-min))
-       (loop for n from 0 upto (- line 2) doing (insert (nth n data)))
-       (move-beginning-of-line 1) (kill-line (- line 2))
-       (delete-region (point) (point-max))
-       (loop for n from (- line 1) upto (1- len) doing (insert (nth n data)))
-       (goto-line line)))))
 
 (defun gimme-make-basic-map ()
   "Generates a map with common, basic functionalities."
@@ -231,14 +212,17 @@
   (interactive)
   (setq gimme-filter-remainder "")
   (gimme-init)
+  ;(message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-playlist)
-  (gimme-try-the-best-to-ensure-fancy-features))
+  (gimme-try-the-best-to-ensure-fancy-features)
+  )
 
 ;;;;;;;;;;
 ;; Init ;;
 ;;;;;;;;;;
 
+(require 'ecoli)
 (require 'htmlr)
 
 (require 'gimme-augmented)
