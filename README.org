@@ -10,7 +10,7 @@
   - [[http://gimmeplayer.org/mediawiki/images/7/74/Customization.png][Colorize your playlist using the colors of your country?]]
   - [[http://gimmeplayer.org/mediawiki/images/9/96/Equalizer.png][Have such a kick-ass equalizer?]]
     
-    Yes? But it doesn't run on Emacs. Check out [[http://www.gimmeplayer.org/][gimmeplayer.org]].
+    Yes? But it doesn't run on Emacs.
 
 * Installing GIMME
 ** Cloning from Github
@@ -22,51 +22,39 @@
 
 ** Installing dependencies
 
-   Install mechanize from ruby gems and the ruby bindings for glib2. On Arch Linux one does simply:
+   Install /mechanize/, from ruby gems, the ruby bindings for glib2 and, of course, xmms2. On
+   Arch Linux one does simply:
    
    #+BEGIN_SRC sh
-   gem install mechanize
-   sudo pacman -S ruby-glib2
+   gem install mechanize 
+   sudo pacman -S ruby-glib2 xmms2
    #+END_SRC
 
 ** Preparing Emacs.
 
    First of all, you must put GIMME's files on Emacs's PATH. If you
-   haven't set it up on Emacs, here is a code snippet you can use to add
-   all subdirectories under ~/.emacs.d/ to it:
+   haven't set it up on Emacs, here is a code snippet you can use to
+   add all subdirectories under ~/.emacs.d/ to it:
 
    #+BEGIN_SRC emacs-lisp
-     ;;;;;;;;;;
-     ;; Path ;;
-     ;;;;;;;;;;
+     ;;;;;;;;;; Path ;; ;;;;;;;;
 
      (require 'cl)
 
-     (defun reload-path ()
-       (interactive)
-       (let* ((directory "~/.emacs.d")
-              (newdirs (lp-subdir-list directory)))
-         (setq load-path (remove-duplicates (append load-path newdirs) :test #'string=)))
-       (message "Path reloaded!"))
+     (defun reload-path () (interactive) (let* ((directory
+       "~/.emacs.d") (newdirs (lp-subdir-list directory))) (setq
+       load-path (remove-duplicates (append load-path
+       newdirs) :test #'string=))) (message "Path reloaded!"))
 
-     (defconst +lp-ignore-list+
-       (list "CVS" ".git" ".svn" ".." "."))
+     (defconst +lp-ignore-list+ (list "CVS" ".git" ".svn" ".." "."))
 
-     (defun lp-subdir-list (base &optional ignore)
-       (unless ignore
-         (setq ignore +lp-ignore-list+))
-       (let ((pending (list base))
-             (retval nil))
-         (while pending
-           (let ((dir (pop pending)))
-             (push dir retval)
-             (dolist (f (directory-files dir))
-               (let ((name (concat dir "/" f)))
-                 (when (and (not (member f ignore))
-                            (file-directory-p name))
-                   (push name pending)
-                   (push name retval))))))
-         (reverse retval)))
+     (defun lp-subdir-list (base &optional ignore) (unless ignore
+       (setq ignore +lp-ignore-list+)) (let ((pending (list base))
+       (retval nil)) (while pending (let ((dir (pop pending))) (push
+       dir retval) (dolist (f (directory-files dir)) (let ((name
+       (concat dir "/" f))) (when (and (not (member f ignore))
+       (file-directory-p name)) (push name pending) (push name
+       retval)))))) (reverse retval)))
 
      (reload-path)
    #+END_SRC
@@ -93,10 +81,10 @@
    #+END_SRC
 
    On Emacs, press M-x, alternate notation for Alt-x, to launch the
-   command prompt, and then gimme. You should now learn about its
-   Features and, in particular, about customization.
+   command prompt, and then gimme. At all times, you can press /?/,
+   the question mark, to get a list of the currently set keybindings.
 
-   Check out [[http://konr.mobi/index.php?title=GIMME][this page]].
+   Check out [[http://konr.mobi/index.php?title=GIMME][this page]] for a tour of GIMME's features.
 
 
 

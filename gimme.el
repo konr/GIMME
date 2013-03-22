@@ -93,7 +93,7 @@
          (consed (mapcar (lambda (el) (cons el (buffer-local-variables el))) all)))
     (caar (reduce (lambda (coll pair)
                     (remove-if-not (lambda (el) (equal (cdr pair)
-                                                  (cdr (assoc (car pair) (cdr el)))))
+                                                       (cdr (assoc (car pair) (cdr el)))))
                                    coll)) alist :initial-value consed))))
 
 (defun gimme-gen-buffer (plist)
@@ -124,7 +124,7 @@
   "Informs the ruby client of all %variables required by the config file"
   (let* ((l (flatten gimme-playlist-formats))
          (l (remove-if-not (lambda (n) (and (symbolp n)
-                                       (string-match "^%" (format "%s" n)))) l))
+                                            (string-match "^%" (format "%s" n)))) l))
          (l (mapcar (lambda (n) (substring (format "%s" n) 1))
                     (remove-duplicates l))))
     l))
@@ -159,9 +159,9 @@
   "Creates the buffer and manages the processes"
   (dolist (proc (remove-if-not (lambda (el) (string-match "GIMME" el)) (mapcar #'process-name (process-list))))
     (kill-process proc))
- (let* ((adapter (plist-get gimme-adapters gimme-default-adapter))
-	(path (format (plist-get adapter 'exec) gimme-path))) 
-  (setq gimme-process (start-process-shell-command "GIMME" nil path)))
+  (let* ((adapter (plist-get gimme-adapters gimme-default-adapter))
+         (path (format (plist-get adapter 'exec) gimme-path)))
+    (setq gimme-process (start-process-shell-command "GIMME" nil path)))
   (set-process-filter gimme-process (lambda (a b) (gimme-eval-all-sexps b))))
 
 (defun gimme-send-message (&rest args)
@@ -176,8 +176,8 @@
   (let ((plist (plist-put plist 'font-lock-face nil)))
     (eval `(let ((plist ',plist)
                  ,@(mapcar (lambda (n) (list (intern (format "%%%s" (car n)))
-                                        (if (and (symbolp (cdr n)) (not (null (cdr n))))
-                                            (list 'quote (cdr n)) (cdr n))))
+                                             (if (and (symbolp (cdr n)) (not (null (cdr n))))
+                                                 (list 'quote (cdr n)) (cdr n))))
                            (plist-to-alist plist)))
              (eval (car ecoli-formats))))))
 
@@ -212,18 +212,27 @@
   (interactive)
   (setq gimme-filter-remainder "")
   (gimme-init)
-  ;(message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
+                                        ;(message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-send-message (format "(set_atribs %s)\n" (gimme-extract-needed-tags)))
   (gimme-playlist)
   (gimme-try-the-best-to-ensure-fancy-features)
   )
 
-;;;;;;;;;;
-;; Init ;;
-;;;;;;;;;;
+;;;;;;;;;;;;;
+;; Bundled ;;
+;;;;;;;;;;;;;
 
-(require 'ecoli)
-(require 'htmlr)
+(require 'cl)
+(loop for bundled in '(hexrgb htmlr ecoli) doing
+      (or (require bundled nil t)
+          (let ((load-path
+                 (cons (expand-file-name "fallback-libs" (file-name-directory (or load-file-name buffer-file-name)))
+                       load-path)))
+            (require bundled))))
+
+;;;;;;;;;;;;;;
+;; Subparts ;;
+;;;;;;;;;;;;;;
 
 (require 'gimme-augmented)
 (require 'gimme-autocomplete)
@@ -241,4 +250,3 @@
 
 (provide 'gimme)
 ;;; gimme.el ends here
-
