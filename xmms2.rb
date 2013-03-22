@@ -4,12 +4,10 @@ $atribs=["title","id","artist","album", "duration","starred","url","tracknr", "t
 dir=File.dirname(__FILE__)
 $LOAD_PATH << dir
 
-['ballcat.rb'].each {|file| eval(File.new(dir+"/"+file).read)}
+['ballcat.rb', 'freebase.rb'].each {|file| eval(File.new(dir+"/"+file).read)}
 # crawlyr FIXME
-['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems', 'freebase'].each do |lib|
+['xmmsclient', 'glib2', 'xmmsclient_glib', 'rubygems'].each do |lib|
   begin
-    #print lib
-    #print "#############\n"
     require lib
   rescue LoadError
     warn "(message \"Oops! Something didn't go right. I bet that '#{lib}' is missing\")"
