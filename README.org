@@ -96,7 +96,7 @@
    command prompt, and then gimme. You should now learn about its
    Features and, in particular, about customization.
 
-   Check out [http://konr.mobi/index.php?title=GIMME this page].
+   Check out [[http://konr.mobi/index.php?title=GIMME][this page]].
 
 
 
